@@ -13,11 +13,16 @@ use Illuminate\View\View;
 
 class LoginController extends Controller
 {
-    public function accountProcedure(): View|RedirectResponse
+    public function accountProcedure(SupabaseAuthService $authService): View|RedirectResponse
     {
         if (auth()->check()) {
             if (auth()->user()->isPending()) {
-                return redirect()->route('account.pending');
+                auth()->user()->update(['is_online' => false]);
+                $authService->logout();
+
+                $showRegister = old('_action') === 'register' || request()->query('form') === 'register';
+
+                return view('auth.account-procedure', compact('showRegister'));
             }
 
             return redirect()->route('dashboard');
@@ -118,6 +123,29 @@ class LoginController extends Controller
         return redirect()->route('account.procedure', ['form' => 'register']);
     }
 
+    public function pending(): View|RedirectResponse
+    {
+        if (! auth()->check()) {
+            return redirect()->route('citizen.citation.lookup');
+        }
+
+        $user = auth()->user();
+
+        if ($user->account_status === 'pending') {
+            return view('auth.pending');
+        }
+
+        if (in_array($user->account_status, ['rejected', 'suspended'], true)) {
+            auth()->logout();
+
+            return redirect()->route('login')->withErrors([
+                'email' => 'Your account has been '.$user->account_status.'.',
+            ]);
+        }
+
+        return redirect()->route('login');
+    }
+
     public function storeRegister(Request $request, SupabaseAuthService $authService): RedirectResponse
     {
         $validated = $request->validate([
@@ -153,12 +181,22 @@ class LoginController extends Controller
 
     public function destroy(SupabaseAuthService $authService): RedirectResponse
     {
+        $wasPending = auth()->check() && auth()->user()->isPending();
+
         if (auth()->check()) {
             auth()->user()->update(['is_online' => false]);
         }
 
         $authService->logout();
 
-        return redirect()->route('account.procedure', ['form' => 'register']);
+        $redirect = redirect()->route('account.procedure');
+
+        if ($wasPending) {
+            $redirect->withErrors([
+                'email' => 'Your account is pending admin approval. You will be notified once approved.',
+            ]);
+        }
+
+        return $redirect;
     }
 }

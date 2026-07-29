@@ -64,7 +64,7 @@ Route::middleware('guest')->group(function () {
     Route::post('webhook/paymongo', [PayMongoController::class, 'webhook'])->name('webhook.paymongo');
 });
 
-Route::get('account/pending', fn () => view('auth.pending'))->name('account.pending');
+Route::get('account/pending', [LoginController::class, 'pending'])->name('account.pending');
 
 // Email Verification
 Route::get('email/verify/callback', fn () => view('auth.verify-callback'))->name('verification.callback');
@@ -75,8 +75,11 @@ Route::middleware('auth')->group(function () {
     Route::post('email/verification-notification', [VerificationController::class, 'resend'])->middleware('throttle:3,1')->name('verification.resend');
 });
 
-Route::middleware(['auth', 'active', 'approved'])->group(function () {
+Route::middleware('auth')->group(function () {
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
+});
+
+Route::middleware(['auth', 'active', 'approved'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('citations', CitationController::class)->only(['index', 'create', 'store', 'show']);
