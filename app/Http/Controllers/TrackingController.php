@@ -23,7 +23,10 @@ class TrackingController extends Controller
 
     public function locations(Request $request): JsonResponse
     {
-        $locations = EnforcerLocation::with('user')->latest('last_seen_at')->get();
+        $locations = EnforcerLocation::with('user')
+            ->where('status', 'active')
+            ->latest('last_seen_at')
+            ->get();
         $zones = Zone::with('team')->get();
 
         $enforcers = $locations->map(function ($location) use ($zones) {

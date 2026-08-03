@@ -8,9 +8,13 @@
     html, body { height:100%; }
     .app-shell { height:100vh; display:flex; flex-direction:column; overflow:hidden; }
     .tracking-page {
-        position:relative; width:100%; height:100%; display:flex; flex-direction:column;
+        position:relative; width:100%; height:100%; display:flex; flex-direction:row;
     }
     .page-bg:has(.tracking-page) { padding:0 !important; }
+
+    .tracking-map-wrap {
+        position:relative; flex:1 1 80%; min-width:0;
+    }
 
     #tracking-map {
         position:absolute; inset:0; z-index:0;
@@ -30,14 +34,34 @@
     .tracking-overlay-bottom > * { pointer-events:auto; }
 
     .enforcer-sidebar {
-        position:absolute; top:1rem; right:1rem; z-index:1;
-        width:320px; max-height:calc(100vh - 120px);
-        background:rgba(255,255,255,0.95); backdrop-filter:blur(12px);
-        border-radius:0.75rem; box-shadow:0 8px 32px rgba(0,0,0,0.12);
+        position:relative;
+        flex:0 0 20%;
+        width:auto; max-height:none; height:100%;
+        background:#fff;
+        border-radius:0; box-shadow:none;
+        border-left:1px solid #e5e7eb;
         display:flex; flex-direction:column;
-        pointer-events:none;
+        transition:opacity 0.3s ease, visibility 0.3s ease;
     }
     .enforcer-sidebar > * { pointer-events:auto; }
+    .enforcer-sidebar.is-collapsed {
+        opacity:0;
+        visibility:hidden;
+        pointer-events:none;
+    }
+
+    @media (max-width: 991.98px) {
+        .enforcer-sidebar { opacity:0; visibility:hidden; pointer-events:none; }
+        .enforcer-toggle-float { display:flex; }
+    }
+
+    @media (min-width: 1024px) {
+        .enforcer-sidebar-header { display:none; }
+        #toggleSidebar { display:none; }
+        .enforcer-sidebar.is-collapsed { opacity:1; visibility:visible; pointer-events:auto; }
+        .enforcer-toggle-float,
+        .enforcer-toggle-float.is-visible { display:none; }
+    }
 
     .enforcer-sidebar-header {
         padding:0.75rem 1rem; border-bottom:1px solid #f1f5f9;
@@ -45,6 +69,18 @@
         flex-shrink:0;
     }
     .enforcer-sidebar-header h6 { margin:0; font-weight:700; font-size:0.85rem; }
+
+    .enforcer-toggle-float {
+        position:absolute; top:1rem; right:1rem; z-index:2;
+        width:40px; height:40px; border-radius:50%;
+        background:#fff; border:none;
+        box-shadow:0 4px 12px rgba(0,0,0,0.15);
+        display:none; align-items:center; justify-content:center;
+        cursor:pointer; color:#2563eb; font-size:1.1rem;
+        pointer-events:auto;
+    }
+    .enforcer-toggle-float.is-visible { display:flex; }
+    .enforcer-toggle-float:hover { background:#f0f4ff; }
 
     .enforcer-sidebar-list {
         overflow-y:auto; flex:1; padding:0.25rem 0;
@@ -75,22 +111,33 @@
 
 @section('content')
 <div class="tracking-page">
-    <div id="tracking-map"></div>
+    <div class="tracking-map-wrap">
+        <div id="tracking-map"></div>
 
-    {{-- Top overlay --}}
-    <div class="tracking-overlay-top">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h1 class="h4 mb-0">GPS Tracking</h1>
-                <small class="text-muted">Real-time enforcer location monitoring</small>
+        {{-- Top overlay --}}
+        <div class="tracking-overlay-top">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h4 mb-0">GPS Tracking</h1>
+                    <small class="text-muted">Real-time enforcer location monitoring</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button id="toggle-3d" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-box me-1"></i>3D View
+                    </button>
+                    <span class="text-muted small">
+                        <span id="enforcer-count">0</span> active
+                    </span>
+                </div>
             </div>
-            <div class="d-flex align-items-center gap-2">
-                <button id="toggle-3d" class="btn btn-outline-primary btn-sm">
-                    <i class="bi bi-box me-1"></i>3D View
-                </button>
-                <span class="text-muted small">
-                    <span id="enforcer-count">0</span> active
-                </span>
+        </div>
+
+        {{-- Bottom stats bar --}}
+        <div class="tracking-overlay-bottom">
+            <div class="tracking-stats-bar" id="enforcer-detail">
+                <div class="stat">
+                    <span class="stat-value text-muted">Select an enforcer</span>
+                </div>
             </div>
         </div>
     </div>
@@ -110,15 +157,9 @@
             </div>
         </div>
     </div>
-
-    {{-- Bottom stats bar --}}
-    <div class="tracking-overlay-bottom">
-        <div class="tracking-stats-bar" id="enforcer-detail">
-            <div class="stat">
-                <span class="stat-value text-muted">Select an enforcer</span>
-            </div>
-        </div>
-    </div>
+    <button class="enforcer-toggle-float" id="toggleSidebarFloat" title="Show enforcers">
+        <i class="bi bi-layout-sidebar"></i>
+    </button>
 </div>
 @endsection
 
@@ -137,14 +178,22 @@ document.addEventListener('DOMContentLoaded', () => {
     map.addControl(new maplibregl.NavigationControl(), 'top-right');
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
-    const state = { enforcers: [], markers: {}, zones: [], selectedEnforcerId: null, is3D: false, refreshTimer: null, sidebarVisible: true };
+    const state = { enforcers: [], markers: {}, zones: [], selectedEnforcerId: null, is3D: false, refreshTimer: null, sidebarVisible: window.innerWidth >= 992 };
 
     const ToggleBtn = document.getElementById('toggleSidebar');
+    const ToggleFloat = document.getElementById('toggleSidebarFloat');
     const Sidebar = document.getElementById('enforcerSidebar');
-    ToggleBtn.addEventListener('click', () => {
+
+    function toggleSidebar() {
         state.sidebarVisible = !state.sidebarVisible;
-        Sidebar.style.display = state.sidebarVisible ? 'flex' : 'none';
-    });
+        Sidebar.classList.toggle('is-collapsed', !state.sidebarVisible);
+        ToggleFloat.classList.toggle('is-visible', !state.sidebarVisible);
+    }
+
+    Sidebar.classList.toggle('is-collapsed', !state.sidebarVisible);
+    ToggleFloat.classList.toggle('is-visible', !state.sidebarVisible);
+    ToggleBtn.addEventListener('click', toggleSidebar);
+    ToggleFloat.addEventListener('click', toggleSidebar);
 
     function createMarker(el, enforcer) {
         return new maplibregl.Marker({ element: el })
@@ -238,9 +287,9 @@ document.addEventListener('DOMContentLoaded', () => {
             updateEnforcerList();
             if (state.selectedEnforcerId) {
                 const still = state.enforcers.find(e => e.id === state.selectedEnforcerId);
-                if (!still) selectEnforcer(state.enforcers[0]?.id || null);
+                if (!still) state.selectedEnforcerId = null;
                 else selectEnforcer(state.selectedEnforcerId);
-            } else if (state.enforcers.length > 0) { selectEnforcer(state.enforcers[0].id); }
+            }
             const countEl = document.getElementById('enforcer-count');
             if (countEl) countEl.textContent = state.enforcers.filter(e => e.status === 'active').length;
         } catch (err) { console.error('Tracking fetch failed:', err); }

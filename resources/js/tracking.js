@@ -194,12 +194,10 @@ function initTrackingMap(options = {}) {
             if (state.selectedEnforcerId) {
                 const stillExists = state.enforcers.find(e => e.id === state.selectedEnforcerId);
                 if (!stillExists) {
-                    selectEnforcer(state.enforcers[0]?.id || null);
+                    state.selectedEnforcerId = null;
                 } else {
                     selectEnforcer(state.selectedEnforcerId);
                 }
-            } else if (state.enforcers.length > 0) {
-                selectEnforcer(state.enforcers[0].id);
             }
 
             const countEl = document.getElementById('enforcer-count');

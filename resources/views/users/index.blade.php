@@ -235,6 +235,14 @@
 </div>
 @endsection
 
+@push('styles')
+<style>
+    @media (min-width: 992px) {
+        .table-responsive { overflow: visible; }
+    }
+</style>
+@endpush
+
 @push('scripts')
 <script>
 document.getElementById('select-all')?.addEventListener('change', function () {
