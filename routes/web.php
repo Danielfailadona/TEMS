@@ -77,6 +77,10 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
+
+    Route::get('logout', function () {
+        return redirect()->route('dashboard');
+    });
 });
 
 Route::middleware(['auth', 'active', 'approved'])->group(function () {
