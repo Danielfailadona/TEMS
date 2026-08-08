@@ -62,6 +62,11 @@
                                 </label>
                             @endforeach
                         </div>
+                        <div class="d-flex align-items-center justify-content-between mt-2" id="member-pagination" hidden>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="member-prev"><i class="bi bi-chevron-left"></i> Prev</button>
+                            <span class="small text-muted" id="member-page-info"></span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="member-next">Next <i class="bi bi-chevron-right"></i></button>
+                        </div>
                         <div class="form-text mt-1">Check members to include them. Only Enforcer roles are available.</div>
                     </div>
                 </div>
@@ -168,6 +173,32 @@ document.addEventListener('DOMContentLoaded', function () {
     const zoneFn = window.__zonePicker?.initTeamZonePicker;
     if (typeof zoneFn === 'function') {
         zoneFn('team-zone-map', { clickable: false, zoom: 10, zones: TEAM_ZONES });
+    }
+
+    const memberRows = Array.from(document.querySelectorAll('#member-list .member-row'));
+    const pagination = document.getElementById('member-pagination');
+    if (memberRows.length > 5) {
+        const PER_PAGE = 5;
+        const prevBtn = document.getElementById('member-prev');
+        const nextBtn = document.getElementById('member-next');
+        const info = document.getElementById('member-page-info');
+        const totalPages = Math.ceil(memberRows.length / PER_PAGE);
+        let currentPage = 1;
+
+        function renderMemberPage() {
+            memberRows.forEach((row, i) => {
+                row.classList.toggle('d-none', i < (currentPage - 1) * PER_PAGE || i >= currentPage * PER_PAGE);
+            });
+            info.textContent = 'Page ' + currentPage + ' of ' + totalPages;
+            prevBtn.disabled = currentPage <= 1;
+            nextBtn.disabled = currentPage >= totalPages;
+        }
+
+        prevBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderMemberPage(); } });
+        nextBtn.addEventListener('click', () => { if (currentPage < totalPages) { currentPage++; renderMemberPage(); } });
+
+        pagination.hidden = false;
+        renderMemberPage();
     }
 });
 </script>
