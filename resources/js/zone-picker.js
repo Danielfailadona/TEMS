@@ -1,4 +1,5 @@
 import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
 export function initTeamZonePicker(containerId, options = {}) {
     const {
@@ -24,6 +25,7 @@ export function initTeamZonePicker(containerId, options = {}) {
 
     map.addControl(new maplibregl.NavigationControl(), 'top-right');
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+    map.on('load', () => map.resize());
 
     const state = { zones: [], markers: [], assigned: new Set(assignedZoneIds) };
 
@@ -140,6 +142,7 @@ export function initZoneEditor(containerId, options = {}) {
 
     map.addControl(new maplibregl.NavigationControl(), 'top-right');
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+    map.on('load', () => map.resize());
 
     const latInput = latInputId ? document.getElementById(latInputId) : null;
     const lngInput = lngInputId ? document.getElementById(lngInputId) : null;
@@ -284,6 +287,7 @@ export function initZoneViewer(containerId, options = {}) {
 
     map.addControl(new maplibregl.NavigationControl(), 'top-right');
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+    map.on('load', () => map.resize());
 
     let activeCircleLayer = null;
     const markers = [];

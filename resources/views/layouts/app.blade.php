@@ -294,10 +294,8 @@
     }
 
     .zone-map {
-        aspect-ratio: 1 / 1;
-        min-height: 350px;
-        max-height: 450px;
         width: 100%;
+        height: 500px;
     }
 </style>
 
