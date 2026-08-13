@@ -3,7 +3,6 @@
 @section('title', 'Clamping Status')
 
 @section('content')
-<h1 class="h3 mb-4">Clamping Status</h1>
 <div class="card stat-card">
     <div class="table-responsive">
         <table class="table table-hover mb-0">

@@ -3,8 +3,7 @@
 @section('title', 'Notifications')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Notifications</h1>
+<div class="mb-4 text-end">
     @if ($notifications->where('is_read', false)->count() > 0)
         <form method="POST" action="{{ route('notifications.markAllRead') }}" class="m-0">
             @csrf

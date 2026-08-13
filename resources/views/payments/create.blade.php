@@ -3,7 +3,6 @@
 @section('title', 'Record Payment')
 
 @section('content')
-<h1 class="h3 mb-4">Record Payment</h1>
 
 <div class="card stat-card mb-4"><div class="card-body">
     <form method="GET" action="{{ route('payments.create') }}" class="row g-2">

@@ -40,11 +40,8 @@
 @endpush
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 mb-1">Archives</h1>
-        <p class="text-muted small mb-0">Resolved and completed records across the system.</p>
-    </div>
+<div class="d-flex justify-content-between align-items-center gap-2 mb-4">
+    <p class="text-muted small mb-0">Resolved and completed records across the system.</p>
     <form method="GET" class="d-flex align-items-center gap-2">
         <select name="type" class="form-select form-select-sm" style="min-width:140px;" onchange="this.form.submit()">
             <option value="">All Types</option>

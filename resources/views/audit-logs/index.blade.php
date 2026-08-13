@@ -3,8 +3,7 @@
 @section('title', 'Audit Logs')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Audit Logs</h1>
+<div class="mb-4">
     <span class="text-muted small">{{ $activities->total() }} total entries</span>
 </div>
 

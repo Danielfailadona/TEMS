@@ -3,8 +3,7 @@
 @section('title', 'Payments')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Payments</h1>
+<div class="mb-4 text-end">
     @can('create', App\Models\Payment::class)
         <a href="{{ route('payments.create') }}" class="btn btn-primary">Record Payment</a>
     @endcan

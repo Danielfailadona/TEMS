@@ -4,10 +4,7 @@
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 mb-1">Appeal Details</h1>
-        <p class="text-muted mb-0">Review the submitted appeal and its outcome.</p>
-    </div>
+    <p class="text-muted mb-0">Review the submitted appeal and its outcome.</p>
     @can('update', $appeal)
         <a href="{{ route('appeals.edit', $appeal) }}" class="btn btn-outline-primary">Review Appeal</a>
     @endcan

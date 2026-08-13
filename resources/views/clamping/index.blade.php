@@ -3,8 +3,7 @@
 @section('title', 'Vehicle Clamping')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Vehicle Clamping</h1>
+<div class="mb-4 text-end">
     @can('create', App\Models\ClampingRecord::class)
         <a href="{{ route('clamping.create') }}" class="btn btn-danger">Record Clamp</a>
     @endcan

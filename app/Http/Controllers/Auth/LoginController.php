@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
+use App\Models\EnforcerLocation;
 use App\Models\User;
 use App\Services\SupabaseAuthService;
 use Illuminate\Http\RedirectResponse;
@@ -65,6 +66,20 @@ class LoginController extends Controller
             'last_login_ip' => $request->ip(),
             'is_online' => true,
         ]);
+
+        // Auto-create EnforcerLocation for enforcers/clamping officers so they appear in tracking
+        if ($user->isRole(Role::Enforcer, Role::ClampingOfficer)) {
+            EnforcerLocation::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'latitude' => 0,
+                    'longitude' => 0,
+                    'accuracy_m' => 0,
+                    'status' => 'offline',
+                    'last_seen_at' => now(),
+                ]
+            );
+        }
 
         \App\Models\DeviceManager::create([
             'user_id' => $user->id,

@@ -3,9 +3,6 @@
 @section('title', 'Advanced Search')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Advanced Search</h1>
-</div>
 
 <form method="GET" class="card stat-card mb-4">
     <div class="card-body">

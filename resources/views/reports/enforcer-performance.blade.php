@@ -3,8 +3,7 @@
 @section('title', 'Enforcer Performance')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Enforcer Performance</h1>
+<div class="mb-4">
     <a href="{{ route('reports.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
 </div>
 

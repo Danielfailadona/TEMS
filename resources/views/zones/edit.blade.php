@@ -3,9 +3,9 @@
 @section('title', 'Edit Zone')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Edit Zone — {{ $zone->name }}</h1>
-    <a href="{{ route('zones.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Zones</a>
+<div class="d-flex justify-content-between align-items-center gap-3 mb-4">
+    <div class="fw-bold text-truncate">{{ $zone->name }}</div>
+    <a href="{{ route('zones.index') }}" class="btn btn-outline-secondary flex-shrink-0"><i class="bi bi-arrow-left"></i> Back to Zones</a>
 </div>
 
 <div class="row g-4">

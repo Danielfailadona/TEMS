@@ -91,6 +91,7 @@ class NavigationComposer
             }
         }
 
-        $view->with('navGroups', $groups);
-    }
+    $view->with('navGroups', $groups);
+    $view->with('isEnforcerMobile', $user->isRole(Role::Enforcer, Role::ClampingOfficer));
+}
 }

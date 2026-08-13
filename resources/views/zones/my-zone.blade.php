@@ -26,12 +26,7 @@
 @endpush
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 mb-1">My Zone</h1>
-        <p class="text-muted mb-0 small">Your assigned patrol zone and team information.</p>
-    </div>
-</div>
+<p class="text-muted mb-4 small">Your assigned patrol zone and team information.</p>
 
 @if ($zones->isEmpty())
     <div class="text-center py-5 text-muted">

@@ -33,6 +33,11 @@ class ZoneController extends Controller
             $query->where('team_id', $teamId);
         }
 
+        if ($assignment = $request->input('assignment')) {
+            if ($assignment === 'assigned') $query->whereNotNull('team_id');
+            elseif ($assignment === 'unassigned') $query->whereNull('team_id');
+        }
+
         $zones = $query->latest()->get();
 
         $stats = [
@@ -136,6 +141,15 @@ class ZoneController extends Controller
         return back()->with('success', 'Zone '.
             ($zone->is_active ? 'activated' : 'deactivated').
             ' successfully.');
+    }
+
+    public function destroy(Zone $zone): RedirectResponse
+    {
+        $this->authorizeAdmin();
+
+        $zone->delete();
+
+        return redirect()->route('zones.index')->with('success', 'Zone deleted successfully.');
     }
 
     public function myZone(): View

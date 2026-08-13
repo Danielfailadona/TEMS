@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     @stack('styles')
 </head>
-<body class="app-shell">
+<body class="app-shell{{ ($isEnforcerMobile ?? false) ? ' enforcer-mobile' : '' }}">
 <div class="d-flex" style="overflow-x:hidden;">
     <aside class="sidebar animate-on-load">
         <div class="sidebar-brand">
@@ -39,6 +39,7 @@
     </aside>
 
     <div class="main-content flex-grow-1 d-flex flex-column">
+        @if (!($isEnforcerMobile ?? false))
         <nav class="navbar navbar-expand-lg bg-white border-bottom px-3 d-lg-none">
             <span class="navbar-brand mb-0 h6">{{ config('itevcms.app_name') }}</span>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileNav">
@@ -63,11 +64,12 @@
                 </form>
             </div>
         </nav>
+        @endif
 
         <header class="topbar px-4 px-lg-5 py-3 border-bottom animate-on-load">
             <div>
                 <div class="text-muted small">Operations console</div>
-                <h2 class="h5 mb-0">@yield('title', 'Dashboard')</h2>
+                <h2 class="h4 mb-0">@yield('title', 'Dashboard')</h2>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <a href="{{ route('notifications.index') }}" class="position-relative text-decoration-none text-dark topbar-icon-btn">
@@ -111,6 +113,81 @@
 </div>
 
 @stack('scripts')
+
+@if ($isEnforcerMobile ?? false)
+<nav class="enforcer-tab-bar" aria-label="Enforcer quick nav">
+  <a href="{{ route('dashboard') }}" class="tab-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+    <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+  </a>
+  <a href="{{ route('citations.index') }}" class="tab-item {{ request()->routeIs('citations.*') ? 'active' : '' }}">
+    <i class="bi bi-file-earmark-text"></i><span>Citations</span>
+  </a>
+  <a href="{{ route('citations.create') }}" class="tab-item tab-fab" aria-label="Issue Citation">
+    <i class="bi bi-plus-lg"></i>
+  </a>
+  <a href="{{ route('enforcer.zone') }}" class="tab-item {{ request()->routeIs('enforcer.zone') ? 'active' : '' }}">
+    <i class="bi bi-geo-alt-fill"></i><span>My Zone</span>
+  </a>
+  <button class="tab-item" type="button" id="enforcerMoreBtn" aria-expanded="false" aria-controls="enforcerMoreMenu">
+    <i class="bi bi-three-dots"></i><span>More</span>
+  </button>
+</nav>
+<div class="enforcer-more-backdrop" id="enforcerMoreBackdrop"></div>
+<div class="enforcer-more-sheet" id="enforcerMoreMenu" role="dialog" aria-label="More options">
+  <div class="enforcer-more-header">
+    <span class="fw-semibold">More</span>
+    <button type="button" class="enforcer-more-close" id="enforcerMoreClose" aria-label="Close menu">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+  <div class="enforcer-more-grid">
+    <a href="{{ route('appeals.index') }}" class="enforcer-more-item">
+      <i class="bi bi-exclamation-circle"></i><span>Appeals</span>
+    </a>
+    <a href="{{ route('clamping-requests.index') }}" class="enforcer-more-item">
+      <i class="bi bi-inbox"></i><span>Clamp Req</span>
+    </a>
+    <a href="{{ route('archives.index') }}" class="enforcer-more-item">
+      <i class="bi bi-archive"></i><span>My Archives</span>
+    </a>
+    <a href="{{ route('profile.edit') }}" class="enforcer-more-item">
+      <i class="bi bi-person-circle"></i><span>My Profile</span>
+    </a>
+    <a href="{{ route('notifications.index') }}" class="enforcer-more-item">
+      <i class="bi bi-bell"></i><span>Notifications</span>
+    </a>
+    <a href="{{ route('settings.index') }}" class="enforcer-more-item">
+      <i class="bi bi-gear"></i><span>Settings</span>
+    </a>
+    <form action="{{ route('logout') }}" method="POST" class="enforcer-more-item">
+      @csrf
+      <button type="submit" class="enforcer-more-btn text-danger"><i class="bi bi-box-arrow-right"></i><span>Logout</span></button>
+    </form>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const moreBtn = document.getElementById('enforcerMoreBtn');
+    const sheet = document.getElementById('enforcerMoreMenu');
+    const backdrop = document.getElementById('enforcerMoreBackdrop');
+    const closeBtn = document.getElementById('enforcerMoreClose');
+    if (!moreBtn || !sheet || !backdrop) return;
+
+    function setOpen(open) {
+        sheet.classList.toggle('is-open', open);
+        backdrop.classList.toggle('is-visible', open);
+        moreBtn.classList.toggle('active', open);
+        moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        moreBtn.querySelector('i').className = open ? 'bi bi-x-lg' : 'bi bi-three-dots';
+    }
+
+    moreBtn.addEventListener('click', () => setOpen(!sheet.classList.contains('is-open')));
+    closeBtn?.addEventListener('click', () => setOpen(false));
+    backdrop.addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') setOpen(false); });
+});
+</script>
+@endif
 
 <style>
     .sidebar {

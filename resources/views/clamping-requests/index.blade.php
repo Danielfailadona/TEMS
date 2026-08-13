@@ -3,12 +3,7 @@
 @section('title', 'Clamping Requests')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 mb-1">Clamping Requests</h1>
-        <p class="text-muted mb-0 small">Manage citizen-reported clamping requests</p>
-    </div>
-</div>
+<p class="text-muted mb-4 small">Manage citizen-reported clamping requests</p>
 
 <div class="row g-3 mb-4">
     <div class="col-md-3 col-6">

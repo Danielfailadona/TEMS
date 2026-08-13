@@ -109,6 +109,7 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
 
     Route::resource('appeals', AppealController::class)->except(['destroy']);
     Route::resource('teams', TeamController::class);
+    Route::patch('teams/{team}/toggle-active', [TeamController::class, 'toggleActive'])->name('teams.toggle-active');
     Route::post('teams/{team}/zones/toggle', [TeamController::class, 'toggleZone'])->name('teams.zones.toggle');
     Route::resource('zones', ZoneController::class);
     Route::patch('zones/{zone}/toggle-active', [ZoneController::class, 'toggleActive'])->name('zones.toggle-active');
@@ -169,6 +170,25 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
     // Settings
     Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::put('settings', [SettingsController::class, 'update'])->name('settings.update');
+
+    // Enforcer GPS location (web)
+    Route::post('location', function (Request $request) {
+        $request->validate(['latitude' => 'required|numeric', 'longitude' => 'required|numeric', 'accuracy_m' => 'nullable|numeric']);
+        $user = auth()->user();
+        if ($user->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::ClampingOfficer)) {
+            return \App\Models\EnforcerLocation::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'latitude' => $request->latitude,
+                    'longitude' => $request->longitude,
+                    'accuracy_m' => $request->accuracy_m,
+                    'status' => 'active',
+                    'last_seen_at' => now(),
+                ]
+            );
+        }
+        return response()->json(['error' => 'Unauthorized'], 403);
+    })->name('location.update');
 
     // Owner Portal
     Route::prefix('owner')->name('owner.')->group(function () {

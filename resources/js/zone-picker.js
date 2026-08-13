@@ -28,6 +28,7 @@ export function initTeamZonePicker(containerId, options = {}) {
     map.on('load', () => map.resize());
 
     const state = { zones: [], markers: [], assigned: new Set(assignedZoneIds) };
+window._zonePickerState = state;
 
     function isAssigned(zoneId) {
         return state.assigned.has(zoneId);
@@ -352,23 +353,28 @@ export function initZoneViewer(containerId, options = {}) {
             el.style.width = '24px';
             el.style.height = '24px';
             el.style.cursor = 'pointer';
-            el.style.borderRadius = '50%';
-            el.style.background = zone.color;
-            el.style.border = '3px solid white';
-            el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.25)';
-            el.style.transition = 'transform 0.2s';
+
+            const dot = document.createElement('div');
+            dot.style.width = '100%';
+            dot.style.height = '100%';
+            dot.style.borderRadius = '50%';
+            dot.style.background = zone.color;
+            dot.style.border = '3px solid white';
+            dot.style.boxShadow = '0 2px 8px rgba(0,0,0,0.25)';
+            dot.style.transition = 'transform 0.15s ease';
+            el.appendChild(dot);
 
             const marker = new maplibregl.Marker({ element: el })
                 .setLngLat([lng, lat])
                 .addTo(map);
 
             el.addEventListener('mouseenter', () => {
-                el.style.transform = 'scale(1.3)';
+                dot.style.transform = 'scale(1.35)';
                 showCircle(zone);
             });
 
             el.addEventListener('mouseleave', () => {
-                el.style.transform = 'scale(1)';
+                dot.style.transform = 'scale(1)';
             });
 
             el.addEventListener('click', () => {

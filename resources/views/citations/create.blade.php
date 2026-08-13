@@ -2,8 +2,54 @@
 
 @section('title', 'Issue Citation')
 
+@push('styles')
+<style>
+    .evidence-capture {
+        border: 2px dashed var(--itevcms-border);
+        border-radius: 0.8rem;
+        padding: 1rem;
+        background: #fafbfc;
+    }
+    .evidence-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .evidence-preview .ev-thumb {
+        position: relative;
+        width: 96px;
+        height: 96px;
+        border-radius: 0.6rem;
+        overflow: hidden;
+        border: 1px solid var(--itevcms-border);
+        background: #fff;
+    }
+    .evidence-preview .ev-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .evidence-preview .ev-thumb .ev-remove {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        border: none;
+        font-size: 0.7rem;
+        line-height: 1;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+    }
+    .evidence-preview .ev-thumb .ev-remove:hover { background: rgba(220, 38, 38, 0.9); }
+</style>
+@endpush
+
 @section('content')
-<h1 class="h3 mb-4">Issue Citation</h1>
 <div class="card stat-card"><div class="card-body">
     <form method="POST" action="{{ route('citations.store') }}" enctype="multipart/form-data">@csrf
         <div class="row g-3">
@@ -56,7 +102,20 @@
             </div>
             <div class="col-12">
                 <label class="form-label">Evidence Photos</label>
-                <input type="file" name="evidence[]" class="form-control" accept="image/*" multiple>
+                <div class="evidence-capture" id="evidenceCapture">
+                    <input type="file" name="evidence[]" id="evidenceCamera" accept="image/*" capture="environment" class="d-none" multiple>
+                    <input type="file" name="evidence[]" id="evidenceGallery" accept="image/*" class="d-none" multiple>
+                    <div class="evidence-buttons">
+                        <button type="button" class="btn btn-outline-primary" id="btnCamera">
+                            <i class="bi bi-camera me-1"></i>Take Photo
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="btnGallery">
+                            <i class="bi bi-folder2-open me-1"></i>Choose File
+                        </button>
+                    </div>
+                    <small class="form-text text-muted d-block mt-2">You may attach multiple photos.</small>
+                    <div class="evidence-preview row g-2 mt-2" id="evidencePreview"></div>
+                </div>
             </div>
         </div>
         <div class="mt-4">
@@ -73,6 +132,45 @@
         this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Submitting...';
         this.closest('form').submit();
     });
+
+    const cameraInput = document.getElementById('evidenceCamera');
+    const galleryInput = document.getElementById('evidenceGallery');
+    const preview = document.getElementById('evidencePreview');
+
+    function renderPreview() {
+        preview.innerHTML = '';
+        [cameraInput, galleryInput].forEach(input => {
+            const files = Array.from(input.files || []);
+            files.forEach((file, fileIdx) => {
+                if (!file.type.startsWith('image/')) return;
+                const col = document.createElement('div');
+                col.className = 'col-auto';
+                const thumb = document.createElement('div');
+                thumb.className = 'ev-thumb';
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                thumb.appendChild(img);
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'ev-remove';
+                btn.setAttribute('aria-label', 'Remove photo');
+                btn.innerHTML = '<i class="bi bi-x-lg"></i>';
+                btn.addEventListener('click', () => {
+                    const dt = new DataTransfer();
+                    files.filter((_, i) => i !== fileIdx).forEach(f => dt.items.add(f));
+                    input.files = dt.files;
+                    renderPreview();
+                });
+                thumb.appendChild(btn);
+                col.appendChild(thumb);
+                preview.appendChild(col);
+            });
+        });
+    }
+
+    [cameraInput, galleryInput].forEach(input => input.addEventListener('change', renderPreview));
+    document.getElementById('btnCamera').addEventListener('click', () => cameraInput.click());
+    document.getElementById('btnGallery').addEventListener('click', () => galleryInput.click());
 </script>
 @endpush
 @endsection

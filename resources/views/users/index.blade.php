@@ -10,8 +10,7 @@
 @section('title', 'Users')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Users</h1>
+<div class="mb-4 text-end">
     <a href="{{ route('users.create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add User</a>
 </div>
 
@@ -70,48 +69,52 @@
     </div>
 </div>
 
-<form class="row g-2 mb-3" method="GET">
-    <div class="col-md-3">
-        <input type="search" name="search" class="form-control" placeholder="Search by name or email..." value="{{ request('search') }}">
-    </div>
-    <div class="col-md-2">
-        <select name="role" class="form-select">
-            <option value="">All Roles</option>
-            @foreach ($roles as $role)
-                <option value="{{ $role->value }}" {{ request('role') === $role->value ? 'selected' : '' }}>{{ $role->label() }}</option>
-            @endforeach
-        </select>
-    </div>
-    <div class="col-md-2">
-        <select name="account_status" class="form-select">
-            <option value="">All Status</option>
-            <option value="pending" {{ request('account_status') === 'pending' ? 'selected' : '' }}>Pending</option>
-            <option value="approved" {{ request('account_status') === 'approved' ? 'selected' : '' }}>Approved</option>
-            <option value="rejected" {{ request('account_status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
-            <option value="suspended" {{ request('account_status') === 'suspended' ? 'selected' : '' }}>Suspended</option>
-        </select>
-    </div>
-    <div class="col-auto">
-        <button class="btn btn-outline-secondary me-1"><i class="bi bi-funnel"></i> Filter</button>
-        <a href="{{ route('users.index') }}" class="btn btn-link">Clear</a>
-    </div>
+@php
+    $activeStatusFilter = request('account_status');
+@endphp
+
+<div class="btn-group flex-wrap gap-1 mb-3" id="status-pills" role="group">
+  <button class="btn btn-sm btn-outline-primary {{ $activeStatusFilter === null || $activeStatusFilter === '' ? 'active' : '' }}" data-filter="all" type="button">All Users</button>
+  <button class="btn btn-sm btn-outline-warning {{ $activeStatusFilter === 'pending' ? 'active' : '' }}" data-filter="pending" type="button">Pending</button>
+  <button class="btn btn-sm btn-outline-success {{ $activeStatusFilter === 'approved' ? 'active' : '' }}" data-filter="approved" type="button">Approved</button>
+  <button class="btn btn-sm btn-outline-danger {{ $activeStatusFilter === 'rejected' ? 'active' : '' }}" data-filter="rejected" type="button">Rejected</button>
+  <button class="btn btn-sm btn-outline-secondary {{ $activeStatusFilter === 'suspended' ? 'active' : '' }}" data-filter="suspended" type="button">Suspended</button>
+</div>
+
+<form class="row g-2 mb-3" method="GET" id="user-filter-form">
+  <input type="hidden" name="account_status" id="filter-status-input" value="{{ request('account_status') }}">
+  <div class="col-md-3">
+    <input type="search" name="search" class="form-control" placeholder="Search by name or email..." value="{{ request('search') }}">
+  </div>
+  <div class="col-md-2">
+    <select name="role" class="form-select">
+      <option value="">All Roles</option>
+      @foreach ($roles as $role)
+        <option value="{{ $role->value }}" {{ request('role') === $role->value ? 'selected' : '' }}>{{ $role->label() }}</option>
+      @endforeach
+    </select>
+  </div>
+  <div class="col-auto">
+    <button class="btn btn-outline-secondary me-1" type="submit"><i class="bi bi-funnel"></i> Filter</button>
+    <a href="{{ route('users.index') }}" class="btn btn-link">Clear</a>
+  </div>
 </form>
 
-<div class="card border-0 shadow-sm">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th width="40"><input type="checkbox" id="select-all" class="form-check-input"></th>
-                    <th>User</th>
-                    <th>Role</th>
-                    <th>Status</th>
-                    <th>Active</th>
-                    <th>Last Login</th>
-                    <th width="80"></th>
-                </tr>
-            </thead>
-            <tbody>
+<div class="card border-0 shadow-sm" id="users-card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" id="users-table">
+      <thead class="table-light">
+        <tr>
+          <th width="40"><input type="checkbox" id="select-all" class="form-check-input"></th>
+          <th>User</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Active</th>
+          <th>Last Login</th>
+          <th width="80"></th>
+        </tr>
+      </thead>
+      <tbody>
                 @forelse ($users as $user)
                     @php
                         $initial = strtoupper(substr($user->name, 0, 1));
@@ -200,7 +203,7 @@
                     </tr>
 
                     @if ($user->account_status === 'pending')
-                        <div class="modal fade" id="rejectModal-{{ $user->id }}" tabindex="-1">
+                        <div class="modal fade user-reject-modal" id="rejectModal-{{ $user->id }}" tabindex="-1">
                             <div class="modal-dialog">
                                 <form method="POST" action="{{ route('users.reject', $user) }}" class="modal-content">
                                     @csrf
@@ -245,20 +248,57 @@
 
 @push('scripts')
 <script>
-document.getElementById('select-all')?.addEventListener('change', function () {
-    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = this.checked);
-});
-document.querySelectorAll('.toggle-active').forEach(checkbox => {
-    checkbox.addEventListener('change', function () {
-        const userId = this.dataset.userId;
-        const isActive = this.checked;
+document.addEventListener('DOMContentLoaded', () => {
+    const tableCard = document.getElementById('users-card');
+    const form = document.getElementById('user-filter-form');
+    const statusInput = document.getElementById('filter-status-input');
+
+    function submitFilter() {
+        const url = new URL(form.action, window.location.origin);
+        new FormData(form).forEach((v, k) => {
+            if (v !== '') url.searchParams.set(k, v);
+        });
+        history.replaceState({}, '', url.toString());
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.text())
+            .then(html => {
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const newCard = doc.getElementById('users-card');
+                if (newCard) tableCard.innerHTML = newCard.innerHTML;
+                document.querySelectorAll('.user-reject-modal').forEach(m => m.remove());
+                doc.querySelectorAll('.user-reject-modal').forEach(m => document.body.appendChild(m));
+            })
+            .catch(() => { window.location.href = url.toString(); });
+    }
+
+    tableCard.addEventListener('change', function (e) {
+        if (e.target.id === 'select-all') {
+            document.querySelectorAll('#users-table .row-checkbox').forEach(cb => cb.checked = e.target.checked);
+            return;
+        }
+        const cb = e.target.closest('.toggle-active');
+        if (!cb) return;
+        const userId = cb.dataset.userId;
+        const isActive = cb.checked;
         fetch(`/users/${userId}/toggle-active`, {
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
             body: JSON.stringify({ is_active: isActive })
-        }).catch(() => {
-            this.checked = !isActive;
+        }).catch(() => { cb.checked = !isActive; });
+    });
+
+    document.querySelectorAll('#status-pills .btn').forEach(pill => {
+        pill.addEventListener('click', () => {
+            document.querySelectorAll('#status-pills .btn').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            statusInput.value = pill.dataset.filter === 'all' ? '' : pill.dataset.filter;
+            submitFilter();
         });
+    });
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        submitFilter();
     });
 });
 </script>

@@ -91,6 +91,38 @@
     @endforeach
 </div>
 
+{{-- Enforcer GPS Location --}}
+@if (auth()->user()->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::ClampingOfficer))
+<div class="row g-3 mb-4 animate-on-load">
+    <div class="col-12 col-md-6">
+        <div class="card stat-card h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong><i class="bi bi-geo-alt me-2"></i>GPS Location</strong>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <span class="rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0"
+                          style="width:44px;height:44px;background:var(--bs-primary-bg-subtle);">
+                        <i class="bi bi-satellite text-primary"></i>
+                    </span>
+                    <div>
+                        <div class="fw-semibold">Track your location</div>
+                        <div class="text-muted small">Update your current GPS position for dispatch tracking</div>
+                    </div>
+                </div>
+                <div id="gps-status" class="mb-2">
+                    <span class="badge bg-secondary">Checking GPS...</span>
+                </div>
+                <button type="button" id="update-location-btn" class="btn btn-primary w-100">
+                    <i class="bi bi-geo-alt-fill me-1"></i>Update My Location
+                </button>
+                <div class="form-text mt-2">Requires GPS permission. Your location is sent to the tracking system for dispatch.</div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 {{-- Analytics 2x2 Grid --}}
 <div class="row g-4 mb-4 animate-on-load">
     {{-- Citations by Month --}}
@@ -315,6 +347,60 @@ document.addEventListener('DOMContentLoaded', () => {
                 zones: zoneData, zoom: 10,
             });
         }
+    }
+
+    // Enforcer GPS location update
+    const updateBtn = document.getElementById('update-location-btn');
+    const statusEl = document.getElementById('gps-status');
+    if (updateBtn && statusEl) {
+        updateBtn.addEventListener('click', async () => {
+            if (!navigator.geolocation) {
+                statusEl.innerHTML = '<span class="badge bg-danger">Geolocation not supported</span>';
+                return;
+            }
+            updateBtn.disabled = true;
+            updateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Getting location...';
+            statusEl.innerHTML = '<span class="badge bg-info">Acquiring GPS...</span>';
+
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    const { latitude, longitude, accuracy } = pos.coords;
+                    statusEl.innerHTML = '<span class="badge bg-info">Sending location...</span>';
+                    try {
+                        const res = await fetch('{{ route("location.update") }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                            },
+                            body: JSON.stringify({
+                                latitude,
+                                longitude,
+                                accuracy_m: Math.round(accuracy)
+                            })
+                        });
+                        if (res.ok) {
+                            statusEl.innerHTML = '<span class="badge bg-success">Location updated ✓</span>';
+                            setTimeout(() => statusEl.innerHTML = '<span class="badge bg-success">Last updated: just now</span>', 2000);
+                        } else {
+                            const err = await res.text();
+                            statusEl.innerHTML = '<span class="badge bg-danger">Failed: ' + err.substring(0, 50) + '</span>';
+                        }
+                    } catch (e) {
+                        statusEl.innerHTML = '<span class="badge bg-danger">Network error</span>';
+                    }
+                    updateBtn.disabled = false;
+                    updateBtn.innerHTML = '<i class="bi bi-geo-alt-fill me-1"></i>Update My Location';
+                },
+                (err) => {
+                    statusEl.innerHTML = '<span class="badge bg-danger">GPS denied: ' + err.message + '</span>';
+                    updateBtn.disabled = false;
+                    updateBtn.innerHTML = '<i class="bi bi-geo-alt-fill me-1"></i>Update My Location';
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
+        });
     }
 });
 </script>

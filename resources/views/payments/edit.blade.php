@@ -3,9 +3,9 @@
 @section('title', 'Edit Payment')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Edit Payment — {{ $payment->receipt_number }}</h1>
-    <a href="{{ route('payments.show', $payment) }}" class="btn btn-outline-secondary">Back to Receipt</a>
+<div class="d-flex justify-content-between align-items-center gap-3 mb-4">
+    <div class="fw-bold text-truncate">{{ $payment->receipt_number }}</div>
+    <a href="{{ route('payments.show', $payment) }}" class="btn btn-outline-secondary flex-shrink-0">Back to Receipt</a>
 </div>
 
 <div class="card stat-card mx-auto" style="max-width:600px">

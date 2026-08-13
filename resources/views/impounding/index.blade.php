@@ -3,9 +3,8 @@
 @section('title', 'Impounding')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Impounded Vehicles</h1>
-    <div class="d-flex gap-2 flex-wrap">
+<div class="mb-4 text-end">
+    <div class="d-flex gap-2 flex-wrap justify-content-end">
         <a href="{{ route('impounding.index') }}" class="btn btn-outline-secondary btn-sm @if(!request('status')) active @endif">Active</a>
         <a href="{{ route('impounding.index', ['status' => 'awaiting_payment']) }}" class="btn btn-outline-danger btn-sm @if(request('status') === 'awaiting_payment') active @endif">Awaiting Payment</a>
         <a href="{{ route('impounding.index', ['status' => 'paid']) }}" class="btn btn-outline-primary btn-sm @if(request('status') === 'paid') active @endif">Paid</a>

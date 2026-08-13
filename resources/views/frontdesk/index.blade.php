@@ -4,7 +4,6 @@
 
 @section('content')
 <div class="mb-4">
-    <h1 class="h3 mb-1">Front Desk</h1>
     <p class="text-muted mb-0">Walk-in assistance — look up citations and vehicle information.</p>
 </div>
 

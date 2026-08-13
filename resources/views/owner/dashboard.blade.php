@@ -4,7 +4,6 @@
 
 @section('content')
 <div class="mb-4">
-    <h1 class="h3 mb-1">My Dashboard</h1>
     <p class="text-muted mb-0">Your vehicles and enforcement status</p>
 </div>
 

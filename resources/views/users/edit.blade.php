@@ -3,9 +3,9 @@
 @section('title', 'Edit User')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Edit User — {{ $user->name }}</h1>
-    <a href="{{ route('users.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Users</a>
+<div class="d-flex justify-content-between align-items-center gap-3 mb-4">
+    <div class="fw-bold text-truncate">{{ $user->name }}</div>
+    <a href="{{ route('users.index') }}" class="btn btn-outline-secondary flex-shrink-0"><i class="bi bi-arrow-left"></i> Back to Users</a>
 </div>
 
 <div class="card border-0 shadow-sm">

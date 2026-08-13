@@ -3,7 +3,6 @@
 @section('title', 'My Vehicles')
 
 @section('content')
-<h1 class="h3 mb-4">My Vehicles</h1>
 <div class="card stat-card">
     <div class="card-body text-center py-5">
         <i class="bi bi-car-front-fill fs-1 text-muted mb-3 d-block"></i>

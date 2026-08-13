@@ -50,39 +50,65 @@
     }
     .empty-map-state i { font-size:3rem; margin-bottom:1rem; opacity:0.4; }
     .min-width-0 { min-width:0; }
+    .stat-card-sm.text-decoration-none { color: inherit; }
+    .stat-card-sm.text-decoration-none:hover { color: inherit; }
+    .stat-card-active { border-color:#2563eb; box-shadow:0 0 0 1px #2563eb inset; }
+    .zone-list-item .zone-actions { opacity:0.65; transition:opacity 0.12s ease; }
+    .zone-list-item:hover .zone-actions { opacity:1; }
+    .zone-action-btn {
+        display:inline-flex; align-items:center; justify-content:center;
+        width:26px; height:26px; padding:0;
+        font-size:0.75rem; border-radius:0.4rem;
+        border:1px solid var(--itevcms-border); background:transparent;
+        color:var(--itevcms-text-muted);
+        transition:background 0.12s ease, color 0.12s ease;
+    }
+    .zone-action-btn:hover { background:#f1f5f9; }
 </style>
 @endpush
 
 @section('content')
-{{-- Header --}}
+@php
+    $chipBase = array_filter(request()->only(['search', 'team_id']), fn ($v) => $v !== null && $v !== '');
+    $curStatus = request('status');
+    $curAssignment = request('assignment');
+@endphp
+
+{{-- Header (single title lives in the topbar) --}}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 mb-1">Zone Management</h1>
-        <p class="text-muted mb-0 small">Define patrol zones and assign them to response teams.</p>
-    </div>
+    <p class="text-muted mb-0 small">Define patrol zones and assign them to response teams.</p>
     <a href="{{ route('zones.create') }}" class="btn btn-primary">
         <i class="bi bi-plus-lg me-1"></i>Create Zone
     </a>
 </div>
 
-{{-- Stat Cards --}}
-<div class="d-flex gap-3 mb-4">
-    <div class="stat-card-sm">
+{{-- Stat Cards (clickable filters) --}}
+<div class="d-flex gap-3 mb-4 flex-wrap">
+    <a href="{{ route('zones.index', $chipBase) }}" class="stat-card-sm text-decoration-none {{ $curStatus === null && $curAssignment === null ? 'stat-card-active' : '' }}" title="View all zones">
         <div class="stat-value">{{ $stats['total'] }}</div>
         <div class="stat-label">Total Zones</div>
-    </div>
-    <div class="stat-card-sm">
+    </a>
+    <a href="{{ route('zones.index', array_merge($chipBase, ['assignment' => 'assigned'])) }}" class="stat-card-sm text-decoration-none {{ $curAssignment === 'assigned' ? 'stat-card-active' : '' }}" title="View assigned zones">
         <div class="stat-value" style="color:#059669;">{{ $stats['assigned'] }}</div>
         <div class="stat-label">Assigned</div>
-    </div>
-    <div class="stat-card-sm">
+    </a>
+    <a href="{{ route('zones.index', array_merge($chipBase, ['assignment' => 'unassigned'])) }}" class="stat-card-sm text-decoration-none {{ $curAssignment === 'unassigned' ? 'stat-card-active' : '' }}" title="View unassigned zones">
         <div class="stat-value" style="color:#dc2626;">{{ $stats['unassigned'] }}</div>
         <div class="stat-label">Unassigned</div>
-    </div>
-    <div class="stat-card-sm">
+    </a>
+    <a href="{{ route('zones.index', $chipBase) }}" class="stat-card-sm text-decoration-none" title="View all zones">
         <div class="stat-value" style="color:#2563eb;">{{ $stats['teams'] }}</div>
         <div class="stat-label">Teams</div>
-    </div>
+    </a>
+</div>
+
+{{-- Quick filter chips --}}
+<div class="btn-group flex-wrap gap-1 mb-3" role="group" id="zone-chips">
+    <a href="{{ route('zones.index', $chipBase) }}" class="btn btn-sm {{ $curStatus === null && $curAssignment === null ? 'btn-primary' : 'btn-outline-primary' }}">All</a>
+    <a href="{{ route('zones.index', array_merge($chipBase, ['status' => 'active'])) }}" class="btn btn-sm {{ $curStatus === 'active' && $curAssignment === null ? 'btn-primary' : 'btn-outline-primary' }}">Active</a>
+    <a href="{{ route('zones.index', array_merge($chipBase, ['status' => 'inactive'])) }}" class="btn btn-sm {{ $curStatus === 'inactive' && $curAssignment === null ? 'btn-primary' : 'btn-outline-primary' }}">Inactive</a>
+    <a href="{{ route('zones.index', array_merge($chipBase, ['assignment' => 'assigned'])) }}" class="btn btn-sm {{ $curAssignment === 'assigned' ? 'btn-primary' : 'btn-outline-primary' }}">Assigned</a>
+    <a href="{{ route('zones.index', array_merge($chipBase, ['assignment' => 'unassigned'])) }}" class="btn btn-sm {{ $curAssignment === 'unassigned' ? 'btn-primary' : 'btn-outline-primary' }}">Unassigned</a>
 </div>
 
 {{-- Filters --}}
@@ -94,12 +120,6 @@
                    value="{{ request('search') }}">
         </div>
 
-        <select name="status" class="form-select" onchange="this.form.submit()">
-            <option value="">All Status</option>
-            <option value="active" @selected(request('status') === 'active')>Active</option>
-            <option value="inactive" @selected(request('status') === 'inactive')>Inactive</option>
-        </select>
-
         <select name="team_id" class="form-select" onchange="this.form.submit()">
             <option value="">All Teams</option>
             @foreach ($teams as $team)
@@ -107,7 +127,7 @@
             @endforeach
         </select>
 
-        @if (request()->anyFilled(['search', 'status', 'team_id']))
+        @if (request()->anyFilled(['search', 'status', 'team_id', 'assignment']))
             <a href="{{ route('zones.index') }}" class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-x-lg"></i>
             </a>
@@ -124,8 +144,19 @@
             @if ($zones->isEmpty())
                 <div class="empty-map-state p-5">
                     <i class="bi bi-map"></i>
-                    <span class="fw-semibold">No zones yet</span>
-                    <small class="text-muted">Create your first zone to see it here.</small>
+                    <span class="fw-semibold">No zones found</span>
+                    <small class="text-muted">
+                        @if (request()->anyFilled(['search', 'status', 'team_id', 'assignment']))
+                            No zones match the current filters.
+                        @else
+                            Create your first zone to see it here.
+                        @endif
+                    </small>
+                    @if (request()->anyFilled(['search', 'status', 'team_id', 'assignment']))
+                        <a href="{{ route('zones.index') }}" class="btn btn-sm btn-outline-secondary mt-3">
+                            <i class="bi bi-x-lg me-1"></i>Clear filters
+                        </a>
+                    @endif
                 </div>
             @else
                 <div id="zone-index-map" class="zone-map-container"></div>
@@ -138,7 +169,20 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body text-center py-5 text-muted">
                     <i class="bi bi-globe2" style="font-size:2rem;display:block;margin-bottom:0.5rem;"></i>
-                    <span class="fw-semibold">No zones created yet.</span>
+                    <span class="fw-semibold">
+                        @if (request()->anyFilled(['search', 'status', 'team_id', 'assignment']))
+                            No zones match your filters.
+                        @else
+                            No zones created yet.
+                        @endif
+                    </span>
+                    @if (request()->anyFilled(['search', 'status', 'team_id', 'assignment']))
+                        <div class="mt-2">
+                            <a href="{{ route('zones.index') }}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-x-lg me-1"></i>Clear filters
+                            </a>
+                        </div>
+                    @endif
                 </div>
             </div>
         @else
@@ -183,16 +227,20 @@
                             </span>
                         </div>
 
-                        <div class="d-flex gap-1 mt-1">
-                            <a href="{{ route('zones.edit', $zone) }}" class="btn btn-sm btn-outline-primary px-2" style="font-size:0.7rem;border-radius:0.4rem;" title="Edit">
+                        <div class="d-flex gap-1 mt-2 zone-actions">
+                            <a href="{{ route('zones.edit', $zone) }}" class="zone-action-btn" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </a>
                             <form action="{{ route('zones.toggle-active', $zone) }}" method="POST" class="d-inline">
                                 @csrf @method('PATCH')
-                                <button type="submit" class="btn btn-sm px-2" style="font-size:0.7rem;border-radius:0.4rem;
-                                    border:1px solid var(--itevcms-border);background:transparent;
-                                    color:{{ $zone->is_active ? '#d97706' : '#059669' }};" title="{{ $zone->is_active ? 'Deactivate' : 'Activate' }}">
+                                <button type="submit" class="zone-action-btn" style="color:{{ $zone->is_active ? '#d97706' : '#059669' }};" title="{{ $zone->is_active ? 'Deactivate' : 'Activate' }}">
                                     <i class="bi bi-{{ $zone->is_active ? 'pause-fill' : 'play-fill' }}"></i>
+                                </button>
+                            </form>
+                            <form action="{{ route('zones.destroy', $zone) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete zone {{ $zone->name }}?');">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="zone-action-btn" title="Delete">
+                                    <i class="bi bi-trash text-danger"></i>
                                 </button>
                             </form>
                         </div>

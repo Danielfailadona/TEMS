@@ -3,7 +3,6 @@
 @section('title', 'Record Clamp')
 
 @section('content')
-<h1 class="h3 mb-4">Record Vehicle Clamp</h1>
 <div class="card stat-card"><div class="card-body">
     <form method="POST" action="{{ route('clamping.store') }}" enctype="multipart/form-data">@csrf
         <div class="row g-3">

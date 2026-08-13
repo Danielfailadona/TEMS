@@ -3,12 +3,7 @@
 @section('title', 'Submit Appeal')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 mb-1">Submit Appeal</h1>
-        <p class="text-muted mb-0">Request a review for a citation you believe is incorrect.</p>
-    </div>
-</div>
+<p class="text-muted mb-4">Request a review for a citation you believe is incorrect.</p>
 
 <div class="card stat-card">
     <div class="card-body">
