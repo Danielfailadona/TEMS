@@ -26,6 +26,7 @@ use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ZoneController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/welcome', fn () => view('welcome'))->name('welcome');
