@@ -158,6 +158,22 @@
     }
     .side-close-btn:hover { color: #fff; }
 
+    .detail-header-row {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 0.6rem; padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .detail-title { font-weight: 700; color: #fff; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem; }
+    .detail-deselect-btn {
+        background: none; border: 1px solid rgba(255, 255, 255, 0.14);
+        color: rgba(203, 213, 225, 0.85); cursor: pointer;
+        border-radius: 999px; padding: 0.2rem 0.55rem;
+        font-size: 0.7rem; font-weight: 600;
+        display: inline-flex; align-items: center; gap: 0.3rem;
+        transition: background 0.12s, border-color 0.12s, color 0.12s;
+    }
+    .detail-deselect-btn:hover { background: rgba(248, 113, 113, 0.15); border-color: rgba(248, 113, 113, 0.4); color: #fca5a5; }
+
     .enforcer-sidebar-list {
         overflow-y: auto; flex: 1; padding: 0.4rem 0;
     }
@@ -392,7 +408,12 @@ document.addEventListener('DOMContentLoaded', () => {
     ToggleBtn?.addEventListener('click', toggleSidebar);
     ToggleClose?.addEventListener('click', closeSidebar);
     Backdrop?.addEventListener('click', closeSidebar);
-    document.addEventListener('keydown', e => e.key === 'Escape' && closeSidebar());
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            if (state.selectedEnforcerId) deselectEnforcer();
+            else closeSidebar();
+        }
+    });
     window.addEventListener('resize', () => {
         if (window.innerWidth >= 1024) closeSidebar();
     });
@@ -418,7 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
             el.innerHTML = `<svg width="36" height="36" viewBox="0 0 24 24" fill="${color}" stroke="#0a1f35" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" fill="#fff" font-size="10" font-weight="bold">${e.initials || 'E'}</text></svg>`;
             el.style.cursor = 'pointer';
             el.style.filter = e.id === state.selectedEnforcerId ? 'drop-shadow(0 0 8px rgba(56,189,248,0.9))' : '';
-            el.addEventListener('click', () => selectEnforcer(e.id));
+            el.addEventListener('click', () => toggleEnforcer(e.id));
             state.markers[e.id] = createMarker(el, e);
         });
     }
@@ -483,16 +504,17 @@ document.addEventListener('DOMContentLoaded', () => {
             .addTo(map);
     }
 
-    function selectEnforcer(id) {
-        state.selectedEnforcerId = id;
-        const e = state.enforcers.find(e => e.id === id);
-        if (!e) return;
-        renderEnforcers();
-        map.flyTo({ center: [e.lng, e.lat], zoom: 15, duration: 800 });
-
-        const detail = document.getElementById('enforcer-detail');
-        detail.innerHTML = `
-            <div class="detail-row"><span class="label">Enforcer</span><span class="value">${e.name}</span></div>
+    function buildEnforcerDetailHTML(e) {
+        return `
+            <div class="detail-header-row">
+                <div class="detail-title">
+                    <span class="status-dot ${e.status === 'active' ? 'active' : 'offline'}" style="width:8px;height:8px;"></span>
+                    ${e.name}
+                </div>
+                <button class="detail-deselect-btn" onclick="window._deselectEnforcer()">
+                    <i class="bi bi-x"></i> Close
+                </button>
+            </div>
             <div class="detail-row"><span class="label">Status</span><span class="value" style="color:${e.status === 'active' ? '#4ade80' : '#94a3b8'};">${e.status === 'active' ? 'Active' : 'Offline'}</span></div>
             <div class="detail-row"><span class="label">Zone</span><span class="value">${e.zone_name || '—'}</span></div>
             <div class="detail-row"><span class="label">Team</span><span class="value">${e.team || '—'}</span></div>
@@ -500,10 +522,38 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="detail-row"><span class="label">Zone status</span><span class="${e.inside_zone ? 'badge-inzone' : 'badge-offzone'}">${e.inside_zone ? 'Inside zone' : 'Outside zone'}</span></div>
             <div class="detail-row"><span class="label">Distance to zone</span><span class="value">${e.distance_km != null ? e.distance_km + ' km' : '—'}</span></div>
         `;
+    }
+
+    function selectEnforcer(id, flyTo) {
+        if (flyTo === undefined) flyTo = true;
+        state.selectedEnforcerId = id;
+        const e = state.enforcers.find(e => e.id === id);
+        if (!e) return;
+        renderEnforcers();
+        if (flyTo) map.flyTo({ center: [e.lng, e.lat], zoom: 15, duration: 800 });
+
+        const detail = document.getElementById('enforcer-detail');
+        detail.innerHTML = buildEnforcerDetailHTML(e);
 
         document.querySelectorAll('.enforcer-sidebar-item').forEach(el => el.classList.remove('is-selected'));
         const item = document.querySelector(`.enforcer-sidebar-item[data-id="${id}"]`);
         if (item) item.classList.add('is-selected');
+    }
+
+    function deselectEnforcer() {
+        state.selectedEnforcerId = null;
+        renderEnforcers();
+        updateEnforcerList();
+        const detail = document.getElementById('enforcer-detail');
+        detail.innerHTML = '<div class="detail-empty"><i class="bi bi-info-circle"></i> Select an enforcer on the map or list to view details.</div>';
+    }
+
+    function updateEnforcerDetail() {
+        if (!state.selectedEnforcerId) return;
+        const e = state.enforcers.find(e => e.id === state.selectedEnforcerId);
+        if (!e) { deselectEnforcer(); return; }
+        const detail = document.getElementById('enforcer-detail');
+        detail.innerHTML = buildEnforcerDetailHTML(e);
     }
 
     function updateEnforcerList() {
@@ -514,7 +564,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         list.innerHTML = visible.map(e => `
-            <div class="enforcer-sidebar-item ${e.id === state.selectedEnforcerId ? 'is-selected' : ''}" data-id="${e.id}" onclick="window._selectEnforcer(${e.id})">
+            <div class="enforcer-sidebar-item ${e.id === state.selectedEnforcerId ? 'is-selected' : ''}" data-id="${e.id}" onclick="window._toggleEnforcer(${e.id})">
                 <span class="status-dot ${e.status === 'active' ? 'active' : 'offline'}"></span>
                 <div class="flex-grow-1 min-width-0">
                     <div class="item-name">${e.name}</div>
@@ -541,6 +591,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window._selectEnforcer = selectEnforcer;
+    window._deselectEnforcer = deselectEnforcer;
+
+    function toggleEnforcer(id) {
+        if (state.selectedEnforcerId === id) deselectEnforcer();
+        else selectEnforcer(id);
+    }
+    window._toggleEnforcer = toggleEnforcer;
 
     document.querySelectorAll('#filter-chips .chip').forEach(chip => {
         chip.addEventListener('click', () => {
@@ -560,13 +617,13 @@ document.addEventListener('DOMContentLoaded', () => {
             state.zones = d.zones || [];
             if (state.selectedEnforcerId) {
                 const still = state.enforcers.find(e => e.id === state.selectedEnforcerId);
-                if (!still) state.selectedEnforcerId = null;
+                if (!still) { state.selectedEnforcerId = null; }
             }
             renderEnforcers();
             renderZones();
             updateEnforcerList();
             updateCounts();
-            if (state.selectedEnforcerId) selectEnforcer(state.selectedEnforcerId);
+            updateEnforcerDetail();
         } catch (err) { console.error('Tracking fetch failed:', err); }
     }
 
@@ -584,6 +641,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.querySelector('i').className = state.theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
         btn.title = state.theme === 'dark' ? 'Toggle light theme' : 'Toggle dark theme';
         document.querySelector('.tracking-page').classList.toggle('map-dark', state.theme === 'dark');
+        map.once('idle', () => hideLoading());
     });
 
     map.on('load', () => {
@@ -594,11 +652,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!zoneHandlersBound) {
                 map.on('click', 'zones-fill', showZonePopup);
                 map.on('click', 'zone-labels', showZonePopup);
+                map.on('click', (e) => {
+                    const targets = map.queryRenderedFeatures(e.point, { layers: ['zones-fill', 'zone-labels'] });
+                    if (targets.length === 0 && state.selectedEnforcerId) deselectEnforcer();
+                });
                 zoneHandlersBound = true;
             }
         } else {
             applyCamera3D();
-            applyDark3D();
+            try { applyDark3D(); } catch (e) {}
             renderZones();
         }
         hideLoading();

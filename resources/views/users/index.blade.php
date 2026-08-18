@@ -1,8 +1,10 @@
 @php
     $totalUsers = \App\Models\User::count();
     $pendingUsers = \App\Models\User::where('account_status', 'pending')->count();
-    $activeToday = \App\Models\User::where('last_login_at', '>=', now()->subDay())->count();
+    $approvedUsers = \App\Models\User::where('account_status', 'approved')->count();
+    $rejectedUsers = \App\Models\User::where('account_status', 'rejected')->count();
     $suspendedUsers = \App\Models\User::where('account_status', 'suspended')->count();
+    $activeToday = \App\Models\User::where('last_login_at', '>=', now()->subDay())->count();
 @endphp
 
 @extends('layouts.app')
@@ -73,13 +75,32 @@
     $activeStatusFilter = request('account_status');
 @endphp
 
-<div class="btn-group flex-wrap gap-1 mb-3" id="status-pills" role="group">
-  <button class="btn btn-sm btn-outline-primary {{ $activeStatusFilter === null || $activeStatusFilter === '' ? 'active' : '' }}" data-filter="all" type="button">All Users</button>
-  <button class="btn btn-sm btn-outline-warning {{ $activeStatusFilter === 'pending' ? 'active' : '' }}" data-filter="pending" type="button">Pending</button>
-  <button class="btn btn-sm btn-outline-success {{ $activeStatusFilter === 'approved' ? 'active' : '' }}" data-filter="approved" type="button">Approved</button>
-  <button class="btn btn-sm btn-outline-danger {{ $activeStatusFilter === 'rejected' ? 'active' : '' }}" data-filter="rejected" type="button">Rejected</button>
-  <button class="btn btn-sm btn-outline-secondary {{ $activeStatusFilter === 'suspended' ? 'active' : '' }}" data-filter="suspended" type="button">Suspended</button>
-</div>
+<nav class="user-mgmt-tabs mb-3" id="status-tabs">
+    <a href="#" class="user-mgmt-tab {{ $activeStatusFilter === null || $activeStatusFilter === '' ? 'active' : '' }}" data-filter="all">
+        <i class="bi bi-people-fill me-1"></i> All Users
+        <span class="tab-count">{{ $totalUsers }}</span>
+    </a>
+    <a href="#" class="user-mgmt-tab tab-pending {{ $activeStatusFilter === 'pending' ? 'active' : '' }}" data-filter="pending">
+        <i class="bi bi-hourglass-split me-1"></i> Pending
+        @if ($pendingUsers > 0)
+            <span class="tab-count tab-count-alert">{{ $pendingUsers }}</span>
+        @else
+            <span class="tab-count">{{ $pendingUsers }}</span>
+        @endif
+    </a>
+    <a href="#" class="user-mgmt-tab tab-approved {{ $activeStatusFilter === 'approved' ? 'active' : '' }}" data-filter="approved">
+        <i class="bi bi-check-circle-fill me-1"></i> Approved
+        <span class="tab-count">{{ $approvedUsers }}</span>
+    </a>
+    <a href="#" class="user-mgmt-tab tab-rejected {{ $activeStatusFilter === 'rejected' ? 'active' : '' }}" data-filter="rejected">
+        <i class="bi bi-x-circle-fill me-1"></i> Rejected
+        <span class="tab-count">{{ $rejectedUsers }}</span>
+    </a>
+    <a href="#" class="user-mgmt-tab tab-suspended {{ $activeStatusFilter === 'suspended' ? 'active' : '' }}" data-filter="suspended">
+        <i class="bi bi-lock-fill me-1"></i> Suspended
+        <span class="tab-count">{{ $suspendedUsers }}</span>
+    </a>
+</nav>
 
 <form class="row g-2 mb-3" method="GET" id="user-filter-form">
   <input type="hidden" name="account_status" id="filter-status-input" value="{{ request('account_status') }}">
@@ -243,6 +264,69 @@
     @media (min-width: 992px) {
         .table-responsive { overflow: visible; }
     }
+
+    .user-mgmt-tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 2px solid #e2e8f0;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .user-mgmt-tabs::-webkit-scrollbar { display: none; }
+
+    .user-mgmt-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.7rem 1.1rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #64748b;
+        text-decoration: none;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        white-space: nowrap;
+        transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .user-mgmt-tab:hover {
+        color: #1e293b;
+        background: rgba(0, 0, 0, 0.02);
+    }
+    .user-mgmt-tab.active {
+        color: #2563eb;
+        border-bottom-color: #2563eb;
+    }
+
+    .tab-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.5rem;
+        height: 1.3rem;
+        padding: 0 0.4rem;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        background: #f1f5f9;
+        color: #64748b;
+    }
+    .user-mgmt-tab.active .tab-count {
+        background: #dbeafe;
+        color: #2563eb;
+    }
+    .tab-count-alert {
+        background: #fef3c7;
+        color: #d97706;
+    }
+    .user-mgmt-tab.active .tab-count-alert {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .tab-pending.active { color: #d97706; border-bottom-color: #f59e0b; }
+    .tab-approved.active { color: #16a34a; border-bottom-color: #22c55e; }
+    .tab-rejected.active { color: #dc2626; border-bottom-color: #ef4444; }
+    .tab-suspended.active { color: #64748b; border-bottom-color: #94a3b8; }
 </style>
 @endpush
 
@@ -287,11 +371,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }).catch(() => { cb.checked = !isActive; });
     });
 
-    document.querySelectorAll('#status-pills .btn').forEach(pill => {
-        pill.addEventListener('click', () => {
-            document.querySelectorAll('#status-pills .btn').forEach(p => p.classList.remove('active'));
-            pill.classList.add('active');
-            statusInput.value = pill.dataset.filter === 'all' ? '' : pill.dataset.filter;
+    document.querySelectorAll('#status-tabs .user-mgmt-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('#status-tabs .user-mgmt-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            statusInput.value = tab.dataset.filter === 'all' ? '' : tab.dataset.filter;
             submitFilter();
         });
     });

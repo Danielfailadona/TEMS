@@ -384,8 +384,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             statusEl.innerHTML = '<span class="badge bg-success">Location updated ✓</span>';
                             setTimeout(() => statusEl.innerHTML = '<span class="badge bg-success">Last updated: just now</span>', 2000);
                         } else {
-                            const err = await res.text();
-                            statusEl.innerHTML = '<span class="badge bg-danger">Failed: ' + err.substring(0, 50) + '</span>';
+                            let msg = 'Server error (' + res.status + ')';
+                            try {
+                                const errBody = await res.text();
+                                try {
+                                    const errJson = JSON.parse(errBody);
+                                    msg = errJson.message || errJson.error || msg;
+                                } catch (_) {
+                                    if (errBody) msg = errBody.substring(0, 80);
+                                }
+                            } catch (_) {}
+                            statusEl.innerHTML = '<span class="badge bg-danger">Failed: ' + msg + '</span>';
                         }
                     } catch (e) {
                         statusEl.innerHTML = '<span class="badge bg-danger">Network error</span>';
@@ -394,7 +403,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateBtn.innerHTML = '<i class="bi bi-geo-alt-fill me-1"></i>Update My Location';
                 },
                 (err) => {
-                    statusEl.innerHTML = '<span class="badge bg-danger">GPS denied: ' + err.message + '</span>';
+                    const gpsErrors = {
+                        1: 'GPS permission denied — please allow location access in your browser settings',
+                        2: 'GPS position unavailable — try again or move to an open area',
+                        3: 'GPS request timed out — please try again',
+                    };
+                    const msg = gpsErrors[err.code] || 'GPS error (code ' + err.code + ')';
+                    statusEl.innerHTML = '<span class="badge bg-danger">' + msg + '</span>';
                     updateBtn.disabled = false;
                     updateBtn.innerHTML = '<i class="bi bi-geo-alt-fill me-1"></i>Update My Location';
                 },
