@@ -16,7 +16,24 @@
         aspect-ratio: 4 / 3;
         min-height: 240px;
         border-radius: 0.5rem;
+        position: relative;
     }
+    .map-detail-overlay {
+        position:absolute; bottom:12px; left:12px; z-index:10;
+        background:rgba(15,23,42,0.92); backdrop-filter:blur(12px);
+        border:1px solid rgba(255,255,255,0.12); border-radius:0.75rem;
+        padding:0.85rem 1rem; color:#e2e8f0; font-family:system-ui,sans-serif;
+        max-width:300px; pointer-events:auto; box-shadow:0 8px 32px rgba(0,0,0,0.35);
+        transition:opacity 0.2s, transform 0.2s;
+    }
+    .map-detail-overlay.is-hidden { opacity:0; transform:translateY(8px); pointer-events:none; }
+    .map-detail-overlay .mdo-title { font-weight:700; font-size:0.9rem; margin-bottom:0.4rem; }
+    .map-detail-overlay .mdo-row { display:flex; justify-content:space-between; padding:0.15rem 0; font-size:0.75rem; }
+    .map-detail-overlay .mdo-row .mdo-lbl { color:rgba(148,163,184,0.9); }
+    .map-detail-overlay .mdo-row .mdo-val { font-weight:600; text-align:right; }
+    .map-detail-overlay .mdo-badge { display:inline-block; font-size:0.62rem; font-weight:700; border-radius:999px; padding:0.1rem 0.45rem; background:rgba(34,197,94,0.18); color:#4ade80; }
+    .map-detail-overlay .mdo-close { position:absolute; top:6px; right:8px; background:none; border:none; color:rgba(203,213,225,0.6); cursor:pointer; font-size:0.85rem; padding:2px 4px; }
+    .map-detail-overlay .mdo-close:hover { color:#fff; }
     .section-icon {
         width: 2rem;
         height: 2rem;
@@ -113,6 +130,7 @@
                         </button>
 
                         <div id="location-map"></div>
+                        <div class="map-detail-overlay is-hidden" id="citizen-map-detail"></div>
                         <small class="text-muted d-block mt-2">
                             <i class="bi bi-info-circle me-1"></i>Click the map to fine-tune location, or use GPS above.
                         </small>
@@ -223,6 +241,18 @@ function placePin(lat, lng) {
     locationMarker = new maplibregl.Marker({ element: el })
         .setLngLat([lng, lat])
         .addTo(map);
+
+    const detailEl = document.getElementById('citizen-map-detail');
+    if (detailEl) {
+        detailEl.innerHTML = `
+            <button class="mdo-close" onclick="document.getElementById('citizen-map-detail').classList.add('is-hidden')">&times;</button>
+            <div class="mdo-title">Selected Location</div>
+            <div class="mdo-row"><span class="mdo-lbl">Status</span><span class="mdo-badge">Pin placed</span></div>
+            <div class="mdo-row"><span class="mdo-lbl">Latitude</span><span class="mdo-val">${lat.toFixed(6)}</span></div>
+            <div class="mdo-row"><span class="mdo-lbl">Longitude</span><span class="mdo-val">${lng.toFixed(6)}</span></div>
+        `;
+        detailEl.classList.remove('is-hidden');
+    }
 
     const gpsBtn = document.getElementById('gpsButton');
     gpsBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Location Set';

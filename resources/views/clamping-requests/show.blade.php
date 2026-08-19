@@ -5,7 +5,24 @@
 @push('styles')
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css">
 <style>
-    #request-map { width:100%; height:400px; border-radius:0.75rem; }
+    #request-map { width:100%; height:400px; border-radius:0.75rem; position:relative; }
+    .map-detail-overlay {
+        position:absolute; bottom:12px; left:12px; z-index:10;
+        background:rgba(15,23,42,0.92); backdrop-filter:blur(12px);
+        border:1px solid rgba(255,255,255,0.12); border-radius:0.75rem;
+        padding:0.85rem 1rem; color:#e2e8f0; font-family:system-ui,sans-serif;
+        max-width:300px; pointer-events:auto; box-shadow:0 8px 32px rgba(0,0,0,0.35);
+        transition:opacity 0.2s, transform 0.2s;
+    }
+    .map-detail-overlay.is-hidden { opacity:0; transform:translateY(8px); pointer-events:none; }
+    .map-detail-overlay .mdo-title { font-weight:700; font-size:0.9rem; margin-bottom:0.4rem; }
+    .map-detail-overlay .mdo-row { display:flex; justify-content:space-between; padding:0.15rem 0; font-size:0.75rem; }
+    .map-detail-overlay .mdo-row .mdo-lbl { color:rgba(148,163,184,0.9); }
+    .map-detail-overlay .mdo-row .mdo-val { font-weight:600; text-align:right; }
+    .map-detail-overlay .mdo-badge { display:inline-block; font-size:0.62rem; font-weight:700; border-radius:999px; padding:0.1rem 0.45rem; }
+    .map-detail-overlay .mdo-badge.active { background:rgba(251,191,36,0.18); color:#fbbf24; }
+    .map-detail-overlay .mdo-close { position:absolute; top:6px; right:8px; background:none; border:none; color:rgba(203,213,225,0.6); cursor:pointer; font-size:0.85rem; padding:2px 4px; }
+    .map-detail-overlay .mdo-close:hover { color:#fff; }
     .info-chip {
         display:inline-flex; align-items:center; gap:0.35rem;
         font-size:0.75rem; padding:0.25rem 0.65rem;
@@ -371,6 +388,7 @@
     <div class="card-body p-0">
         @if ($request->latitude && $request->longitude)
             <div id="request-map"></div>
+            <div class="map-detail-overlay is-hidden" id="request-map-detail"></div>
         @else
             <div class="text-center py-5 text-muted">
                 <i class="bi bi-map" style="font-size:2rem;display:block;margin-bottom:0.5rem;"></i>
@@ -509,6 +527,9 @@
         const lat = {{ $request->latitude }};
         const lng = {{ $request->longitude }};
         const address = {!! json_encode($request->location_address) !!};
+        const status = {!! json_encode($request->status) !!};
+        const vehiclePlate = {!! json_encode($request->vehicle_plate ?? 'N/A') !!};
+        const detailEl = document.getElementById('request-map-detail');
 
         const map = new maplibregl.Map({
             container: 'request-map',
@@ -542,10 +563,17 @@
                 },
             });
 
-            new maplibregl.Popup({ closeOnClick: true })
-                .setLngLat([lng, lat])
-                .setHTML('<strong>Requested Location</strong><br>' + address)
-                .addTo(map);
+            if (detailEl) {
+                detailEl.innerHTML = `
+                    <button class="mdo-close" onclick="document.getElementById('request-map-detail').classList.add('is-hidden')">&times;</button>
+                    <div class="mdo-title">Clamping Request Location</div>
+                    <div class="mdo-row"><span class="mdo-lbl">Status</span><span class="mdo-badge active">${status}</span></div>
+                    <div class="mdo-row"><span class="mdo-lbl">Vehicle</span><span class="mdo-val">${vehiclePlate}</span></div>
+                    <div class="mdo-row"><span class="mdo-lbl">Address</span><span class="mdo-val">${address || '—'}</span></div>
+                    <div class="mdo-row"><span class="mdo-lbl">Coordinates</span><span class="mdo-val">${lat.toFixed(7)}, ${lng.toFixed(7)}</span></div>
+                `;
+                detailEl.classList.remove('is-hidden');
+            }
         });
     })();
 </script>

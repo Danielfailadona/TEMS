@@ -100,7 +100,7 @@
                 <strong><i class="bi bi-geo-alt me-2"></i>GPS Location</strong>
             </div>
             <div class="card-body">
-                <div class="d-flex align-items-center gap-3 mb-2">
+                <div class="d-flex align-items-center gap-3 mb-3">
                     <span class="rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0"
                           style="width:44px;height:44px;background:var(--bs-primary-bg-subtle);">
                         <i class="bi bi-satellite text-primary"></i>
@@ -110,13 +110,26 @@
                         <div class="text-muted small">Update your current GPS position for dispatch tracking</div>
                     </div>
                 </div>
-                <div id="gps-status" class="mb-2">
-                    <span class="badge bg-secondary">Checking GPS...</span>
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" role="switch" id="gps-toggle">
+                        <label class="form-check-label fw-semibold" for="gps-toggle">GPS Tracking</label>
+                    </div>
                 </div>
-                <button type="button" id="update-location-btn" class="btn btn-primary w-100">
-                    <i class="bi bi-geo-alt-fill me-1"></i>Update My Location
-                </button>
-                <div class="form-text mt-2">Requires GPS permission. Your location is sent to the tracking system for dispatch.</div>
+                <div id="gps-status" class="mb-2">
+                    <span class="badge bg-secondary">Tracking paused</span>
+                </div>
+                <div class="d-flex align-items-center gap-2 mb-2" id="gps-controls" style="display:none !important;">
+                    <button type="button" id="gps-update-now" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-geo-alt-fill me-1"></i>Update Now
+                    </button>
+                    <select id="gps-interval" class="form-select form-select-sm" style="width:auto;">
+                        <option value="5000" selected>Every 5s</option>
+                        <option value="3000">Every 3s (fast)</option>
+                        <option value="15000">Every 15s</option>
+                    </select>
+                </div>
+                <div class="form-text">Requires GPS permission. Your location is sent to the tracking system for dispatch.</div>
             </div>
         </div>
     </div>
@@ -135,6 +148,7 @@
         </div>
     </div>
     {{-- Revenue Trend --}}
+    @if (!auth()->user()->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::ClampingOfficer))
     <div class="col-md-6">
         <div class="card stat-card h-100">
             <div class="card-header bg-white"><strong>Revenue Trend</strong></div>
@@ -143,6 +157,7 @@
             </div>
         </div>
     </div>
+    @endif
     {{-- Top Violations --}}
     <div class="col-md-6">
         <div class="card stat-card h-100">
@@ -178,7 +193,8 @@
     </div>
 </div>
 
-{{-- Recent Activity (full width) --}}
+{{-- Recent Activity (full width) — admin only --}}
+@if (!auth()->user()->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::ClampingOfficer))
 <div class="card stat-card mb-4 animate-on-load">
     <div class="card-header bg-white">
         <strong>Recent Activity</strong>
@@ -204,6 +220,7 @@
         @endforelse
     </div>
 </div>
+@endif
 
 {{-- Pending Work Queue + Quick Actions + Zone Map --}}
 <div class="row g-4 animate-on-load">
@@ -236,6 +253,7 @@
                     <a href="{{ route('clamping-requests.index') }}" class="btn btn-sm btn-outline-primary" style="font-size:0.7rem;">View</a>
                 </div>
 
+                @if (!auth()->user()->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::ClampingOfficer))
                 <div class="pending-card">
                     <div class="pending-count" style="color:#d97706;background:#d9770615;">
                         {{ $pendingQueue['account_approvals'] }}
@@ -246,6 +264,7 @@
                     </div>
                     <a href="{{ route('users.index') }}" class="btn btn-sm btn-outline-primary" style="font-size:0.7rem;">View</a>
                 </div>
+                @endif
             </div>
         </div>
     </div>
@@ -272,6 +291,7 @@
         </div>
     </div>
 
+    @if (!auth()->user()->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::ClampingOfficer))
     <div class="col-xl-4">
         <div class="card stat-card h-100">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
@@ -287,6 +307,7 @@
             </div>
         </div>
     </div>
+    @endif
 </div>
 @endsection
 
@@ -314,18 +335,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    new Chart(document.getElementById('revenueChart'), {
-        type: 'line',
-        data: {
-            labels: revenueLabels,
-            datasets: [{ label: 'Revenue (₱)', data: revenueData, borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)', fill: true, tension: 0.35 }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } } }
-        }
-    });
+    const revenueCanvas = document.getElementById('revenueChart');
+    if (revenueCanvas) {
+        new Chart(revenueCanvas, {
+            type: 'line',
+            data: {
+                labels: revenueLabels,
+                datasets: [{ label: 'Revenue (₱)', data: revenueData, borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)', fill: true, tension: 0.35 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } } }
+            }
+        });
+    }
 
     new Chart(document.getElementById('appealsChart'), {
         type: 'line',
@@ -349,72 +373,97 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Enforcer GPS location update
-    const updateBtn = document.getElementById('update-location-btn');
-    const statusEl = document.getElementById('gps-status');
-    if (updateBtn && statusEl) {
-        updateBtn.addEventListener('click', async () => {
+    // Enforcer GPS toggle-based tracking
+    const gpsToggle = document.getElementById('gps-toggle');
+    const gpsStatusEl = document.getElementById('gps-status');
+    const gpsControls = document.getElementById('gps-controls');
+    const gpsUpdateNow = document.getElementById('gps-update-now');
+    const gpsIntervalSelect = document.getElementById('gps-interval');
+    let gpsPollTimer = null;
+
+    if (gpsToggle && gpsStatusEl) {
+        async function sendGPSOnce() {
             if (!navigator.geolocation) {
-                statusEl.innerHTML = '<span class="badge bg-danger">Geolocation not supported</span>';
+                gpsStatusEl.innerHTML = '<span class="badge bg-danger">Geolocation not supported</span>';
                 return;
             }
-            updateBtn.disabled = true;
-            updateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Getting location...';
-            statusEl.innerHTML = '<span class="badge bg-info">Acquiring GPS...</span>';
-
-            navigator.geolocation.getCurrentPosition(
-                async (pos) => {
-                    const { latitude, longitude, accuracy } = pos.coords;
-                    statusEl.innerHTML = '<span class="badge bg-info">Sending location...</span>';
-                    try {
-                        const res = await fetch('{{ route("location.update") }}', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
-                            },
-                            body: JSON.stringify({
-                                latitude,
-                                longitude,
-                                accuracy_m: Math.round(accuracy)
-                            })
-                        });
-                        if (res.ok) {
-                            statusEl.innerHTML = '<span class="badge bg-success">Location updated ✓</span>';
-                            setTimeout(() => statusEl.innerHTML = '<span class="badge bg-success">Last updated: just now</span>', 2000);
-                        } else {
-                            let msg = 'Server error (' + res.status + ')';
-                            try {
-                                const errBody = await res.text();
+            gpsStatusEl.innerHTML = '<span class="badge bg-info"><span class="spinner-border spinner-border-sm me-1"></span>Acquiring GPS...</span>';
+            return new Promise((resolve) => {
+                navigator.geolocation.getCurrentPosition(
+                    async (pos) => {
+                        const { latitude, longitude, accuracy } = pos.coords;
+                        gpsStatusEl.innerHTML = '<span class="badge bg-info"><span class="spinner-border spinner-border-sm me-1"></span>Sending...</span>';
+                        try {
+                            const res = await fetch('{{ route("location.update") }}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                                },
+                                body: JSON.stringify({ latitude, longitude, accuracy_m: Math.round(accuracy) })
+                            });
+                            if (res.ok) {
+                                const sec = gpsToggle.checked ? Math.round(parseInt(gpsIntervalSelect.value) / 1000) : null;
+                                gpsStatusEl.innerHTML = sec
+                                    ? '<span class="badge bg-success">Active · updated every ' + sec + 's</span>'
+                                    : '<span class="badge bg-success">Location updated ✓</span>';
+                            } else {
+                                let msg = 'Server error (' + res.status + ')';
                                 try {
-                                    const errJson = JSON.parse(errBody);
-                                    msg = errJson.message || errJson.error || msg;
-                                } catch (_) {
-                                    if (errBody) msg = errBody.substring(0, 80);
-                                }
-                            } catch (_) {}
-                            statusEl.innerHTML = '<span class="badge bg-danger">Failed: ' + msg + '</span>';
+                                    const errBody = await res.text();
+                                    try { const j = JSON.parse(errBody); msg = j.message || j.error || msg; } catch (_) { if (errBody) msg = errBody.substring(0, 80); }
+                                } catch (_) {}
+                                gpsStatusEl.innerHTML = '<span class="badge bg-danger">Failed: ' + msg + '</span>';
+                            }
+                        } catch (e) {
+                            gpsStatusEl.innerHTML = '<span class="badge bg-danger">Network error</span>';
                         }
-                    } catch (e) {
-                        statusEl.innerHTML = '<span class="badge bg-danger">Network error</span>';
-                    }
-                    updateBtn.disabled = false;
-                    updateBtn.innerHTML = '<i class="bi bi-geo-alt-fill me-1"></i>Update My Location';
-                },
-                (err) => {
-                    const gpsErrors = {
-                        1: 'GPS permission denied — please allow location access in your browser settings',
-                        2: 'GPS position unavailable — try again or move to an open area',
-                        3: 'GPS request timed out — please try again',
-                    };
-                    const msg = gpsErrors[err.code] || 'GPS error (code ' + err.code + ')';
-                    statusEl.innerHTML = '<span class="badge bg-danger">' + msg + '</span>';
-                    updateBtn.disabled = false;
-                    updateBtn.innerHTML = '<i class="bi bi-geo-alt-fill me-1"></i>Update My Location';
-                },
-                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-            );
+                        resolve();
+                    },
+                    (err) => {
+                        const gpsErrors = { 1: 'GPS permission denied', 2: 'GPS position unavailable', 3: 'GPS request timed out' };
+                        gpsStatusEl.innerHTML = '<span class="badge bg-danger">' + (gpsErrors[err.code] || 'GPS error') + '</span>';
+                        resolve();
+                    },
+                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                );
+            });
+        }
+
+        function startGPSPolling() {
+            const ms = parseInt(gpsIntervalSelect.value) || 5000;
+            sendGPSOnce();
+            gpsPollTimer = setInterval(sendGPSOnce, ms);
+            const sec = Math.round(ms / 1000);
+            gpsStatusEl.innerHTML = '<span class="badge bg-success">Active · updating every ' + sec + 's</span>';
+        }
+
+        function stopGPSPolling() {
+            if (gpsPollTimer) { clearInterval(gpsPollTimer); gpsPollTimer = null; }
+            gpsStatusEl.innerHTML = '<span class="badge bg-secondary">Tracking paused</span>';
+        }
+
+        gpsToggle.addEventListener('change', () => {
+            if (gpsToggle.checked) {
+                gpsControls.style.display = 'flex';
+                startGPSPolling();
+            } else {
+                gpsControls.style.display = 'none';
+                stopGPSPolling();
+            }
+        });
+
+        gpsUpdateNow?.addEventListener('click', () => sendGPSOnce());
+
+        gpsIntervalSelect?.addEventListener('change', () => {
+            if (gpsToggle.checked) {
+                if (gpsPollTimer) clearInterval(gpsPollTimer);
+                const ms = parseInt(gpsIntervalSelect.value) || 5000;
+                gpsPollTimer = setInterval(sendGPSOnce, ms);
+                const sec = Math.round(ms / 1000);
+                gpsStatusEl.innerHTML = '<span class="badge bg-success">Active · updating every ' + sec + 's</span>';
+            }
         });
     }
 });

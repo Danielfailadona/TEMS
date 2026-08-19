@@ -5,7 +5,7 @@
 @push('styles')
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
 <style>
-    #my-zone-map { width:100%; min-height:500px; border-radius:0.75rem; overflow:hidden; }
+    #my-zone-map { width:100%; min-height:500px; border-radius:0.75rem; overflow:hidden; position:relative; }
     .zone-detail-card {
         border:1px solid var(--itevcms-border); border-radius:0.75rem;
         background:var(--itevcms-card); overflow:hidden;
@@ -22,6 +22,23 @@
         padding:0.5rem 0; border-bottom:1px solid #f1f5f9;
     }
     .team-member:last-child { border-bottom:none; }
+    .map-detail-overlay {
+        position:absolute; bottom:12px; left:12px; z-index:10;
+        background:rgba(15,23,42,0.92); backdrop-filter:blur(12px);
+        border:1px solid rgba(255,255,255,0.12); border-radius:0.75rem;
+        padding:0.85rem 1rem; color:#e2e8f0; font-family:system-ui,sans-serif;
+        max-width:300px; pointer-events:auto; box-shadow:0 8px 32px rgba(0,0,0,0.35);
+        transition:opacity 0.2s, transform 0.2s;
+    }
+    .map-detail-overlay.is-hidden { opacity:0; transform:translateY(8px); pointer-events:none; }
+    .map-detail-overlay .mdo-title { font-weight:700; font-size:0.9rem; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.4rem; }
+    .map-detail-overlay .mdo-row { display:flex; justify-content:space-between; padding:0.15rem 0; font-size:0.75rem; }
+    .map-detail-overlay .mdo-row .mdo-lbl { color:rgba(148,163,184,0.9); }
+    .map-detail-overlay .mdo-row .mdo-val { font-weight:600; text-align:right; }
+    .map-detail-overlay .mdo-badge { display:inline-block; font-size:0.62rem; font-weight:700; border-radius:999px; padding:0.1rem 0.45rem; }
+    .map-detail-overlay .mdo-badge.active { background:rgba(34,197,94,0.18); color:#4ade80; }
+    .map-detail-overlay .mdo-close { position:absolute; top:6px; right:8px; background:none; border:none; color:rgba(203,213,225,0.6); cursor:pointer; font-size:0.85rem; padding:2px 4px; }
+    .map-detail-overlay .mdo-close:hover { color:#fff; }
 </style>
 @endpush
 
@@ -39,7 +56,8 @@
     <div class="row g-4">
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm overflow-hidden">
-                <div id="my-zone-map" data-lat="{{ $zone->center_latitude }}" data-lng="{{ $zone->center_longitude }}" data-radius="{{ $zone->radius_m }}" data-name="{{ $zone->name }}"></div>
+                <div id="my-zone-map" data-lat="{{ $zone->center_latitude }}" data-lng="{{ $zone->center_longitude }}" data-radius="{{ $zone->radius_m }}" data-name="{{ $zone->name }}" data-team="{{ $zone->team?->name ?? '' }}" data-desc="{{ $zone->description ?? '' }}"></div>
+                <div class="map-detail-overlay is-hidden" id="my-zone-detail"></div>
             </div>
         </div>
         <div class="col-lg-4">
@@ -121,6 +139,29 @@ document.addEventListener('DOMContentLoaded', function () {
     const lng = parseFloat(mapContainer.dataset.lng);
     const radius = parseFloat(mapContainer.dataset.radius);
     const name = mapContainer.dataset.name;
+    const team = mapContainer.dataset.team || '—';
+    const desc = mapContainer.dataset.desc || '';
+    const detailEl = document.getElementById('my-zone-detail');
+    const areaM2 = Math.round(Math.PI * radius * radius);
+
+    function showZoneDetail() {
+        if (!detailEl) return;
+        detailEl.innerHTML = `
+            <button class="mdo-close" onclick="document.getElementById('my-zone-detail').classList.add('is-hidden')">&times;</button>
+            <div class="mdo-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#38bdf8" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Z</text></svg>
+                ${name}
+            </div>
+            <div class="mdo-row"><span class="mdo-lbl">Status</span><span class="mdo-badge active">Active</span></div>
+            <div class="mdo-row"><span class="mdo-lbl">Team</span><span class="mdo-val">${team}</span></div>
+            <div class="mdo-row"><span class="mdo-lbl">Radius</span><span class="mdo-val">${radius.toLocaleString()} m</span></div>
+            <div class="mdo-row"><span class="mdo-lbl">Area</span><span class="mdo-val">${areaM2.toLocaleString()} m²</span></div>
+            <div class="mdo-row"><span class="mdo-lbl">Coordinates</span><span class="mdo-val">${lat.toFixed(7)}, ${lng.toFixed(7)}</span></div>
+            ${desc ? `<div style="margin-top:0.3rem;font-size:0.7rem;color:rgba(203,213,225,0.7);">${desc}</div>` : ''}
+        `;
+        detailEl.classList.remove('is-hidden');
+    }
+    showZoneDetail();
 
     const map = new maplibregl.Map({
         container: 'my-zone-map',
@@ -170,8 +211,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         new maplibregl.Marker({ color: '#2563eb' })
             .setLngLat([lng, lat])
-            .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML('<strong>' + name + '</strong>'))
             .addTo(map);
+
+        showZoneDetail();
     });
 });
 </script>

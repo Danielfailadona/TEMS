@@ -1,6 +1,69 @@
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
+const MAP_DETAIL_CSS = `
+.map-detail-overlay {
+    position:absolute; bottom:12px; left:12px; z-index:10;
+    background:rgba(15,23,42,0.92); backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,0.12); border-radius:0.75rem;
+    padding:0.85rem 1rem; color:#e2e8f0; font-family:system-ui,sans-serif;
+    max-width:300px; pointer-events:auto; box-shadow:0 8px 32px rgba(0,0,0,0.35);
+    transition:opacity 0.2s, transform 0.2s;
+}
+.map-detail-overlay.is-hidden { opacity:0; transform:translateY(8px); pointer-events:none; }
+.map-detail-overlay .mdo-title { font-weight:700; font-size:0.9rem; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.4rem; }
+.map-detail-overlay .mdo-row { display:flex; justify-content:space-between; padding:0.15rem 0; font-size:0.75rem; }
+.map-detail-overlay .mdo-row .mdo-lbl { color:rgba(148,163,184,0.9); }
+.map-detail-overlay .mdo-row .mdo-val { font-weight:600; text-align:right; }
+.map-detail-overlay .mdo-badge { display:inline-block; font-size:0.62rem; font-weight:700; border-radius:999px; padding:0.1rem 0.45rem; }
+.map-detail-overlay .mdo-badge.active { background:rgba(34,197,94,0.18); color:#4ade80; }
+.map-detail-overlay .mdo-badge.inactive { background:rgba(148,163,184,0.18); color:#94a3b8; }
+.map-detail-overlay .mdo-close { position:absolute; top:6px; right:8px; background:none; border:none; color:rgba(203,213,225,0.6); cursor:pointer; font-size:0.85rem; padding:2px 4px; }
+.map-detail-overlay .mdo-close:hover { color:#fff; }
+`;
+
+let _detailStyleInjected = false;
+function injectDetailStyle() {
+    if (_detailStyleInjected) return;
+    _detailStyleInjected = true;
+    const s = document.createElement('style');
+    s.textContent = MAP_DETAIL_CSS;
+    document.head.appendChild(s);
+}
+
+function createDetailOverlay(containerId) {
+    injectDetailStyle();
+    const container = document.getElementById(containerId);
+    if (!container) return null;
+    container.style.position = 'relative';
+    const el = document.createElement('div');
+    el.className = 'map-detail-overlay is-hidden';
+    container.appendChild(el);
+    return {
+        el,
+        show(zone) {
+            const areaM2 = zone.radius ? Math.round(Math.PI * zone.radius * zone.radius) : '—';
+            const teamName = zone.team_name || (zone.team && zone.team.name) || '—';
+            const isActive = zone.is_active !== false;
+            el.innerHTML = `
+                <button class="mdo-close" data-mdo-close>&times;</button>
+                <div class="mdo-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#38bdf8" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Z</text></svg>
+                    ${zone.name}
+                </div>
+                <div class="mdo-row"><span class="mdo-lbl">Status</span><span class="mdo-badge ${isActive ? 'active' : 'inactive'}">${isActive ? 'Active' : 'Inactive'}</span></div>
+                <div class="mdo-row"><span class="mdo-lbl">Team</span><span class="mdo-val">${teamName}</span></div>
+                <div class="mdo-row"><span class="mdo-lbl">Radius</span><span class="mdo-val">${zone.radius ? zone.radius.toLocaleString() + ' m' : '—'}</span></div>
+                <div class="mdo-row"><span class="mdo-lbl">Area</span><span class="mdo-val">${typeof areaM2 === 'number' ? areaM2.toLocaleString() + ' m²' : areaM2}</span></div>
+                <div class="mdo-row"><span class="mdo-lbl">Coordinates</span><span class="mdo-val">${(zone.lat || zone.center_latitude || '—').toString().substring(0,10)}, ${(zone.lng || zone.center_longitude || '—').toString().substring(0,10)}</span></div>
+            `;
+            el.classList.remove('is-hidden');
+            el.querySelector('[data-mdo-close]')?.addEventListener('click', (e) => { e.stopPropagation(); this.hide(); });
+        },
+        hide() { el.classList.add('is-hidden'); },
+    };
+}
+
 export function initTeamZonePicker(containerId, options = {}) {
     const {
         styleUrl = 'https://tiles.openfreemap.org/styles/liberty',
@@ -28,7 +91,8 @@ export function initTeamZonePicker(containerId, options = {}) {
     map.on('load', () => map.resize());
 
     const state = { zones: [], markers: [], assigned: new Set(assignedZoneIds) };
-window._zonePickerState = state;
+    window._zonePickerState = state;
+    const detailOverlay = createDetailOverlay(containerId);
 
     function isAssigned(zoneId) {
         return state.assigned.has(zoneId);
@@ -106,6 +170,7 @@ window._zonePickerState = state;
                             updateMarkerStyle(marker, zone);
                         });
                     }
+                    if (detailOverlay) detailOverlay.show({ ...zone, radius: zone.radius_m || zone.radius, is_active: zone.is_active !== false });
                     if (onZoneSelect) onZoneSelect(zone);
                     map.flyTo({ center: [lng, lat], zoom: 13, duration: 600 });
                 });
@@ -116,6 +181,10 @@ window._zonePickerState = state;
     }
 
     map.on('load', loadZones);
+    map.on('click', (e) => {
+        const features = map.queryRenderedFeatures(e.point);
+        if (features.length === 0 && detailOverlay) detailOverlay.hide();
+    });
     return map;
 }
 
@@ -148,6 +217,7 @@ export function initZoneEditor(containerId, options = {}) {
     const latInput = latInputId ? document.getElementById(latInputId) : null;
     const lngInput = lngInputId ? document.getElementById(lngInputId) : null;
     const radiusInput = radiusInputId ? document.getElementById(radiusInputId) : null;
+    const detailOverlay = createDetailOverlay(containerId);
 
     const state = {
         centerLat: initialLat ? parseFloat(initialLat) : null,
@@ -234,16 +304,15 @@ export function initZoneEditor(containerId, options = {}) {
                 el.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="#6b7280" stroke="white" stroke-width="2" opacity="0.6"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" fill="white" font-size="8" font-weight="bold">Z</text></svg>';
                 el.style.width = '24px';
                 el.style.height = '24px';
+                el.style.cursor = 'pointer';
 
-                const popup = new maplibregl.Popup({ offset: 25, closeButton: false }).setHTML(`
-                    <div style="font-weight:600">${zone.name}</div>
-                    <div style="font-size:0.85rem;color:#666">${zone.radius_m} m radius</div>
-                `);
-
-                new maplibregl.Marker({ element: el })
+                const marker = new maplibregl.Marker({ element: el })
                     .setLngLat([lng, lat])
-                    .setPopup(popup)
                     .addTo(map);
+
+                el.addEventListener('click', () => {
+                    if (detailOverlay) detailOverlay.show({ ...zone, radius: zone.radius_m || zone.radius, lat: zone.center_latitude, lng: zone.center_longitude, is_active: zone.is_active !== false });
+                });
             });
         }
     });
@@ -293,6 +362,7 @@ export function initZoneViewer(containerId, options = {}) {
     let activeCircleLayer = null;
     const markers = [];
     const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '280px' });
+    const detailOverlay = createDetailOverlay(containerId);
 
     function removeActiveCircle() {
         if (activeCircleLayer) {
@@ -380,20 +450,17 @@ export function initZoneViewer(containerId, options = {}) {
             el.addEventListener('click', () => {
                 map.flyTo({ center: [lng, lat], zoom: 14, duration: 600 });
                 showCircle(zone);
-                popup.setLngLat([lng, lat])
-                    .setHTML(`
-                        <div style="font-weight:700;font-size:0.95rem;">${zone.name}</div>
-                        ${zone.address ? `<div style="font-size:0.8rem;color:#64748b;">📍 ${zone.address}</div>` : ''}
-                        <div style="font-size:0.8rem;color:#64748b;margin-top:2px;">
-                            ${zone.team_name ? `👥 ${zone.team_name} · ` : ''}📏 ${zone.radius}m
-                        </div>
-                    `)
-                    .addTo(map);
+                if (detailOverlay) detailOverlay.show(zone);
                 if (onZoneClick) onZoneClick(zone);
             });
 
             markers.push({ zone, marker, el });
         });
+    });
+
+    map.on('click', (e) => {
+        const features = map.queryRenderedFeatures(e.point);
+        if (features.length === 0 && detailOverlay) detailOverlay.hide();
     });
 
     return { map, markers, removeActiveCircle };
