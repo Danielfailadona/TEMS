@@ -338,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusInput = document.getElementById('filter-status-input');
 
     function submitFilter() {
-        const url = new URL(form.action, window.location.origin);
+        const url = new URL(form.action.split('?')[0], window.location.origin);
         new FormData(form).forEach((v, k) => {
             if (v !== '') url.searchParams.set(k, v);
         });

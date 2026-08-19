@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Archive;
 use App\Models\Citation;
 use App\Models\ClampingRequest;
 use Illuminate\Http\Request;
@@ -67,7 +68,18 @@ class CitizenPortalController extends Controller
         $data['evidence_photo'] = $photoPath;
         $data['status'] = 'pending';
 
-        ClampingRequest::create($data);
+        $clampingRequest = ClampingRequest::create($data);
+
+        if (auth()->check()) {
+            Archive::create([
+                'archivable_type' => ClampingRequest::class,
+                'archivable_id' => $clampingRequest->id,
+                'archived_by' => auth()->id(),
+                'archived_at' => now(),
+                'reason' => 'Clamping request created',
+                'snapshot' => $clampingRequest->toArray(),
+            ]);
+        }
 
         return view('citizen.clamping-success');
     }

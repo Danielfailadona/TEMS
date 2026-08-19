@@ -23,7 +23,17 @@ class ClampingRequestController extends Controller
     {
         $this->authorize('viewAny', ClampingRequest::class);
 
+        $user = auth()->user();
+        $isRestricted = $user->isRole(Role::Enforcer, Role::ClampingOfficer);
+
         $query = ClampingRequest::with(['processedBy', 'assignedTo', 'clampingRecord']);
+
+        if ($isRestricted) {
+            $query->where(function ($q) use ($user) {
+                $q->where('assigned_to', $user->id)
+                  ->orWhere('status', 'pending');
+            });
+        }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -41,12 +51,20 @@ class ClampingRequestController extends Controller
 
         $requests = $query->latest()->paginate(10);
 
+        $statsQuery = ClampingRequest::query();
+        if ($isRestricted) {
+            $statsQuery->where(function ($q) use ($user) {
+                $q->where('assigned_to', $user->id)
+                  ->orWhere('status', 'pending');
+            });
+        }
+
         $stats = [
-            'total' => ClampingRequest::count(),
-            'pending' => ClampingRequest::where('status', 'pending')->count(),
-            'approved' => ClampingRequest::where('status', 'approved')->count(),
-            'rejected' => ClampingRequest::where('status', 'rejected')->count(),
-            'resolved' => ClampingRequest::where('status', 'resolved')->count(),
+            'total' => (clone $statsQuery)->count(),
+            'pending' => (clone $statsQuery)->where('status', 'pending')->count(),
+            'approved' => (clone $statsQuery)->where('status', 'approved')->count(),
+            'rejected' => (clone $statsQuery)->where('status', 'rejected')->count(),
+            'resolved' => (clone $statsQuery)->where('status', 'resolved')->count(),
         ];
 
         return view('clamping-requests.index', compact('requests', 'stats'));

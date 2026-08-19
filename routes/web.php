@@ -37,19 +37,19 @@ Route::get('/health', fn () => response('ok', 200));
 
 Route::middleware('guest')->group(function () {
     Route::get('account-procedure', [LoginController::class, 'accountProcedure'])->name('account.procedure');
-    Route::post('account-procedure', [LoginController::class, 'store'])->middleware('throttle:5,1')->name('account.procedure.store');
+    Route::post('account-procedure', [LoginController::class, 'store'])->middleware('throttle:5,5')->name('account.procedure.store');
 
     Route::get('login', [LoginController::class, 'create'])->name('login');
-    Route::post('login', [LoginController::class, 'store'])->middleware('throttle:5,1');
+    Route::post('login', [LoginController::class, 'store'])->middleware('throttle:5,5');
     
     Route::get('register', [LoginController::class, 'showRegister'])->name('register');
-    Route::post('register', [LoginController::class, 'storeRegister'])->middleware('throttle:5,1');
+    Route::post('register', [LoginController::class, 'storeRegister'])->middleware('throttle:5,5');
 
     // Password Reset via Supabase
     Route::get('password/reset', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
-    Route::post('password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::post('password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->middleware('throttle:3,5')->name('password.email');
     Route::get('password/reset/callback', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
-    Route::post('password/reset', [ResetPasswordController::class, 'reset'])->name('password.update');
+    Route::post('password/reset', [ResetPasswordController::class, 'reset'])->middleware('throttle:3,5')->name('password.update');
 
     // Citizen Portal - Public access
     Route::prefix('citizen')->name('citizen.')->group(function () {
@@ -57,7 +57,7 @@ Route::middleware('guest')->group(function () {
         Route::get('citation/search', [CitizenPortalController::class, 'citationSearch'])->name('citation.search');
         Route::get('citation/{citation}', [CitizenPortalController::class, 'citationDetail'])->name('citation.detail');
         Route::get('request-clamping', [CitizenPortalController::class, 'clampingRequest'])->name('clamping.show');
-        Route::post('request-clamping', [CitizenPortalController::class, 'storeClampingRequest'])->name('clamping.store');
+        Route::post('request-clamping', [CitizenPortalController::class, 'storeClampingRequest'])->middleware('throttle:5,5')->name('clamping.store');
         Route::get('clamping/success', [CitizenPortalController::class, 'clampingSuccess'])->name('clamping.success');
     });
 

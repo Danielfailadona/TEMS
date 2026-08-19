@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\CitationStatus;
 use App\Enums\ClampingStatus;
 use App\Http\Requests\StoreClampingRequest;
+use App\Models\Archive;
 use App\Models\Citation;
 use App\Models\ClampingRecord;
 use App\Models\ClampingRequest as CitizenClampingRequest;
@@ -88,6 +89,15 @@ class ClampingController extends Controller
             'notes' => $request->notes,
             'evidence_path' => $evidencePath,
             'clamped_at' => now(),
+        ]);
+
+        Archive::create([
+            'archivable_type' => ClampingRecord::class,
+            'archivable_id' => $record->id,
+            'archived_by' => auth()->id(),
+            'archived_at' => now(),
+            'reason' => 'Vehicle clamped',
+            'snapshot' => $record->toArray(),
         ]);
 
         if ($citation) {

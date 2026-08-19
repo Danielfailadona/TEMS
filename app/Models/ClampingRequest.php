@@ -20,6 +20,7 @@ class ClampingRequest extends Model
         'additional_notes',
         'status',
         'rejection_reason',
+        'assigned_to',
         'processed_by',
         'processed_at',
         'clamping_record_id',

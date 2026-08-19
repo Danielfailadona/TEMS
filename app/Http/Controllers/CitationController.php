@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\CitationStatus;
 use App\Enums\ClampingStatus;
 use App\Http\Requests\StoreCitationRequest;
+use App\Models\Archive;
 use App\Models\Citation;
 use App\Models\CitationEvidence;
 use App\Models\ClampingRecord;
@@ -85,6 +86,15 @@ class CitationController extends Controller
                 }
             }
 
+            Archive::create([
+                'archivable_type' => Citation::class,
+                'archivable_id' => $citation->id,
+                'archived_by' => auth()->id(),
+                'archived_at' => now(),
+                'reason' => 'Citation issued',
+                'snapshot' => $citation->toArray(),
+            ]);
+
             return $citation;
         });
 
@@ -126,6 +136,15 @@ class CitationController extends Controller
                 'location' => $citation->location,
                 'notes' => 'Referred for impounding by ' . auth()->user()->name,
                 'clamped_at' => now(),
+            ]);
+
+            Archive::create([
+                'archivable_type' => ClampingRecord::class,
+                'archivable_id' => $clamping->id,
+                'archived_by' => auth()->id(),
+                'archived_at' => now(),
+                'reason' => 'Vehicle clamped (referred from citation)',
+                'snapshot' => $clamping->toArray(),
             ]);
 
             $citation->update(['status' => CitationStatus::Clamped]);
