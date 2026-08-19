@@ -155,6 +155,9 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
 
     // Archives
     Route::get('archives', [ArchiveController::class, 'index'])->name('archives.index');
+    Route::get('archives/export', [ArchiveController::class, 'export'])->name('archives.export');
+    Route::get('archives/backup', [ArchiveController::class, 'backup'])->name('archives.backup');
+    Route::get('archives/{archive}/print', [ArchiveController::class, 'print'])->name('archives.print');
 
     // Advanced Search
     Route::get('search', [SearchController::class, 'index'])->name('search.index');

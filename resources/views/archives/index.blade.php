@@ -42,17 +42,23 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center gap-2 mb-4">
     <p class="text-muted small mb-0">Resolved and completed records across the system.</p>
-    <form method="GET" class="d-flex align-items-center gap-2">
-        <select name="type" class="form-select form-select-sm" style="min-width:140px;" onchange="this.form.submit()">
-            <option value="">All Types</option>
-            @foreach ($types as $type)
-                <option value="App\Models\{{ $type }}" @selected(request('type') === "App\Models\\{$type}")>{{ $type }}</option>
-            @endforeach
-        </select>
-        @if (request('type'))
-            <a href="{{ route('archives.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-lg"></i></a>
+    <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+        @if ($user->isAdmin())
+            <a href="{{ route('archives.export', request()->query()) }}" class="btn btn-sm btn-outline-success"><i class="bi bi-download me-1"></i> Export CSV</a>
+            <a href="{{ route('archives.backup', request()->query()) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-file-earmark-arrow-down me-1"></i> Download Backup</a>
         @endif
-    </form>
+        <form method="GET" class="d-flex align-items-center gap-2 mb-0">
+            <select name="type" class="form-select form-select-sm" style="min-width:140px;" onchange="this.form.submit()">
+                <option value="">All Types</option>
+                @foreach ($types as $type)
+                    <option value="App\Models\{{ $type }}" @selected(request('type') === "App\Models\\{$type}")>{{ $type }}</option>
+                @endforeach
+            </select>
+            @if (request('type'))
+                <a href="{{ route('archives.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-lg"></i></a>
+            @endif
+        </form>
+    </div>
 </div>
 
 @php
@@ -210,6 +216,7 @@ function archiveDetails($archive) {
                             </div>
                         </div>
                         <i class="bi bi-chevron-down text-muted" style="font-size:0.7rem;transition:transform 0.2s;"></i>
+                        <a href="{{ route('archives.print', $archive) }}" target="_blank" class="btn btn-sm p-1" onclick="event.stopPropagation()" title="Print Record" style="color:var(--itevcms-text-muted);"><i class="bi bi-printer"></i></a>
                     </div>
 
                     <div class="archive-card-body">
