@@ -264,7 +264,40 @@ body::before {
     }
 
     @page {
-        margin: 0.5in;
+        size: 5in 7in;
+        margin: 0.25in;
+    }
+
+    /* Receipt (payments.show) — 5x7 printable with watermark */
+    .card.print-page-receipt {
+        border: 2px solid #111 !important;
+        box-shadow: none !important;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .card.print-page-receipt::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: url("/images/transpo_enfo_orig.png");
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 65% auto;
+        opacity: 0.06;
+        z-index: 0;
+        pointer-events: none;
+    }
+
+    .card.print-page-receipt .card-body {
+        padding: 1.25rem !important;
+        position: relative;
+        z-index: 1;
+    }
+
+    .card.print-page-receipt hr {
+        border-color: #111 !important;
+        opacity: 1 !important;
     }
 }
 
