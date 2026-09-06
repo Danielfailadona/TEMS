@@ -37,7 +37,7 @@ Route::get('/health', fn () => response('ok', 200));
 
 Route::middleware('guest')->group(function () {
     Route::get('account-procedure', [LoginController::class, 'accountProcedure'])->name('account.procedure');
-    Route::post('account-procedure', [LoginController::class, 'store'])->middleware('throttle:5,5')->name('account.procedure.store');
+    Route::post('account-procedure', [LoginController::class, 'store'])->middleware('throttle.message:5,5')->name('account.procedure.store');
 
     Route::get('login', [LoginController::class, 'create'])->name('login');
     Route::post('login', [LoginController::class, 'store'])->middleware('throttle:5,5');
