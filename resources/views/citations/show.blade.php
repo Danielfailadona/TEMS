@@ -46,8 +46,10 @@
     <div class="col-lg-4">
         <div class="card stat-card mb-3 text-center">
             <div class="card-body py-3">
-                {!! $citation->getQRCode() !!}
-                <div class="small text-muted mt-2">Scan to view citation details</div>
+                <div class="bg-white p-2 d-inline-block rounded border">
+                    {!! $citation->getQRCodeSvg(180) !!}
+                </div>
+                <div class="small text-muted mt-2">Scan to view citation ticket</div>
             </div>
         </div>
 

@@ -18,7 +18,9 @@
                 <p class="mb-0 opacity-75">Issued on {{ $citation->issued_at?->format('F d, Y') }} at {{ $citation->location }}</p>
             </div>
             <div class="detail-hero-qr">
-                <img src="{{ $citation->getQRCodeUrl() }}" alt="Citation QR Code" style="width: 100px;">
+                <div class="bg-white p-1 rounded">
+                    {!! $citation->getQRCodeSvg(100) !!}
+                </div>
             </div>
         </div>
     </div>
@@ -210,9 +212,14 @@
                     </div>
                 </div>
                 <div class="d-flex gap-2 mt-3 flex-wrap">
-                    <button class="btn btn-primary" onclick="alert('Payment portal coming soon!')">
-                        <i class="bi bi-credit-card me-2"></i>Pay Online
-                    </button>
+                    @if ($citation->isPayable())
+                        <form method="POST" action="{{ route('public.citation.checkout', ['id' => $citation->id, 'token' => $citation->getValidationToken()]) }}">
+                            @csrf
+                            <button class="btn btn-primary">
+                                <i class="bi bi-credit-card me-2"></i>Pay Online
+                            </button>
+                        </form>
+                    @endif
                     <button class="btn btn-outline-secondary" onclick="window.print()">
                         <i class="bi bi-printer me-2"></i>Print Citation
                     </button>

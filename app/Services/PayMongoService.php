@@ -6,9 +6,9 @@ use Illuminate\Support\Facades\Http;
 
 class PayMongoService
 {
-    protected string $secretKey;
+    protected ?string $secretKey;
 
-    protected string $publicKey;
+    protected ?string $publicKey;
 
     public function __construct()
     {
@@ -41,7 +41,7 @@ class PayMongoService
                             'quantity' => 1,
                         ],
                     ],
-                    'payment_method_types' => ['gcash', 'maya', 'card', 'grab_pay'],
+                    'payment_method_types' => $params['payment_method_types'] ?? ['gcash', 'maya', 'card'],
                     'success_url' => $params['success_url'],
                     'cancel_url' => $params['cancel_url'],
                     'description' => $params['description'],
@@ -83,5 +83,15 @@ class PayMongoService
     public function isAvailable(): bool
     {
         return ! empty($this->secretKey) && ! empty($this->publicKey);
+    }
+
+    /**
+     * TODO(deferred): PayMongo webhook HMAC signature verification is not yet
+     * implemented. Do not rely on this method until it is finished and the
+     * PAYMONGO_WEBHOOK_SECRET is configured.
+     */
+    public function verifyWebhookSignature(string $payload, string $signature): bool
+    {
+        return true;
     }
 }

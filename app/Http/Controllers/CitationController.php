@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\CitationStatus;
 use App\Enums\ClampingStatus;
+use App\Enums\Role;
 use App\Http\Requests\StoreCitationRequest;
 use App\Models\Archive;
 use App\Models\Citation;
@@ -98,7 +99,31 @@ class CitationController extends Controller
             return $citation;
         });
 
+        if (auth()->user()->isRole(Role::Enforcer, Role::ClampingOfficer)) {
+            return redirect()->route('citations.handoff', $citation)
+                ->with('success', 'Citation issued successfully. Show the QR code to the violator.');
+        }
+
         return redirect()->route('citations.show', $citation)->with('success', 'Citation issued successfully.');
+    }
+
+    public function handoff(Citation $citation): View
+    {
+        $this->authorize('handoff', $citation);
+
+        $citation->load(['violationType', 'enforcer', 'evidence']);
+
+        return view('citations.handoff', compact('citation'));
+    }
+
+    public function printCitation(Citation $citation): View
+    {
+        $this->authorize('view', $citation);
+
+        $citation->load(['violationType', 'enforcer', 'evidence', 'payment']);
+        $isEnforcerCopy = true;
+
+        return view('citations.print', compact('citation', 'isEnforcerCopy'));
     }
 
     public function show(Citation $citation): View

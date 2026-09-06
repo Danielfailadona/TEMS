@@ -10,7 +10,12 @@
     <h2 class="mb-2">Payment Cancelled</h2>
     <p class="text-muted mb-4">Your payment was not completed. No charges have been made.</p>
 
-    <div class="d-flex justify-content-center gap-3">
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
+        @if (isset($payment) && $payment->citation)
+            <a href="{{ route('citations.show', $payment->citation) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-file-earmark-text me-2"></i>View Citation
+            </a>
+        @endif
         <a href="{{ route('citations.index') }}" class="btn btn-primary">
             <i class="bi bi-file-earmark-text me-2"></i>My Citations
         </a>
