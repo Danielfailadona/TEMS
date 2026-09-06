@@ -82,7 +82,7 @@
             </div>
         @endif
 
-        @if ($clamping->citation?->payment)
+        @if ($clamping->citation?->payment && $clamping->citation->paid_at)
             <div class="card stat-card mb-4">
                 <div class="card-header bg-white"><strong>Payment Record</strong></div>
                 <div class="card-body">
@@ -91,7 +91,7 @@
                         <div class="col-md-6"><strong class="text-muted small d-block">Amount Paid</strong>₱{{ number_format($clamping->citation->payment->amount, 2) }}</div>
                         <div class="col-md-6"><strong class="text-muted small d-block">Method</strong>{{ $clamping->citation->payment->payment_method->label() }}</div>
                         <div class="col-md-6"><strong class="text-muted small d-block">Paid At</strong>{{ $clamping->citation->payment->paid_at?->format('M d, Y h:i A') ?? '—' }}</div>
-                        <div class="col-md-6"><strong class="text-muted small d-block">Cashier</strong>{{ $clamping->citation->payment->cashier->name }}</div>
+                        <div class="col-md-6"><strong class="text-muted small d-block">Cashier</strong>{{ $clamping->citation->payment->cashier->name ?? 'Online Payment' }}</div>
                         @if ($clamping->citation->payment->reference_number)
                             <div class="col-md-6"><strong class="text-muted small d-block">Reference</strong>{{ $clamping->citation->payment->reference_number }}</div>
                         @endif

@@ -81,8 +81,13 @@ class PaymentController extends Controller
 
         $citation = Citation::with('payment')->findOrFail($request->citation_id);
 
-        if ($citation->payment) {
+        if ($citation->payment && $citation->payment->paid_at) {
             return back()->withErrors(['citation_id' => 'This citation has already been paid.']);
+        }
+
+        // If a pending/abandoned online payment exists, let the manual payment replace it.
+        if ($citation->payment && !$citation->payment->paid_at) {
+            $citation->payment->delete();
         }
 
         if (! $citation->isPayable()) {

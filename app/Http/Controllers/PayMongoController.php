@@ -24,7 +24,10 @@ class PayMongoController extends Controller
         }
 
         if ($citation->payment) {
-            return back()->withErrors(['citation_id' => 'This citation has already been paid.']);
+            if ($citation->payment->paid_at) {
+                return back()->withErrors(['citation_id' => 'This citation has already been paid.']);
+            }
+            // Abandoned/pending online checkout — reuse the row so the receipt number is kept.
         }
 
         if (!$citation->isPayable()) {
@@ -35,7 +38,7 @@ class PayMongoController extends Controller
             return back()->withErrors(['paymongo' => 'Online payment is not configured. Please pay at the office.']);
         }
 
-        $payment = DB::transaction(function () use ($citation, $numberService) {
+        $payment = $citation->payment ?? DB::transaction(function () use ($citation, $numberService) {
             return Payment::create([
                 'receipt_number' => $numberService->receiptNumber(),
                 'citation_id' => $citation->id,
@@ -129,7 +132,10 @@ class PayMongoController extends Controller
         }
 
         if ($citation->payment) {
-            return back()->withErrors(['citation_id' => 'This citation has already been paid.']);
+            if ($citation->payment->paid_at) {
+                return back()->withErrors(['citation_id' => 'This citation has already been paid.']);
+            }
+            // Abandoned/pending online checkout — reuse the row so the receipt number is kept.
         }
 
         if (! $citation->isPayable()) {
@@ -140,7 +146,7 @@ class PayMongoController extends Controller
             return back()->withErrors(['paymongo' => 'Online payment is not configured. Please pay at the office.']);
         }
 
-        $payment = DB::transaction(function () use ($citation, $numberService) {
+        $payment = $citation->payment ?? DB::transaction(function () use ($citation, $numberService) {
             return Payment::create([
                 'receipt_number' => $numberService->receiptNumber(),
                 'citation_id' => $citation->id,

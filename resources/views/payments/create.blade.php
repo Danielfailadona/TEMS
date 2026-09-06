@@ -14,7 +14,7 @@
 </div></div>
 
 @if ($citation)
-    @if ($citation->payment)
+    @if ($citation->payment && $citation->payment->paid_at)
         <div class="alert alert-info">Citation {{ $citation->citation_number }} has already been paid.</div>
     @elseif (!$citation->isPayable())
         <div class="alert alert-warning">Citation {{ $citation->citation_number }} is not eligible for payment.</div>

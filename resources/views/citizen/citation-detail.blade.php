@@ -167,7 +167,7 @@
     @endif
 
     <!-- PAYMENT STATUS -->
-    @if ($citation->payment)
+    @if ($citation->payment && $citation->payment->paid_at)
         <div class="card stat-card mb-4 border-success animate-on-load" style="animation-delay: 0.7s;">
             <div class="card-body">
                 <div class="d-flex align-items-center gap-3 mb-3">

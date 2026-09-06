@@ -44,7 +44,7 @@
         @if ($payment->paymongo_checkout_id)
             <div class="row mb-2"><div class="col-5 text-muted">Checkout ID</div><div class="col-7"><code class="small">{{ $payment->paymongo_checkout_id }}</code></div></div>
         @endif
-        <div class="row mb-2"><div class="col-5 text-muted">Cashier</div><div class="col-7">{{ $payment->cashier->name }}</div></div>
+        <div class="row mb-2"><div class="col-5 text-muted">Cashier</div><div class="col-7">{{ $payment->cashier->name ?? 'Online Payment' }}</div></div>
         <div class="row mb-2"><div class="col-5 text-muted">Date Paid</div><div class="col-7">{{ $payment->paid_at?->format('M d, Y h:i A') ?? 'Pending' }}</div></div>
         <hr>
         <p class="text-muted small mb-0 text-center">This receipt serves as proof of payment for the cited violation.</p>
