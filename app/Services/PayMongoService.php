@@ -41,7 +41,7 @@ class PayMongoService
                             'quantity' => 1,
                         ],
                     ],
-                    'payment_method_types' => $params['payment_method_types'] ?? ['gcash', 'card'],
+                    'payment_method_types' => $params['payment_method_types'] ?? ['gcash', 'card', 'qrph'],
                     'success_url' => $params['success_url'],
                     'cancel_url' => $params['cancel_url'],
                     'description' => $params['description'],

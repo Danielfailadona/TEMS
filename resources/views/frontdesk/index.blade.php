@@ -37,7 +37,13 @@
                 <div class="col-md-4"><strong class="text-muted small d-block">Status</strong><span class="badge {{ $citation->status->badgeClass() }}">{{ $citation->status->label() }}</span></div>
                 <div class="col-md-4"><strong class="text-muted small d-block">Issued</strong>{{ $citation->issued_at->format('M d, Y') }}</div>
                 @if ($citation->payment)
-                    <div class="col-12"><strong class="text-muted small d-block">Payment</strong>Paid {{ $citation->payment->paid_at->format('M d, Y') }} — Receipt {{ $citation->payment->receipt_number }}</div>
+                    <div class="col-12"><strong class="text-muted small d-block">Payment</strong>
+                        @if ($citation->payment->paid_at)
+                            Paid {{ $citation->payment->paid_at->format('M d, Y') }} — Receipt {{ $citation->payment->receipt_number }}
+                        @else
+                            Payment pending — Receipt {{ $citation->payment->receipt_number }}
+                        @endif
+                    </div>
                 @endif
             </div>
         </div>

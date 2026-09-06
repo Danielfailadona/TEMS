@@ -75,7 +75,7 @@
             @if ($clamping->citation->payment)
                 <tr><td>Payment Method:</td><td>{{ $clamping->citation->payment->payment_method->label() }}</td></tr>
                 <tr><td>Receipt Number:</td><td>{{ $clamping->citation->payment->receipt_number }}</td></tr>
-                <tr><td>Paid At:</td><td>{{ $clamping->citation->payment->paid_at->format('F d, Y h:i A') }}</td></tr>
+                <tr><td>Paid At:</td><td>{{ $clamping->citation->payment->paid_at?->format('F d, Y h:i A') ?? 'Pending' }}</td></tr>
             @endif
         </table>
     @endif

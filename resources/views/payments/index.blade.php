@@ -31,7 +31,7 @@
                         <td>{{ $payment->citation->vehicle_plate }}</td>
                         <td>₱{{ number_format($payment->amount, 2) }}</td>
                         <td>{{ $payment->payment_method->label() }}</td>
-                        <td>{{ $payment->paid_at->format('M d, Y') }}</td>
+                        <td>{{ $payment->paid_at ? $payment->paid_at->format('M d, Y') : 'Pending' }}</td>
                         <td class="text-end">
                             <a href="{{ route('payments.show', $payment) }}" class="btn btn-sm btn-outline-primary">View</a>
                             @can('update', $payment)

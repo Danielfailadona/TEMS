@@ -6,12 +6,12 @@
     <title>Citation #{{ $citation->citation_number }}</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; color: #111; font-size: 12px; padding: 20px; }
-        .ticket { max-width: 480px; margin: 0 auto; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; color: #111; font-size: 12px; background: #e5e7eb; }
+        .ticket { width: 5in; min-height: 7in; margin: 16px auto; padding: 0.35in; background: #fff; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
 
         .header { text-align: center; border-bottom: 2px solid #111; padding-bottom: 10px; margin-bottom: 14px; }
-        .header img { height: 48px; margin-bottom: 4px; }
-        .header .name { font-size: 16px; font-weight: 700; letter-spacing: 0.02em; }
+        .header img { height: 52px; margin-bottom: 4px; }
+        .header .name { font-size: 17px; font-weight: 700; letter-spacing: 0.02em; }
         .header .sub { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #444; }
 
         .title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -29,12 +29,6 @@
         .footer { margin-top: 14px; border-top: 1px dashed #999; padding-top: 8px; font-size: 9px; color: #555; text-align: center; }
         .signature { margin-top: 18px; border-top: 1px solid #111; width: 200px; text-align: center; font-size: 10px; padding-top: 4px; float: left; }
 
-        .no-print { display: block; }
-        @media print {
-            .no-print { display: none !important; }
-            body { padding: 0; }
-        }
-        .print-btn { margin-bottom: 16px; }
         .stamp-paid {
             position: absolute;
             top: 40%;
@@ -49,45 +43,27 @@
             padding: 6px 20px;
             pointer-events: none;
         }
-        .ticket { position: relative; }
 
-        /* Thermal printer (58mm) — activated by ?thermal=1 */
-        body.thermal { font-family: 'Courier New', monospace; font-size: 9px; padding: 2mm; }
-        body.thermal .ticket { max-width: 100%; }
-        body.thermal .header img { height: 32px; }
-        body.thermal .header .name { font-size: 12px; }
-        body.thermal .header .sub { font-size: 8px; }
-        body.thermal .title-row h1 { font-size: 11px; }
-        body.thermal .status { font-size: 9px; padding: 1px 6px; }
-        body.thermal td.label { font-size: 8px; }
-        body.thermal td.value { font-size: 9px; }
-        body.thermal .qr svg { width: 80px; height: 80px; }
-        body.thermal .qr .hint { font-size: 7px; }
-        body.thermal .footer { font-size: 7px; border-top: 1px dashed #555; }
-        body.thermal .signature { font-size: 7px; border-top: 1px solid #111; margin-top: 8px; }
-        body.thermal .stamp-paid { font-size: 22px; border-width: 3px; }
-        body.thermal .no-print { display: none; }
-        body.thermal .print-btn { display: none; }
+        .print-btn { text-align: center; margin: 16px 0; }
+        .print-btn button, .print-btn a {
+            display: inline-block; padding: 10px 24px; font-size: 14px; cursor: pointer;
+            border-radius: 8px; text-decoration: none; margin: 0 4px;
+        }
+
         @media print {
-            body.thermal @page { size: 58mm auto; margin: 0; }
-            body.thermal { font-size: 9px; }
+            @page { size: 5in 7in; margin: 0; }
+            body { background: #fff; }
+            .ticket { width: 5in; min-height: 7in; margin: 0; padding: 0.35in; box-shadow: none; }
+            .print-btn { display: none !important; }
         }
     </style>
 </head>
-<body class="{{ request('thermal') == '1' ? 'thermal' : '' }}">
-<div class="print-btn no-print">
-    <button onclick="window.print()"
-            style="padding:10px 24px; font-size:14px; cursor:pointer; border:1px solid #2563eb; background:#2563eb; color:#fff; border-radius:8px;">
+<body>
+<div class="print-btn">
+    <button onclick="window.print()" style="border:1px solid #2563eb; background:#2563eb; color:#fff;">
         <b>🖨 Print / Save as PDF</b>
     </button>
-    <a href="javascript:history.back()"
-       style="padding:10px 24px; font-size:14px; text-decoration:none; border:1px solid #999; color:#333; border-radius:8px; margin-left:6px;">Back</a>
-    @if (! empty($isEnforcerCopy))
-        <a href="?thermal=1&autoprint=1" target="_blank"
-           style="padding:10px 24px; font-size:14px; cursor:pointer; border:1px solid #111; background:#111; color:#fff; border-radius:8px; margin-left:6px; text-decoration:none;">
-            <b>🖨 Print Thermal (58mm)</b>
-        </a>
-    @endif
+    <a href="javascript:history.back()" style="border:1px solid #999; color:#333;">Back</a>
 </div>
 
 <div class="ticket">
@@ -132,7 +108,7 @@
         @if ($citation->payment)
             <tr><td class="label">Receipt #</td><td class="value">{{ $citation->payment->receipt_number }}</td></tr>
             <tr><td class="label">Amount Paid</td><td class="value">₱{{ number_format($citation->payment->amount, 2) }}</td></tr>
-            <tr><td class="label">Paid On</td><td class="value">{{ $citation->payment->paid_at?->format('F d, Y h:i A') }}</td></tr>
+            <tr><td class="label">Paid On</td><td class="value">{{ $citation->payment->paid_at?->format('F d, Y h:i A') ?? 'Pending' }}</td></tr>
             <tr><td class="label">Method</td><td class="value">{{ $citation->payment->online_payment_method ? ucfirst($citation->payment->online_payment_method) : $citation->payment->payment_method->label() }}</td></tr>
         @else
             <tr><td class="label">Payment Status</td><td class="value">Pending</td></tr>
@@ -153,12 +129,5 @@
         Generated by {{ config('itevcms.app_name') }} on {{ now()->format('F d, Y h:i A') }}
     </div>
 </div>
-
-<script>
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('autoprint') === '1') {
-        setTimeout(function () { window.print(); }, 400);
-    }
-</script>
 </body>
 </html>

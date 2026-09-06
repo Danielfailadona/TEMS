@@ -75,7 +75,11 @@
                 <div class="card-header bg-white"><strong>Payment</strong></div>
                 <div class="card-body">
                     <p class="mb-1">Receipt: <a href="{{ route('payments.show', $citation->payment) }}">{{ $citation->payment->receipt_number }}</a></p>
-                    <p class="mb-0 text-muted small">Paid {{ $citation->payment->paid_at->format('M d, Y') }}</p>
+                    @if ($citation->payment->paid_at)
+                        <p class="mb-0 text-muted small">Paid {{ $citation->payment->paid_at->format('M d, Y') }}</p>
+                    @else
+                        <p class="mb-0 text-muted small"><span class="text-warning">Payment pending</span> — {{ $citation->payment->online_payment_method ? 'online checkout in progress' : 'not yet recorded' }}</p>
+                    @endif
                 </div>
             </div>
         @elseif ($citation->isPayable())
