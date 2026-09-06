@@ -50,9 +50,31 @@
             pointer-events: none;
         }
         .ticket { position: relative; }
+
+        /* Thermal printer (58mm) — activated by ?thermal=1 */
+        body.thermal { font-family: 'Courier New', monospace; font-size: 9px; padding: 2mm; }
+        body.thermal .ticket { max-width: 100%; }
+        body.thermal .header img { height: 32px; }
+        body.thermal .header .name { font-size: 12px; }
+        body.thermal .header .sub { font-size: 8px; }
+        body.thermal .title-row h1 { font-size: 11px; }
+        body.thermal .status { font-size: 9px; padding: 1px 6px; }
+        body.thermal td.label { font-size: 8px; }
+        body.thermal td.value { font-size: 9px; }
+        body.thermal .qr svg { width: 80px; height: 80px; }
+        body.thermal .qr .hint { font-size: 7px; }
+        body.thermal .footer { font-size: 7px; border-top: 1px dashed #555; }
+        body.thermal .signature { font-size: 7px; border-top: 1px solid #111; margin-top: 8px; }
+        body.thermal .stamp-paid { font-size: 22px; border-width: 3px; }
+        body.thermal .no-print { display: none; }
+        body.thermal .print-btn { display: none; }
+        @media print {
+            body.thermal @page { size: 58mm auto; margin: 0; }
+            body.thermal { font-size: 9px; }
+        }
     </style>
 </head>
-<body>
+<body class="{{ request('thermal') == '1' ? 'thermal' : '' }}">
 <div class="print-btn no-print">
     <button onclick="window.print()"
             style="padding:10px 24px; font-size:14px; cursor:pointer; border:1px solid #2563eb; background:#2563eb; color:#fff; border-radius:8px;">
@@ -60,6 +82,12 @@
     </button>
     <a href="javascript:history.back()"
        style="padding:10px 24px; font-size:14px; text-decoration:none; border:1px solid #999; color:#333; border-radius:8px; margin-left:6px;">Back</a>
+    @if (! empty($isEnforcerCopy))
+        <a href="?thermal=1&autoprint=1" target="_blank"
+           style="padding:10px 24px; font-size:14px; cursor:pointer; border:1px solid #111; background:#111; color:#fff; border-radius:8px; margin-left:6px; text-decoration:none;">
+            <b>🖨 Print Thermal (58mm)</b>
+        </a>
+    @endif
 </div>
 
 <div class="ticket">
@@ -127,7 +155,8 @@
 </div>
 
 <script>
-    if (new URLSearchParams(window.location.search).get('autoprint') === '1') {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('autoprint') === '1') {
         setTimeout(function () { window.print(); }, 400);
     }
 </script>
