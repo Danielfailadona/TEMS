@@ -25,7 +25,10 @@
     <div class="card-body p-4">
         <div class="text-center mb-4">
             <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" height="64" class="mb-2">
-            <h4 class="mb-0">{{ config('itevcms.app_name') }}</h4>
+            <h4 class="mb-0 fw-bold">{{ config('itevcms.app_name') }}</h4>
+            <div class="text-muted small mb-1" style="font-size: 0.7rem; letter-spacing: 0.04em;">
+                Transportation Enforcement Management System
+            </div>
             <small class="text-muted">Official Payment Receipt</small>
         </div>
         <hr>
@@ -59,9 +62,25 @@
         .card.print-page-receipt {
             border: 2px solid #111 !important;
             box-shadow: none !important;
+            position: relative;
+            overflow: hidden;
+        }
+        .card.print-page-receipt::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: url("{{ asset('images/transpo_enfo_orig.png') }}");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 65% auto;
+            opacity: 0.06;
+            z-index: 0;
+            pointer-events: none;
         }
         .card.print-page-receipt .card-body {
             padding: 1.25rem !important;
+            position: relative;
+            z-index: 1;
         }
         .card.print-page-receipt hr {
             border-color: #111 !important;
