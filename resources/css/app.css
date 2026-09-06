@@ -219,6 +219,28 @@ body::before {
         background: white;
     }
 
+    aside.sidebar,
+    header.topbar,
+    nav.navbar,
+    .enforcer-tab-bar,
+    .enforcer-more-backdrop,
+    .enforcer-more-sheet {
+        display: none !important;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+        min-height: auto !important;
+    }
+
+    main.page-bg,
+    main.p-4,
+    main.p-lg-5 {
+        padding: 0 !important;
+        margin: 0 !important;
+        background: #fff !important;
+    }
+
     .page-break {
         page-break-after: always;
     }
@@ -229,11 +251,16 @@ body::before {
 
     .card, .stat-card {
         page-break-inside: avoid;
-        box-shadow: 0 0 0 1px #ddd;
+        box-shadow: 0 0 0 1px #ddd !important;
+        border: 1px solid #ddd !important;
     }
 
     button, a {
         cursor: default;
+    }
+
+    a[href]::after {
+        content: "";
     }
 
     @page {
