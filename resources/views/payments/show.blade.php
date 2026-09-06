@@ -13,9 +13,18 @@
     </div>
 </div>
 
-<div class="card stat-card mx-auto" style="max-width:640px">
+<div class="alert alert-info py-2 no-print" role="alert" style="max-width:640px; margin: 0 auto 1rem;">
+    <small>
+        <i class="bi bi-info-circle me-1"></i>
+        <strong>Tip:</strong> In the print dialog, click ⋯ &rarr; <em>More settings</em> &rarr; toggle off
+        <em>Headers and footers</em> to remove the URL and page number.
+    </small>
+</div>
+
+<div class="card stat-card mx-auto print-page-receipt" style="max-width:640px">
     <div class="card-body p-4">
         <div class="text-center mb-4">
+            <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" height="64" class="mb-2">
             <h4 class="mb-0">{{ config('itevcms.app_name') }}</h4>
             <small class="text-muted">Official Payment Receipt</small>
         </div>
@@ -39,3 +48,25 @@
     </div>
 </div>
 @endsection
+
+@push('styles')
+<style>
+    @media print {
+        @page {
+            size: 5in 7in;
+            margin: 0.25in;
+        }
+        .card.print-page-receipt {
+            border: 2px solid #111 !important;
+            box-shadow: none !important;
+        }
+        .card.print-page-receipt .card-body {
+            padding: 1.25rem !important;
+        }
+        .card.print-page-receipt hr {
+            border-color: #111 !important;
+            opacity: 1 !important;
+        }
+    }
+</style>
+@endpush
