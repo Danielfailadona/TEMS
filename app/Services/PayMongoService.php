@@ -59,6 +59,12 @@ class PayMongoService
             ],
         ];
 
+        // Mirror the working VCMS project: a reference_number on the checkout
+        // lets the webhook resolve the record from payment.paid events too.
+        if (! empty($params['reference_number'])) {
+            $payload['data']['attributes']['reference_number'] = $params['reference_number'];
+        }
+
         $response = $this->client()->post('/checkout_sessions', $payload);
 
         if ($response->failed()) {

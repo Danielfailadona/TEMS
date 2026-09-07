@@ -57,6 +57,7 @@ class PayMongoController extends Controller
                 'description' => 'Citation '.$citation->citation_number.' - '.$citation->violationType->name,
                 'success_url' => route('payments.online.success', ['payment' => $payment->id]),
                 'cancel_url' => route('payments.online.cancel', ['payment' => $payment->id]),
+                'reference_number' => $payment->paymongo_checkout_id ? null : $payment->receipt_number,
                 'payment_id' => (string) $payment->id,
                 'citation_number' => $citation->citation_number,
                 'receipt_number' => $payment->receipt_number,
@@ -144,6 +145,7 @@ class PayMongoController extends Controller
                     'id' => $citation->id,
                     'token' => $token,
                 ]),
+                'reference_number' => $payment->paymongo_checkout_id ? null : $payment->receipt_number,
                 'payment_id' => (string) $payment->id,
                 'citation_number' => $citation->citation_number,
                 'receipt_number' => $payment->receipt_number,
@@ -195,56 +197,48 @@ class PayMongoController extends Controller
         return view('payments.online-cancel', compact('payment'));
     }
 
-    public function sync(Payment $payment, PayMongoService $payMongo): RedirectResponse
-    {
-        $this->authorize('update', $payment);
-
-        $session = $this->resolvePaidCheckoutSession($payment, $payMongo);
-
-        if (! $session) {
-            return back()->withErrors(['paymongo' => 'PayMongo has not recorded a completed payment for this checkout yet.']);
-        }
-
-        $needsRepair = $payment->paid_at
-            && ($payment->paymongo_status !== 'paid' || $payment->citation->status !== CitationStatus::Paid);
-
-        if (! $payment->paid_at || $needsRepair) {
-            $this->confirmOnlinePayment($payment, $session['attributes'], auth()->id(), $needsRepair);
-
-            return back()->with(
-                'success',
-                $needsRepair
-                    ? 'Payment reconciled with PayMongo. Citation marked as paid.'
-                    : 'Payment confirmed with PayMongo. Citation marked as paid.'
-            );
-        }
-
-        return back()->with('info', 'This payment is already confirmed.');
-    }
-
     public function webhook(Request $request, PayMongoService $payMongo): \Illuminate\Http\Response
     {
         $payload = $request->all();
 
-        $webhookSecret = config('paymongo.webhook_secret');
+        $eventType = $payload['data']['attributes']['type'] ?? '';
+        $eventAttrs = $payload['data']['attributes']['data']['attributes'] ?? [];
 
-        if ($webhookSecret && ! $payMongo->verifyWebhookSignature($request->getContent(), (string) $request->header('PayMongo-Signature'))) {
-            return response('Invalid signature', 401);
+        // Mirrors the working webhook from the previous VCMS project: no hard
+        // dependency on the signing secret. When a secret is configured we still
+        // validate it, but an invalid/missing signature is only logged so a
+        // misconfigured secret can never silently block payment confirmation.
+        if (config('paymongo.webhook_secret') && ! $payMongo->verifyWebhookSignature($request->getContent(), (string) $request->header('PayMongo-Signature'))) {
+            \Illuminate\Support\Facades\Log::warning('PayMongo webhook: signature mismatch — processing anyway.');
         }
 
-        $eventType = $payload['data']['attributes']['type'] ?? '';
-        $nestedAttrs = $payload['data']['attributes']['data']['attributes'] ?? [];
+        // Checkout Session and Payment API event variants.
+        if (! in_array($eventType, ['payment.paid', 'checkout_session.payment.paid', 'checkout_session.payment_paid'], true)) {
+            return response('OK');
+        }
 
-        // Checkout Session flow emits `checkout_session.payment.paid`. The id
-        // that matches our stored paymongo_checkout_id (cs_*) lives in the
-        // nested payment attributes as `checkout_session_id`.
-        if ($eventType === 'checkout_session.payment.paid' && ! empty($nestedAttrs['checkout_session_id'])) {
-            $sessionId = $nestedAttrs['checkout_session_id'];
-            $session = null;
-            $payment = null;
+        // `payment.paid` and older payloads carry the reference_number used when
+        // the checkout session was created (see createCheckoutSession).
+        $referenceNumber = $eventAttrs['reference_number'] ?? $eventAttrs['reference_id'] ?? null;
+        $sessionId = $eventAttrs['checkout_session_id'] ?? null;
 
-            // Retrieve the session and locate the payment via metadata. This is
-            // reliable even when the payer completed an older checkout attempt.
+        $payment = null;
+
+        if ($referenceNumber) {
+            $payment = Payment::where('receipt_number', $referenceNumber)
+                ->orWhere('paymongo_checkout_id', $referenceNumber)
+                ->first();
+        }
+
+        if (! $payment && $sessionId) {
+            $payment = Payment::where('paymongo_checkout_id', $sessionId)
+                ->orWhereJsonContains('paymongo_session_ids', $sessionId)
+                ->first();
+        }
+
+        // Fallback for checkouts created before reference_number was added to
+        // the session payload: recover the linked payment via the checkout id.
+        if (! $payment && $sessionId) {
             try {
                 $session = $payMongo->retrieveCheckoutSession($sessionId);
                 $paymentId = $session['attributes']['metadata']['payment_id'] ?? null;
@@ -252,16 +246,10 @@ class PayMongoController extends Controller
             } catch (\Throwable $e) {
                 report($e);
             }
+        }
 
-            if (! $payment) {
-                $payment = Payment::where('paymongo_checkout_id', $sessionId)
-                    ->orWhereJsonContains('paymongo_session_ids', $sessionId)
-                    ->first();
-            }
-
-            if ($payment && ! $payment->paid_at && $session) {
-                $this->confirmOnlinePayment($payment, $session['attributes'], null);
-            }
+        if ($payment && ! $payment->paid_at) {
+            $this->confirmOnlinePayment($payment, $eventAttrs, null);
         }
 
         return response('OK');

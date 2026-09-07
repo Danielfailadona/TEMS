@@ -135,7 +135,6 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
     Route::get('payments/{payment}/success', [PayMongoController::class, 'success'])->name('payments.online.success');
     Route::get('payments/{payment}/cancel', [PayMongoController::class, 'cancel'])->name('payments.online.cancel');
     Route::post('citations/{citation}/checkout', [PayMongoController::class, 'checkout'])->name('citations.checkout');
-    Route::post('payments/{payment}/sync-paymongo', [PayMongoController::class, 'sync'])->name('payments.sync');
 
     // User management
     Route::resource('users', UserController::class)->except(['show', 'destroy']);
