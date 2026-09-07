@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TEMS - Dashboard</title>
+
+    <!-- Bootstrap 5 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            --sidebar-width: 220px;
+            --primary: #0f2b4a;
+            --accent: #2563eb;
+            --surface: #f1f5f9;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --muted: #64748b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background-color: var(--surface);
+            color: #0f172a;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0; left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(160deg, #0f2b4a 0%, #0a1f35 100%);
+            box-shadow: 20px 0 45px rgba(15, 23, 42, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 1030;
+        }
+
+        .sidebar-brand {
+            height: 190px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-logo {
+            width: 100px; height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.10));
+            display: grid;
+            place-items: center;
+            margin-bottom: 0.75rem;
+            font-size: 2rem;
+            color: #fff;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
+        }
+
+        .sidebar-brand-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 0.04em;
+            line-height: 1.2;
+            margin-bottom: 0.2rem;
+        }
+
+        .sidebar-brand-sub {
+            width: 140px;
+            font-size: 0.65rem;
+            font-weight: 500;
+            color: rgba(255,255,255,0.55);
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .sidebar-nav {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 0.5rem 0;
+        }
+
+        .sidebar-group {
+            margin-bottom: 0.25rem;
+        }
+
+        .sidebar-group-label {
+            padding: 1rem 1rem 0.35rem;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.35);
+        }
+
+        .sidebar-nav .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 1rem;
+            margin: 0 0.5rem;
+            color: rgba(255,255,255,0.75);
+            border-radius: 0.5rem;
+            border-left: 3px solid transparent;
+            font-size: 0.875rem;
+            transition: all 0.15s ease;
+        }
+
+        .sidebar-nav .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        .sidebar-nav .nav-link.active {
+            background: rgba(255,255,255,0.14);
+            color: #fff;
+            border-left-color: #fff;
+            font-weight: 600;
+        }
+
+        .sidebar-nav-icon {
+            font-size: 1.1rem;
+            width: 1.25rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .sidebar-nav::-webkit-scrollbar { width: 4px; }
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.15);
+            border-radius: 4px;
+        }
+
+        /* Main */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+        }
+
+        /* Topbar */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);
+            padding: 1rem 1.25rem;
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+        }
+
+        .topbar-left .topbar-breadcrumb {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-bottom: 0.1rem;
+        }
+
+        .topbar-left .topbar-title {
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .topbar-icon-btn {
+            position: relative;
+            font-size: 1.25rem;
+            color: #0f172a;
+            text-decoration: none;
+            transition: color 0.15s ease;
+        }
+
+        .topbar-icon-btn:hover { color: var(--accent); }
+
+        .notification-badge {
+            position: absolute;
+            top: -4px; right: -6px;
+            background: #dc2626;
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 700;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            display: grid;
+            place-items: center;
+            padding: 0 4px;
+        }
+
+        .user-dropdown-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: none;
+            border: none;
+            font-size: 0.875rem;
+            color: #0f172a;
+        }
+
+        .status-dot {
+            color: #16a34a;
+            font-size: 0.6rem;
+        }
+
+        .user-name { font-weight: 600; }
+        .user-role { color: var(--muted); }
+
+        /* Page content */
+        .page-bg {
+            background-color: var(--surface);
+            padding: 1.5rem;
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 768px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 1.1rem;
+            box-shadow: 0 10px 28px rgba(15,23,42,0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            padding: 1.1rem 1.25rem;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 35px rgba(15,23,42,0.09);
+        }
+
+        .stat-card.dim .kpi-value {
+            font-size: 1.1rem;
+            color: var(--muted);
+        }
+
+        .stat-card.dim .kpi-label-row {
+            opacity: 0.65;
+        }
+
+        .kpi-label-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-value {
+            font-size: 1.75rem;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 0.35rem;
+        }
+
+        .kpi-trend {
+            font-size: 0.875rem;
+            color: var(--muted);
+        }
+
+        .trend-up { color: #16a34a; }
+        .trend-down { color: #dc2626; }
+        .trend-flat { color: #6b7280; }
+
+        /* Content cards */
+        .content-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 1.1rem;
+            box-shadow: 0 10px 28px rgba(15,23,42,0.06);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .content-card .card-header-custom {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            background: #fff;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .content-card .card-body-custom {
+            padding: 1.25rem;
+        }
+
+        /* Charts grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 992px) { .charts-grid { grid-template-columns: 1fr; } }
+
+        .chart-box {
+            height: 200px;
+        }
+
+        /* Activity list */
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .activity-item:last-child { border-bottom: none; }
+
+        .activity-icon {
+            width: 44px; height: 44px;
+            border-radius: 0.5rem;
+            background: #eff6ff;
+            color: var(--accent);
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            font-size: 1.2rem;
+        }
+
+        .activity-title { font-weight: 600; font-size: 0.9rem; }
+        .activity-desc { color: var(--muted); font-size: 0.85rem; }
+        .activity-meta { color: var(--muted); font-size: 0.75rem; margin-top: 0.15rem; }
+        .activity-time { color: var(--muted); font-size: 0.85rem; white-space: nowrap; margin-left: auto; }
+
+        /* Bottom grid */
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.4fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1200px) { .bottom-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 768px) { .bottom-grid { grid-template-columns: 1fr; } }
+
+        /* Queue items */
+        .queue-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+
+        .queue-badge {
+            width: 2rem; height: 2rem;
+            border-radius: 0.4rem;
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .queue-title { font-weight: 600; font-size: 0.85rem; }
+        .queue-desc { color: var(--muted); font-size: 0.75rem; }
+
+        /* Quick actions */
+        .quick-actions-grid {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .btn-action {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.7rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+
+        /* Map placeholder */
+        .map-placeholder {
+            width: 100%;
+            height: 220px;
+            background: #e5e7eb;
+            border-radius: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-road {
+            position: absolute;
+            background: #fff;
+            opacity: 0.9;
+        }
+
+        .map-label {
+            position: absolute;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #374151;
+            pointer-events: none;
+        }
+
+        .map-label-lg {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .map-controls {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .map-btn {
+            width: 28px; height: 28px;
+            background: #fff;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            color: #374151;
+            font-size: 1rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .violation-bar-bg {
+            height: 5px;
+            border-radius: 3px;
+            background: #e5e7eb;
+            width: 80px;
+            overflow: hidden;
+        }
+
+        .violation-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-logo">
+                <i class="bi bi-shield-check" style="font-size: 2.5rem;"></i>
+            </div>
+            <div class="sidebar-brand-title">TEMs</div>
+            <div class="sidebar-brand-sub">Transportation Enforcement Management System</div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="sidebar-group">
+                <div class="sidebar-group-label">Operations</div>
+                <a href="#" class="nav-link active">
+                    <i class="bi bi-speedometer2 sidebar-nav-icon"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-link">
+                    <i class="bi bi-receipt sidebar-nav-icon"></i>
+                    <span>Citations</span>
+                </a>
+                <a href="#" class="nav-link">
+                    <i class="bi bi-chat-square-text sidebar-nav-icon"></i>
+                    <span>Appeals</span>
+                </a>
+                <a href="#" class="nav-link">
+                    <i class="bi bi-cash-stack sidebar-nav-icon"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="#" class="nav-link">
+                    <i class="bi bi-lock sidebar-nav-icon"></i>
+                    <span>Clamping</span>
+                </a>
+                <a href="#" class="nav-link">
+                    <i class="bi bi-truck sidebar-nav-icon"></i>
+                    <span>Impounding</span>
+                </a>
+                <a href="#" class="nav-link">
+                    <i class="bi bi-clipboard-check sidebar-nav-icon"></i>
+                    <span>Clamping Requests</span>
+                </a>
+            </div>
+            <div class="sidebar-group">
+                <div class="sidebar-group-label">Monitoring</div>
+                <a href="#" class="nav-link">
+                    <i class="bi bi-broadcast-pin sidebar-nav-icon"></i>
+                    <span>Tracking</span>
+                </a>
+                <a href="#" class="nav-link">
+                    <i class="bi bi-bar-chart-line sidebar-nav-icon"></i>
+                    <span>Reports</span>
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <div class="topbar-breadcrumb">Operations console</div>
+                <h1 class="topbar-title">Dashboard</h1>
+            </div>
+            <div class="topbar-right">
+                <a href="#" class="topbar-icon-btn">
+                    <i class="bi bi-bell"></i>
+                    <span class="notification-badge">0</span>
+                </a>
+                <button class="user-dropdown-btn">
+                    <span class="status-dot"><i class="bi bi-circle-fill"></i></span>
+                    <span>
+                        <span class="user-name d-block" style="line-height:1.2;">Super Administrator</span>
+                        <span class="user-role d-block" style="font-size:0.75rem;">Super Administrator</span>
+                    </span>
+                    <i class="bi bi-caret-down-fill" style="font-size:0.7rem; color:#999; margin-left:0.2rem;"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <main class="page-bg">
+            <!-- Greeting -->
+            <div class="mb-4" style="animation: fadeInUp 0.4s ease;">
+                <h1 style="font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem;">Good Morning, Super Administrator</h1>
+                <div class="d-flex flex-wrap gap-3" style="font-size: 0.85rem; color: var(--muted);">
+                    <span><i class="bi bi-calendar3 me-1"></i>Thursday, August 27, 2026</span>
+                    <span><i class="bi bi-person-badge me-1"></i>Super Administrator</span>
+                </div>
+            </div>
+
+            <!-- KPI Row -->
+            <div class="kpi-grid" style="animation: fadeInUp 0.4s ease;">
+                <!-- Total Citations -->
+                <div class="stat-card dim">
+                    <div class="kpi-label-row">
+                        <i class="bi bi-receipt" style="color: var(--accent);"></i>
+                        <span>Total Citations</span>
+                    </div>
+                    <div class="kpi-value" style="color: var(--accent);">2</div>
+                    <div class="kpi-trend">— 0% vs last week</div>
+                </div>
+                <!-- Unpaid Citations -->
+                <div class="stat-card">
+                    <div class="kpi-label-row">
+                        <i class="bi bi-exclamation-circle" style="color: #d97706;"></i>
+                        <span>Unpaid Citations</span>
+                    </div>
+                    <div class="kpi-value" style="color: #d97706;">2</div>
+                    <div class="kpi-trend">— 0% vs last week</div>
+                </div>
+                <!-- Payments Today -->
+                <div class="stat-card dim">
+                    <div class="kpi-label-row">
+                        <i class="bi bi-cash-stack" style="color: #16a34a;"></i>
+                        <span>Payments Today</span>
+                    </div>
+                    <div class="kpi-value" style="color: #16a34a;">₱0.00</div>
+                    <div class="kpi-trend">— 0% vs last week</div>
+                </div>
+                <!-- Active Clamps -->
+                <div class="stat-card">
+                    <div class="kpi-label-row">
+                        <i class="bi bi-lock" style="color: #dc2626;"></i>
+                        <span>Active Clamps</span>
+                    </div>
+                    <div class="kpi-value" style="color: #dc2626;">0</div>
+                    <div class="kpi-trend">— 0% vs last week</div>
+                </div>
+                <!-- Pending Appeals -->
+                <div class="stat-card">
+                    <div class="kpi-label-row">
+                        <i class="bi bi-chat-square-text" style="color: #2563eb;"></i>
+                        <span>Pending Appeals</span>
+                    </div>
+                    <div class="kpi-value" style="color: #2563eb;">0</div>
+                    <div class="kpi-trend">— 0% vs last week</div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="charts-grid" style="animation: fadeInUp 0.5s ease;">
+                <!-- Citations by Month -->
+                <div class="content-card">
+                    <div class="card-header-custom">Citations by Month</div>
+                    <div class="card-body-custom chart-box">
+                        <canvas id="citationsChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Revenue Trend -->
+                <div class="content-card">
+                    <div class="card-header-custom">Revenue Trend</div>
+                    <div class="card-body-custom chart-box">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Top Violation Types -->
+                <div class="content-card">
+                    <div class="card-header-custom">Top Violation Types</div>
+                    <div class="card-body-custom">
+                        <div class="d-flex justify-content-between align-items-center" style="padding: 0.35rem 0; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem;">
+                            <span>Illegal Parking</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="violation-bar-bg">
+                                    <div class="violation-bar-fill" style="width: 100%;"></div>
+                                </div>
+                                <span class="fw-semibold" style="font-size: 0.85rem;">2</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Appeals Trend -->
+                <div class="content-card">
+                    <div class="card-header-custom">Appeals Trend</div>
+                    <div class="card-body-custom chart-box">
+                        <canvas id="appealsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="content-card" style="animation: fadeInUp 0.6s ease;">
+                <div class="card-header-custom">
+                    <div>
+                        <strong>Recent Activity</strong>
+                        <div style="font-size: 0.8rem; color: var(--muted); font-weight: 400;">Latest enforcement events across the office</div>
+                    </div>
+                </div>
+                <div class="card-body-custom" style="padding: 0;">
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="bi bi-receipt"></i>
+                        </div>
+                        <div>
+                            <div class="activity-title">Citation Issued</div>
+                            <div class="activity-desc">fasdasd</div>
+                            <div class="activity-meta">Vehicle: dsd-123 · Officer: Ross Sabio</div>
+                        </div>
+                        <div class="activity-time">2 months ago</div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="bi bi-receipt"></i>
+                        </div>
+                        <div>
+                            <div class="activity-title">Citation Issued</div>
+                            <div class="activity-desc">fasdasd</div>
+                            <div class="activity-meta">Vehicle: dsd-123 · Officer: Ross Sabio</div>
+                        </div>
+                        <div class="activity-time">2 months ago</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Row -->
+            <div class="bottom-grid" style="animation: fadeInUp 0.7s ease; padding-bottom: 2rem;">
+                <!-- Pending Work Queue -->
+                <div class="content-card">
+                    <div class="card-header-custom">
+                        <strong>Pending Work Queue</strong>
+                        <span style="font-size: 0.8rem; color: var(--muted); font-weight: 400;">Needs attention</span>
+                    </div>
+                    <div class="card-body-custom d-flex flex-column gap-3">
+                        <div class="queue-item">
+                            <div class="queue-badge" style="color: #7c3aed; background: rgba(124,58,237,0.08);">0</div>
+                            <div class="flex-grow-1">
+                                <div class="queue-title">Pending Appeals</div>
+                                <div class="queue-desc">Awaiting review decision</div>
+                            </div>
+                            <a href="#" class="btn btn-outline-primary" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">View</a>
+                        </div>
+                        <div class="queue-item">
+                            <div class="queue-badge" style="color: #0891b2; background: rgba(8,145,178,0.08);">0</div>
+                            <div class="flex-grow-1">
+                                <div class="queue-title">Clamping Requests</div>
+                                <div class="queue-desc">Citizen requests to review</div>
+                            </div>
+                            <a href="#" class="btn btn-outline-primary" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">View</a>
+                        </div>
+                        <div class="queue-item">
+                            <div class="queue-badge" style="color: #d97706; background: rgba(217,119,6,0.08);">10</div>
+                            <div class="flex-grow-1">
+                                <div class="queue-title">Account Approvals</div>
+                                <div class="queue-desc">New users awaiting approval</div>
+                            </div>
+                            <a href="#" class="btn btn-outline-primary" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">View</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="content-card">
+                    <div class="card-header-custom"><strong>Quick Actions</strong></div>
+                    <div class="card-body-custom quick-actions-grid">
+                        <a href="#" class="btn btn-outline-primary btn-action">
+                            <i class="bi bi-receipt"></i> Issue Citation
+                        </a>
+                        <a href="#" class="btn btn-success btn-action" style="background: #16a34a; border-color: #16a34a; color: #fff;">
+                            <i class="bi bi-cash-stack"></i> Process Payment
+                        </a>
+                        <a href="#" class="btn btn-outline-danger btn-action">
+                            <i class="bi bi-lock"></i> Record Clamp
+                        </a>
+                        <a href="#" class="btn btn-outline-secondary btn-action">
+                            <i class="bi bi-chat-square-text"></i> Review Appeals
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Zone Coverage -->
+                <div class="content-card">
+                    <div class="card-header-custom d-flex justify-content-between align-items-center">
+                        <strong>Zone Coverage</strong>
+                        <a href="#" class="btn btn-outline-primary" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">Manage</a>
+                    </div>
+                    <div class="card-body-custom" style="padding: 0.75rem;">
+                        <div class="map-placeholder">
+                            <!-- Roads -->
+                            <div style="position:absolute; top:35%; left:0; width:100%; height:3px; background:rgba(255,255,255,0.9); transform:rotate(-8deg);"></div>
+                            <div style="position:absolute; top:60%; left:0; width:100%; height:3px; background:rgba(255,255,255,0.9); transform:rotate(5deg);"></div>
+                            <div style="position:absolute; top:0; left:40%; width:3px; height:100%; background:rgba(255,255,255,0.9); transform:rotate(3deg);"></div>
+                            <div style="position:absolute; top:0; left:70%; width:3px; height:100%; background:rgba(255,255,255,0.8); transform:rotate(-4deg);"></div>
+                            <div style="position:absolute; top:20%; left:0; width:100%; height:2px; background:rgba(255,255,255,0.6); transform:rotate(15deg);"></div>
+                            <div style="position:absolute; top:75%; left:0; width:100%; height:2px; background:rgba(255,255,255,0.6); transform:rotate(-10deg);"></div>
+
+                            <!-- Labels -->
+                            <div class="map-label-lg" style="top: 40%; left: 20%;">Manila</div>
+                            <div class="map-label" style="top: 38%; left: 75%;">San Juan</div>
+                            <div class="map-label" style="top: 48%; left: 80%;">Pasig</div>
+                            <div class="map-label" style="top: 58%; left: 65%;">Taguig</div>
+                            <div class="map-label" style="top: 72%; left: 40%;">Parañaque</div>
+                            <div class="map-label" style="top: 52%; left: 30%;">Mandaluyong</div>
+                            <div class="map-label" style="top: 62%; left: 25%;">Makati</div>
+
+                            <!-- Zoom controls -->
+                            <div class="map-controls">
+                                <div class="map-btn">+</div>
+                                <div class="map-btn">−</div>
+                                <div class="map-btn" style="font-size:0.8rem;">⛶</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Chart.js defaults for cleaner look
+        Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        Chart.defaults.font.size = 12;
+        Chart.defaults.plugins.legend.display = false;
+
+        // Citations by Month - single blue bar
+        new Chart(document.getElementById('citationsChart'), {
+            type: 'bar',
+            data: {
+                labels: ['2026-06'],
+                datasets: [{
+                    label: 'Citations',
+                    data: [2],
+                    backgroundColor: '#2563eb',
+                    borderRadius: 4,
+                    barPercentage: 0.5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, color: '#64748b' },
+                        grid: { color: '#f1f5f9' }
+                    },
+                    x: {
+                        ticks: { color: '#64748b' },
+                        grid: { display: false }
+                    }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Revenue Trend - empty
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Revenue (₱)',
+                    data: [],
+                    borderColor: '#16a34a',
+                    backgroundColor: 'rgba(22,163,74,0.08)',
+                    fill: true,
+                    tension: 0.35
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#64748b',
+                            callback: v => '₱' + Number(v).toLocaleString()
+                        },
+                        grid: { color: '#f1f5f9' }
+                    },
+                    x: {
+                        ticks: { color: '#64748b' },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Appeals Trend - empty
+        new Chart(document.getElementById('appealsChart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Appeals',
+                    data: [],
+                    borderColor: '#7c3aed',
+                    backgroundColor: 'rgba(124,58,237,0.08)',
+                    fill: true,
+                    tension: 0.35
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, color: '#64748b' },
+                        grid: { color: '#f1f5f9' }
+                    },
+                    x: {
+                        ticks: { color: '#64748b' },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    </script>
+
+    <style>
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</body>
+</html>

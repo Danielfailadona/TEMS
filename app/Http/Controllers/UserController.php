@@ -27,7 +27,7 @@ class UserController extends Controller
             ->when($request->role, fn ($q, $r) => $q->where('role', $r))
             ->when($request->account_status, fn ($q, $s) => $q->where('account_status', $s))
             ->orderBy(\Illuminate\Support\Facades\DB::raw("CASE account_status WHEN 'pending' THEN 0 WHEN 'approved' THEN 1 WHEN 'rejected' THEN 2 WHEN 'suspended' THEN 3 ELSE 4 END"))
-            ->orderBy('name')
+            ->orderBy('created_at', 'desc')
             ->paginate(10)
             ->withQueryString();
 

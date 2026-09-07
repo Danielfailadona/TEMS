@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jacob Aiden — Frontend Developer</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #080d17;
+            --bg-card: #0f1520;
+            --accent: #00d4ff;
+            --accent-glow: rgba(0, 212, 255, 0.25);
+            --text-primary: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border-subtle: rgba(255, 255, 255, 0.06);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Ambient glow behind hero */
+        .page-glow {
+            position: fixed;
+            top: -30%;
+            left: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0,212,255,0.12) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-glow-2 {
+            position: fixed;
+            bottom: -20%;
+            right: -5%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(0,150,255,0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Navbar */
+        .navbar-custom {
+            position: relative;
+            z-index: 10;
+            padding: 1.5rem 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: transparent;
+        }
+
+        .logo {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.25rem;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--accent);
+        }
+
+        .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent);
+            border-radius: 1px;
+        }
+
+        /* Hero */
+        .hero {
+            position: relative;
+            z-index: 5;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: center;
+            min-height: calc(100vh - 100px);
+            padding: 2rem 4rem 4rem;
+            gap: 2rem;
+        }
+
+        @media (max-width: 992px) {
+            .hero { grid-template-columns: 1fr; padding: 2rem; }
+            .hero-image { display: none; }
+            .navbar-custom { padding: 1.5rem 2rem; }
+        }
+
+        .hero-content {
+            max-width: 580px;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            letter-spacing: -0.03em;
+        }
+
+        .hero-title .accent {
+            color: var(--accent);
+        }
+
+        .hero-subtitle {
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 1.25rem;
+            letter-spacing: -0.01em;
+        }
+
+        .hero-desc {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: var(--text-muted);
+            margin-bottom: 2.25rem;
+            max-width: 480px;
+        }
+
+        /* Buttons */
+        .btn-group-custom {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .btn-accent {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.85rem 1.75rem;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 25px var(--accent-glow);
+        }
+
+        .btn-accent:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 35px rgba(0,212,255,0.4);
+            color: #000;
+        }
+
+        .btn-outline-accent {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.85rem 1.75rem;
+            background: transparent;
+            color: var(--accent);
+            border: 1.5px solid var(--accent);
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline-accent:hover {
+            background: rgba(0,212,255,0.08);
+            transform: translateY(-2px);
+            color: var(--accent);
+        }
+
+        /* Social icons */
+        .social-row {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .social-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            display: grid;
+            place-items: center;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .social-btn:hover {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        /* Hero Image */
+        .hero-image {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 500px;
+        }
+
+        .hero-image-inner {
+            position: relative;
+            width: 100%;
+            max-width: 520px;
+            aspect-ratio: 1 / 1;
+            border-radius: 2rem;
+            overflow: hidden;
+            background: linear-gradient(160deg, #1a2332 0%, #0a1018 100%);
+            box-shadow:
+                0 0 0 1px rgba(0,212,255,0.15),
+                0 25px 60px rgba(0,0,0,0.5),
+                inset 0 0 80px rgba(0,212,255,0.05);
+        }
+
+        /* Stylized portrait placeholder using CSS */
+        .portrait-placeholder {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background:
+                radial-gradient(ellipse at 65% 35%, rgba(0,180,220,0.35) 0%, transparent 55%),
+                radial-gradient(ellipse at 50% 50%, #1a2838 0%, #080d17 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .portrait-silhouette {
+            font-size: 12rem;
+            color: rgba(0,212,255,0.15);
+            filter: blur(1px);
+        }
+
+        .portrait-face-mark {
+            position: absolute;
+            top: 28%;
+            right: 22%;
+            width: 70px;
+            height: 140px;
+            background: linear-gradient(180deg, rgba(0,212,255,0.5) 0%, rgba(0,180,240,0.1) 100%);
+            border-radius: 40% 60% 50% 50%;
+            transform: rotate(-8deg);
+            filter: blur(1px);
+            box-shadow:
+                0 0 30px rgba(0,212,255,0.3),
+                inset 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        .portrait-face-mark-2 {
+            position: absolute;
+            top: 32%;
+            right: 18%;
+            width: 25px;
+            height: 80px;
+            background: linear-gradient(180deg, rgba(0,180,240,0.35) 0%, transparent 100%);
+            border-radius: 50%;
+            transform: rotate(-5deg);
+            filter: blur(2px);
+        }
+
+        .portrait-face-mark-3 {
+            position: absolute;
+            top: 25%;
+            right: 30%;
+            width: 50px;
+            height: 120px;
+            background: linear-gradient(180deg, rgba(0,200,255,0.25) 0%, transparent 100%);
+            border-radius: 40% 60% 45% 55%;
+            transform: rotate(-3deg);
+            filter: blur(3px);
+        }
+
+        .portrait-eye-glow {
+            position: absolute;
+            top: 38%;
+            right: 28%;
+            width: 30px;
+            height: 8px;
+            background: radial-gradient(ellipse, rgba(0,220,255,0.9) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(3px);
+            box-shadow: 0 0 15px rgba(0,212,255,0.6);
+        }
+
+        .portrait-eye-glow-2 {
+            position: absolute;
+            top: 36%;
+            right: 20%;
+            width: 25px;
+            height: 7px;
+            background: radial-gradient(ellipse, rgba(0,220,255,0.7) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(4px);
+            box-shadow: 0 0 12px rgba(0,212,255,0.5);
+        }
+
+        /* Decorative corner glow on image */
+        .hero-image-inner::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            right: -20%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(0,212,255,0.2) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .hero-image-inner::after {
+            content: '';
+            position: absolute;
+            bottom: -15%;
+            left: -15%;
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle, rgba(0,150,255,0.12) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 2;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-glow"></div>
+    <div class="page-glow-2"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar-custom">
+        <div class="logo">Jacob.</div>
+        <ul class="nav-links">
+            <li><a href="#" class="active">Home</a></li>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Services</a></li>
+            <li><a href="#">Portfolio</a></li>
+            <li><a href="#">Contact</a></li>
+        </ul>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Hi, I'm Jacob <span class="accent">Aiden</span></h1>
+            <div class="hero-subtitle">Frontend Developer</div>
+            <p class="hero-desc">
+                Lorem ipsum dolor sit amet consectetur adipisicing elit. Eligendi, ea
+                laudantium dolorum beatae vitae quae aperiam, magnam delectus illum
+                voluptate corrupti. Cupiditate non quisquam ex.
+            </p>
+            <div class="btn-group-custom">
+                <a href="#" class="btn-accent">Hire Me</a>
+                <a href="#" class="btn-outline-accent">Let's Talk</a>
+            </div>
+            <div class="social-row">
+                <a href="#" class="social-btn"><i class="bi bi-facebook"></i></a>
+                <a href="#" class="social-btn"><i class="bi bi-twitter-x"></i></a>
+                <a href="#" class="social-btn"><i class="bi bi-linkedin"></i></a>
+            </div>
+        </div>
+
+        <div class="hero-image">
+            <div class="hero-image-inner">
+                <div class="portrait-placeholder">
+                    <div class="portrait-silhouette">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div class="portrait-face-mark"></div>
+                    <div class="portrait-face-mark-2"></div>
+                    <div class="portrait-face-mark-3"></div>
+                    <div class="portrait-eye-glow"></div>
+                    <div class="portrait-eye-glow-2"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</body>
+</html>

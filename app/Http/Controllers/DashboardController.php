@@ -94,12 +94,11 @@ class DashboardController extends Controller
             ->sortKeys();
 
         // Analytics: Top Violation Types
+        // All violation types are listed in a fixed (definition) order; rows keep their
+        // position regardless of count, and zero-count types still show an empty bar.
         $topViolations = ViolationType::withCount(['citations' => fn ($q) => $q->where('issued_at', '>=', now()->subMonths(3))])
-            ->orderByDesc('citations_count')
-            ->take(10)
+            ->orderBy('id')
             ->get()
-            ->filter(fn ($v) => $v->citations_count > 0)
-            ->take(5)
             ->map(fn ($v) => ['name' => $v->name, 'count' => (int) $v->citations_count])
             ->values();
 
