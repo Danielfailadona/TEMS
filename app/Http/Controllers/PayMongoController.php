@@ -52,7 +52,6 @@ class PayMongoController extends Controller
         try {
             $session = $payMongo->createCheckoutSession([
                 'billing_name' => $citation->driver_name ?? auth()->user()->name,
-                'billing_email' => auth()->user()->email,
                 'billing_phone' => auth()->user()->phone,
                 'amount' => $citation->penalty_amount,
                 'description' => 'Citation '.$citation->citation_number.' - '.$citation->violationType->name,
@@ -160,7 +159,6 @@ class PayMongoController extends Controller
         try {
             $session = $payMongo->createCheckoutSession([
                 'billing_name' => $citation->driver_name ?? 'Citation Payer',
-                'billing_email' => 'noreply+'.$citation->citation_number.'@violator.local',
                 'billing_phone' => null,
                 'amount' => $citation->penalty_amount,
                 'description' => 'Citation '.$citation->citation_number.' - '.$citation->violationType->name,

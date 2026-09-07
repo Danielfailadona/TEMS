@@ -28,14 +28,16 @@ class PayMongoService
 
     public function createCheckoutSession(array $params): array
     {
+        $billing = array_filter([
+            'name' => $params['billing_name'] ?? null,
+            'email' => $params['billing_email'] ?? null,
+            'phone' => $params['billing_phone'] ?? null,
+        ], fn ($v) => $v !== null && $v !== '');
+
         $payload = [
             'data' => [
                 'attributes' => [
-                    'billing' => [
-                        'name' => $params['billing_name'],
-                        'email' => $params['billing_email'],
-                        'phone' => $params['billing_phone'] ?? null,
-                    ],
+                    'billing' => $billing,
                     'line_items' => [
                         [
                             'name' => $params['description'],
