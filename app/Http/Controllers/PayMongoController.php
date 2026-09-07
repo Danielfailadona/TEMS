@@ -220,7 +220,14 @@ class PayMongoController extends Controller
         // we also surface that id on `payment.paid` payloads.
         $sessionId = $eventAttrs['checkout_session_id'] ?? null;
 
+        \Illuminate\Support\Facades\Log::info('PayMongo webhook: paid event received', [
+            'type' => $eventType,
+            'session_id' => $sessionId,
+        ]);
+
         if (! $sessionId) {
+            \Illuminate\Support\Facades\Log::warning('PayMongo webhook: no checkout_session_id in payload.', compact('eventType'));
+
             return response('OK');
         }
 
@@ -242,8 +249,19 @@ class PayMongoController extends Controller
             }
         }
 
+        \Illuminate\Support\Facades\Log::info('PayMongo webhook: payment resolution', [
+            'session_id' => $sessionId,
+            'payment_id' => $payment?->id,
+        ]);
+
         if ($payment && ! $payment->paid_at) {
+            \Illuminate\Support\Facades\Log::info('PayMongo webhook: confirming payment', ['payment_id' => $payment->id]);
             $this->confirmOnlinePayment($payment, $eventAttrs, null);
+            \Illuminate\Support\Facades\Log::info('PayMongo webhook: payment confirmed', [
+                'payment_id' => $payment->refresh()->id,
+                'paid_at' => $payment->paid_at,
+                'paymongo_status' => $payment->paymongo_status,
+            ]);
         }
 
         return response('OK');
@@ -284,6 +302,12 @@ class PayMongoController extends Controller
 
     protected function confirmOnlinePayment(Payment $payment, array $attrs, ?int $archivedBy, bool $force = false): void
     {
+        \Illuminate\Support\Facades\Log::info('confirmOnlinePayment invoked', [
+            'payment_id' => $payment->id,
+            'already_paid' => (bool) $payment->paid_at,
+            'force' => $force,
+        ]);
+
         if ($payment->paid_at && ! $force) {
             return;
         }
