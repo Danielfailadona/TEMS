@@ -57,7 +57,6 @@ class PayMongoController extends Controller
                 'description' => 'Citation '.$citation->citation_number.' - '.$citation->violationType->name,
                 'success_url' => route('payments.online.success', ['payment' => $payment->id]),
                 'cancel_url' => route('payments.online.cancel', ['payment' => $payment->id]),
-                'reference_number' => $payment->paymongo_checkout_id ? null : $payment->receipt_number,
                 'payment_id' => (string) $payment->id,
                 'citation_number' => $citation->citation_number,
                 'receipt_number' => $payment->receipt_number,
@@ -145,7 +144,6 @@ class PayMongoController extends Controller
                     'id' => $citation->id,
                     'token' => $token,
                 ]),
-                'reference_number' => $payment->paymongo_checkout_id ? null : $payment->receipt_number,
                 'payment_id' => (string) $payment->id,
                 'citation_number' => $citation->citation_number,
                 'receipt_number' => $payment->receipt_number,
@@ -217,28 +215,24 @@ class PayMongoController extends Controller
             return response('OK');
         }
 
-        // `payment.paid` and older payloads carry the reference_number used when
-        // the checkout session was created (see createCheckoutSession).
-        $referenceNumber = $eventAttrs['reference_number'] ?? $eventAttrs['reference_id'] ?? null;
+        // `checkout_session.payment.paid` carries the checkout id (cs_*) in the
+        // nested payment attributes as `checkout_session_id`. Whenever possible
+        // we also surface that id on `payment.paid` payloads.
         $sessionId = $eventAttrs['checkout_session_id'] ?? null;
 
-        $payment = null;
-
-        if ($referenceNumber) {
-            $payment = Payment::where('receipt_number', $referenceNumber)
-                ->orWhere('paymongo_checkout_id', $referenceNumber)
-                ->first();
+        if (! $sessionId) {
+            return response('OK');
         }
 
-        if (! $payment && $sessionId) {
-            $payment = Payment::where('paymongo_checkout_id', $sessionId)
-                ->orWhereJsonContains('paymongo_session_ids', $sessionId)
-                ->first();
-        }
+        // Resolve the linked payment row via the checkout/session identifiers
+        // stored on it when the session was created.
+        $payment = Payment::where('paymongo_checkout_id', $sessionId)
+            ->orWhereJsonContains('paymongo_session_ids', $sessionId)
+            ->first();
 
-        // Fallback for checkouts created before reference_number was added to
-        // the session payload: recover the linked payment via the checkout id.
-        if (! $payment && $sessionId) {
+        // Fallback for checkouts created before paymongo_session_ids existed:
+        // recover the linked payment via the checkout id in metadata.
+        if (! $payment) {
             try {
                 $session = $payMongo->retrieveCheckoutSession($sessionId);
                 $paymentId = $session['attributes']['metadata']['payment_id'] ?? null;
