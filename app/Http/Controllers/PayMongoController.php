@@ -199,19 +199,27 @@ class PayMongoController extends Controller
     {
         $this->authorize('update', $payment);
 
-        if ($payment->paid_at) {
-            return back()->with('info', 'This payment is already confirmed.');
-        }
-
         $session = $this->resolvePaidCheckoutSession($payment, $payMongo);
 
-        if ($session) {
-            $this->confirmOnlinePayment($payment, $session['attributes'], auth()->id());
-
-            return back()->with('success', 'Payment confirmed with PayMongo. Citation marked as paid.');
+        if (! $session) {
+            return back()->withErrors(['paymongo' => 'PayMongo has not recorded a completed payment for this checkout yet.']);
         }
 
-        return back()->withErrors(['paymongo' => 'PayMongo has not recorded a completed payment for this checkout yet.']);
+        $needsRepair = $payment->paid_at
+            && ($payment->paymongo_status !== 'paid' || $payment->citation->status !== CitationStatus::Paid);
+
+        if (! $payment->paid_at || $needsRepair) {
+            $this->confirmOnlinePayment($payment, $session['attributes'], auth()->id(), $needsRepair);
+
+            return back()->with(
+                'success',
+                $needsRepair
+                    ? 'Payment reconciled with PayMongo. Citation marked as paid.'
+                    : 'Payment confirmed with PayMongo. Citation marked as paid.'
+            );
+        }
+
+        return back()->with('info', 'This payment is already confirmed.');
     }
 
     public function webhook(Request $request, PayMongoService $payMongo): \Illuminate\Http\Response
@@ -292,9 +300,9 @@ class PayMongoController extends Controller
         return null;
     }
 
-    protected function confirmOnlinePayment(Payment $payment, array $attrs, ?int $archivedBy): void
+    protected function confirmOnlinePayment(Payment $payment, array $attrs, ?int $archivedBy, bool $force = false): void
     {
-        if ($payment->paid_at) {
+        if ($payment->paid_at && ! $force) {
             return;
         }
 
@@ -302,19 +310,25 @@ class PayMongoController extends Controller
             'paymongo_payment_intent_id' => $attrs['payment_intent']['id'] ?? null,
             'paymongo_status' => $attrs['status'],
             'online_payment_method' => $attrs['payment_method_used'] ?? null,
-            'paid_at' => now(),
+            'paid_at' => $payment->paid_at ?? now(),
         ]);
 
         $payment->citation->update(['status' => CitationStatus::Paid]);
 
-        Archive::create([
-            'archivable_type' => Citation::class,
-            'archivable_id' => $payment->citation->id,
-            'archived_by' => $archivedBy,
-            'archived_at' => now(),
-            'reason' => 'Citation paid online via PayMongo',
-            'snapshot' => $payment->citation->refresh()->toArray(),
-        ]);
+        $alreadyArchived = Archive::where('archivable_type', Citation::class)
+            ->where('archivable_id', $payment->citation->id)
+            ->exists();
+
+        if (! $alreadyArchived) {
+            Archive::create([
+                'archivable_type' => Citation::class,
+                'archivable_id' => $payment->citation->id,
+                'archived_by' => $archivedBy,
+                'archived_at' => now(),
+                'reason' => 'Citation paid online via PayMongo',
+                'snapshot' => $payment->citation->refresh()->toArray(),
+            ]);
+        }
 
         \App\Models\SystemNotification::notify(
             $payment->citation->enforcer,
