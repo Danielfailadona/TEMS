@@ -58,44 +58,4 @@
         <p class="text-muted small mb-0 text-center">This receipt serves as proof of payment for the cited violation.</p>
     </div>
 </div>
-
-@if ($payment->citation->evidence->isNotEmpty())
-    <div class="card stat-card mx-auto mt-3 no-print" style="max-width:640px">
-        <div class="card-body">
-            <h6 class="card-title text-muted text-uppercase small fw-semibold mb-3">
-                <i class="bi bi-images me-1"></i>Evidence ({{ $payment->citation->evidence->count() }})
-            </h6>
-            <div class="d-flex flex-wrap gap-2">
-                @foreach ($payment->citation->evidence as $evidence)
-                    <img src="{{ asset('storage/'.$evidence->file_path) }}"
-                         alt="Evidence"
-                         class="rounded border"
-                         style="width: 96px; height: 96px; object-fit: cover; cursor: zoom-in;"
-                         onclick="openModal('{{ asset('storage/'.$evidence->file_path) }}')">
-                @endforeach
-            </div>
-        </div>
-    </div>
-@endif
-
-<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Evidence Preview</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center p-0">
-                <img id="modalImage" src="" alt="Evidence" class="img-fluid" style="max-height: 80vh;">
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    function openModal(src) {
-        document.getElementById('modalImage').src = src;
-        new bootstrap.Modal(document.getElementById('imageModal')).show();
-    }
-</script>
 @endsection
