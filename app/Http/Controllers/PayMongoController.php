@@ -65,6 +65,10 @@ class PayMongoController extends Controller
             $payment->update([
                 'paymongo_checkout_id' => $session['id'],
                 'paymongo_status' => $session['status'],
+                'paymongo_session_ids' => array_values(array_unique(array_merge(
+                    $payment->paymongo_session_ids ?? [],
+                    [$session['id']]
+                ))),
             ]);
 
             return redirect()->away($session['checkout_url']);
@@ -77,41 +81,10 @@ class PayMongoController extends Controller
 
     public function success(Payment $payment, PayMongoService $payMongo): View
     {
-        if ($payment->paymongo_checkout_id && !$payment->paymongo_payment_intent_id) {
-            try {
-                $session = $payMongo->retrieveCheckoutSession($payment->paymongo_checkout_id);
-                $attrs = $session['attributes'];
+        $session = $this->resolvePaidCheckoutSession($payment, $payMongo);
 
-                if (in_array($attrs['status'], ['paid', 'completed'], true)) {
-                    $payment->update([
-                        'paymongo_payment_intent_id' => $attrs['payment_intent']['id'] ?? null,
-                        'paymongo_status' => $attrs['status'],
-                        'online_payment_method' => $attrs['payment_method_used'] ?? null,
-                        'paid_at' => now(),
-                    ]);
-
-                    $payment->citation->update(['status' => CitationStatus::Paid]);
-
-                    Archive::create([
-                        'archivable_type' => Citation::class,
-                        'archivable_id' => $payment->citation->id,
-                        'archived_by' => auth()->id(),
-                        'archived_at' => now(),
-                        'reason' => 'Citation paid online via PayMongo',
-                        'snapshot' => $payment->citation->refresh()->toArray(),
-                    ]);
-
-                    \App\Models\SystemNotification::notify(
-                        $payment->citation->enforcer,
-                        'payment_received',
-                        'Payment Received',
-                        "Citation {$payment->citation->citation_number} paid online via ".($payment->online_payment_method ?? 'PayMongo'),
-                        ['payment_id' => $payment->id, 'citation_number' => $payment->citation->citation_number]
-                    );
-                }
-            } catch (\Throwable $e) {
-                report($e);
-            }
+        if ($session) {
+            $this->confirmOnlinePayment($payment, $session['attributes'], auth()->id());
         }
 
         return view('payments.online-success', compact('payment'));
@@ -179,6 +152,10 @@ class PayMongoController extends Controller
             $payment->update([
                 'paymongo_checkout_id' => $session['id'],
                 'paymongo_status' => $session['status'],
+                'paymongo_session_ids' => array_values(array_unique(array_merge(
+                    $payment->paymongo_session_ids ?? [],
+                    [$session['id']]
+                ))),
             ]);
 
             return redirect()->away($session['checkout_url']);
@@ -197,22 +174,13 @@ class PayMongoController extends Controller
             abort(404);
         }
 
-        $viewData = ['payment' => $payment];
+        $session = $this->resolvePaidCheckoutSession($payment, $payMongo);
 
-        if ($payment->paymongo_checkout_id && !$payment->paymongo_payment_intent_id) {
-            try {
-                $session = $payMongo->retrieveCheckoutSession($payment->paymongo_checkout_id);
-                $attrs = $session['attributes'];
-
-                if (in_array($attrs['status'], ['paid', 'completed'], true)) {
-                    $this->confirmOnlinePayment($payment, $attrs, null);
-                }
-            } catch (\Throwable $e) {
-                report($e);
-            }
+        if ($session) {
+            $this->confirmOnlinePayment($payment, $session['attributes'], null);
         }
 
-        $viewData['citation'] = $viewData['payment']->citation;
+        $viewData = ['payment' => $payment, 'citation' => $payment->citation];
 
         return view('citations.payment-result', $viewData);
     }
@@ -244,19 +212,54 @@ class PayMongoController extends Controller
         // that matches our stored paymongo_checkout_id (cs_*) lives in the
         // nested payment attributes as `checkout_session_id`.
         if ($eventType === 'checkout_session.payment.paid' && ! empty($nestedAttrs['checkout_session_id'])) {
-            $payment = Payment::where('paymongo_checkout_id', $nestedAttrs['checkout_session_id'])->first();
+            $sessionId = $nestedAttrs['checkout_session_id'];
+            $session = null;
+            $payment = null;
 
-            if ($payment && ! $payment->paid_at) {
-                try {
-                    $session = $payMongo->retrieveCheckoutSession($nestedAttrs['checkout_session_id']);
-                    $this->confirmOnlinePayment($payment, $session['attributes'], null);
-                } catch (\Throwable $e) {
-                    report($e);
-                }
+            // Retrieve the session and locate the payment via metadata. This is
+            // reliable even when the payer completed an older checkout attempt.
+            try {
+                $session = $payMongo->retrieveCheckoutSession($sessionId);
+                $paymentId = $session['attributes']['metadata']['payment_id'] ?? null;
+                $payment = $paymentId ? Payment::find((int) $paymentId) : null;
+            } catch (\Throwable $e) {
+                report($e);
+            }
+
+            if (! $payment) {
+                $payment = Payment::where('paymongo_checkout_id', $sessionId)
+                    ->orWhereJsonContains('paymongo_session_ids', $sessionId)
+                    ->first();
+            }
+
+            if ($payment && ! $payment->paid_at && $session) {
+                $this->confirmOnlinePayment($payment, $session['attributes'], null);
             }
         }
 
         return response('OK');
+    }
+
+    protected function resolvePaidCheckoutSession(Payment $payment, PayMongoService $payMongo): ?array
+    {
+        $ids = array_values(array_unique(array_merge(
+            $payment->paymongo_session_ids ?? [],
+            $payment->paymongo_checkout_id ? [$payment->paymongo_checkout_id] : [],
+        )));
+
+        foreach (array_reverse($ids) as $id) {
+            try {
+                $session = $payMongo->retrieveCheckoutSession($id);
+
+                if (in_array($session['attributes']['status'] ?? '', ['paid', 'completed'], true)) {
+                    return $session;
+                }
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        return null;
     }
 
     protected function resolvePublicCitation($id, $token): ?Citation

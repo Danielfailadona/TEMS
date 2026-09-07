@@ -77,7 +77,7 @@
                 <div class="mx-auto mb-3 spinner-border text-warning" style="width:3rem;height:3rem;" role="status"></div>
                 <h3 class="mb-2">Payment Being Processed</h3>
                 <p class="text-muted mx-auto" style="max-width: 380px;">
-                    Your payment is being verified. This usually takes a few seconds. You may return to this page later to confirm your citation status.
+                    Your payment is being verified. This usually takes a few seconds. This page will update automatically once your payment is confirmed.
                 </p>
                 <a href="{{ route('public.citation.ticket', ['id' => $citation->id, 'token' => $citation->getValidationToken()]) }}"
                    class="btn btn-primary mt-2">
@@ -85,6 +85,17 @@
                 </a>
             </div>
         </div>
+        <script>
+            (function () {
+                var attempts = 0;
+                var tick = function () {
+                    if (attempts >= 12) return;
+                    attempts++;
+                    setTimeout(function () { window.location.reload(); }, 5000);
+                };
+                tick();
+            })();
+        </script>
     @endif
 </div>
 
