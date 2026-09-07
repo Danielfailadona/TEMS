@@ -195,6 +195,25 @@ class PayMongoController extends Controller
         return view('payments.online-cancel', compact('payment'));
     }
 
+    public function sync(Payment $payment, PayMongoService $payMongo): RedirectResponse
+    {
+        $this->authorize('update', $payment);
+
+        if ($payment->paid_at) {
+            return back()->with('info', 'This payment is already confirmed.');
+        }
+
+        $session = $this->resolvePaidCheckoutSession($payment, $payMongo);
+
+        if ($session) {
+            $this->confirmOnlinePayment($payment, $session['attributes'], auth()->id());
+
+            return back()->with('success', 'Payment confirmed with PayMongo. Citation marked as paid.');
+        }
+
+        return back()->withErrors(['paymongo' => 'PayMongo has not recorded a completed payment for this checkout yet.']);
+    }
+
     public function webhook(Request $request, PayMongoService $payMongo): \Illuminate\Http\Response
     {
         $payload = $request->all();

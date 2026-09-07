@@ -8,6 +8,14 @@
     <div class="d-flex gap-2">
         @can('update', $payment)
             <a href="{{ route('payments.edit', $payment) }}" class="btn btn-outline-secondary">Edit</a>
+            @if ($payment->isPendingOnline())
+                <form method="POST" action="{{ route('payments.sync', $payment) }}">
+                    @csrf
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-repeat me-1"></i>Sync PayMongo Status
+                    </button>
+                </form>
+            @endif
         @endcan
         <button onclick="window.print()" class="btn btn-outline-primary">Print Receipt</button>
     </div>
