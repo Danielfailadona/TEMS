@@ -233,23 +233,27 @@ class PayMongoController extends Controller
     {
         $payload = $request->all();
 
-        // TODO(deferred): verify PayMongo HMAC signature before handling events.
+        $webhookSecret = config('paymongo.webhook_secret');
 
-        if (($payload['data']['attributes']['type'] ?? '') === 'payment.paid') {
-            $checkoutId = $payload['data']['attributes']['data']['id'] ?? null;
+        if ($webhookSecret && ! $payMongo->verifyWebhookSignature($request->getContent(), (string) $request->header('PayMongo-Signature'))) {
+            return response('Invalid signature', 400);
+        }
 
-            if ($checkoutId) {
-                $payment = Payment::where('paymongo_checkout_id', $checkoutId)->first();
+        $eventType = $payload['data']['attributes']['type'] ?? '';
+        $nestedAttrs = $payload['data']['attributes']['data']['attributes'] ?? [];
 
-                if ($payment && !$payment->paid_at) {
-                    try {
-                        $session = $payMongo->retrieveCheckoutSession($checkoutId);
-                        $attrs = $session['attributes'];
+        // Checkout Session flow emits `checkout_session.payment.paid`. The id
+        // that matches our stored paymongo_checkout_id (cs_*) lives in the
+        // nested payment attributes as `checkout_session_id`.
+        if ($eventType === 'checkout_session.payment.paid' && ! empty($nestedAttrs['checkout_session_id'])) {
+            $payment = Payment::where('paymongo_checkout_id', $nestedAttrs['checkout_session_id'])->first();
 
-                        $this->confirmOnlinePayment($payment, $attrs, null);
-                    } catch (\Throwable $e) {
-                        report($e);
-                    }
+            if ($payment && ! $payment->paid_at) {
+                try {
+                    $session = $payMongo->retrieveCheckoutSession($nestedAttrs['checkout_session_id']);
+                    $this->confirmOnlinePayment($payment, $session['attributes'], null);
+                } catch (\Throwable $e) {
+                    report($e);
                 }
             }
         }

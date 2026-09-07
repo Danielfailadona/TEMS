@@ -10,10 +10,13 @@ class PayMongoService
 
     protected ?string $publicKey;
 
+    protected ?string $webhookSecret;
+
     public function __construct()
     {
         $this->secretKey = config('paymongo.secret_key');
         $this->publicKey = config('paymongo.public_key');
+        $this->webhookSecret = config('paymongo.webhook_secret');
     }
 
     protected function client(): \Illuminate\Http\Client\PendingRequest
@@ -85,13 +88,28 @@ class PayMongoService
         return ! empty($this->secretKey) && ! empty($this->publicKey);
     }
 
-    /**
-     * TODO(deferred): PayMongo webhook HMAC signature verification is not yet
-     * implemented. Do not rely on this method until it is finished and the
-     * PAYMONGO_WEBHOOK_SECRET is configured.
-     */
     public function verifyWebhookSignature(string $payload, string $signature): bool
     {
-        return true;
+        if (! $this->webhookSecret) {
+            return true;
+        }
+
+        $parts = [];
+
+        foreach (explode(',', $signature) as $kv) {
+            [$key, $value] = array_pad(explode('=', $kv, 2), 2, '');
+            $parts[$key] = $value;
+        }
+
+        $timestamp = $parts['t'] ?? '';
+        $received = $parts['v1'] ?? '';
+
+        if ($timestamp === '' || $received === '') {
+            return false;
+        }
+
+        $expected = hash_hmac('sha256', $timestamp.'.'.$payload, $this->webhookSecret);
+
+        return hash_equals($expected, $received);
     }
 }
