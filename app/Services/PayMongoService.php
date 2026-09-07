@@ -104,7 +104,16 @@ class PayMongoService
         }
 
         $timestamp = $parts['t'] ?? '';
-        $received = $parts['v1'] ?? '';
+
+        // PayMongo sends two signatures per event: `te` for test-mode events
+        // and `li` for live-mode events. Only one is populated.
+        $received = '';
+
+        if (! empty($parts['te'])) {
+            $received = $parts['te'];
+        } elseif (! empty($parts['li'])) {
+            $received = $parts['li'];
+        }
 
         if ($timestamp === '' || $received === '') {
             return false;

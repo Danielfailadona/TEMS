@@ -221,7 +221,7 @@ class PayMongoController extends Controller
         $webhookSecret = config('paymongo.webhook_secret');
 
         if ($webhookSecret && ! $payMongo->verifyWebhookSignature($request->getContent(), (string) $request->header('PayMongo-Signature'))) {
-            return response('Invalid signature', 400);
+            return response('Invalid signature', 401);
         }
 
         $eventType = $payload['data']['attributes']['type'] ?? '';
