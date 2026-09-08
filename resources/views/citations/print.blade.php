@@ -27,7 +27,10 @@
         .qr .hint { font-size: 10px; color: #555; margin-top: 4px; }
 
         .footer { margin-top: 14px; border-top: 1px dashed #999; padding-top: 8px; font-size: 9px; color: #555; text-align: center; }
-        .signature { margin-top: 18px; border-top: 1px solid #111; width: 200px; text-align: center; font-size: 10px; padding-top: 4px; float: left; }
+        .signature { margin-top: 18px; width: 200px; text-align: center; font-size: 10px; float: left; }
+        .signature-line { border-top: 1px solid #111; width: 100%; margin-bottom: 4px; }
+        .signature-title { font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+        .signature-name { font-size: 11px; font-weight: 600; }
 
         .stamp-paid {
             position: absolute;
@@ -121,7 +124,9 @@
     </div>
 
     <div class="signature">
-        {{ $citation->enforcer->name ?? 'Name of Issuing Officer' }}
+        <div class="signature-line"></div>
+        <div class="signature-title">Transportation Enforcer</div>
+        <div class="signature-name">{{ $citation->enforcer->name ?? 'Name of Issuing Officer' }}</div>
     </div>
 
     <div class="footer">
