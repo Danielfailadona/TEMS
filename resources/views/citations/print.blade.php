@@ -121,7 +121,7 @@
     </div>
 
     <div class="signature">
-        Signature of Issuing Officer
+        {{ $citation->enforcer->name ?? 'Name of Issuing Officer' }}
     </div>
 
     <div class="footer">
