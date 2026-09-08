@@ -226,27 +226,39 @@ class PayMongoController extends Controller
         ]);
 
         // Some PayMongo test-simulator payloads omit `checkout_session_id`.
-        // Recover it by retrieving the Payment resource when only the `pay_*`
-        // id is available, then fall back to its `attributes.checkout_session_id`.
+        // Strategy:
+        // 1. For checkout_session.payment.paid: the nested data IS the checkout session,
+        //    so its `id` field IS the checkout session ID (cs_...).
+        // 2. For payment.paid: the nested data is a Payment; try to retrieve it to get
+        //    its checkout_session_id.
         if (! $sessionId) {
             $nestedId = $payload['data']['attributes']['data']['id'] ?? null;
+            $nestedType = $payload['data']['attributes']['data']['type'] ?? null;
 
-            if (is_string($nestedId) && str_starts_with($nestedId, 'pay_')) {
-                try {
-                    $paymentResource = $payMongo->retrievePayment($nestedId);
-                    $sessionId = $paymentResource['attributes']['checkout_session_id'] ?? null;
+            if ($eventType === 'checkout_session.payment.paid' || $eventType === 'checkout_session.payment_paid') {
+                // Nested data is the checkout session; its `id` is the cs_... id
+                if (is_string($nestedId) && str_starts_with($nestedId, 'cs_')) {
+                    $sessionId = $nestedId;
+                }
+            } elseif ($eventType === 'payment.paid') {
+                // Nested data is a Payment; retrieve it to get checkout_session_id
+                if (is_string($nestedId) && str_starts_with($nestedId, 'pay_')) {
+                    try {
+                        $paymentResource = $payMongo->retrievePayment($nestedId);
+                        $sessionId = $paymentResource['attributes']['checkout_session_id'] ?? null;
 
-                    if ($sessionId) {
-                        \Illuminate\Support\Facades\Log::info('PayMongo webhook: resolved session_id via payment retrieve', [
+                        if ($sessionId) {
+                            \Illuminate\Support\Facades\Log::info('PayMongo webhook: resolved session_id via payment retrieve', [
+                                'payment_pay_id' => $nestedId,
+                                'session_id' => $sessionId,
+                            ]);
+                        }
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning('PayMongo webhook: payment retrieve failed', [
                             'payment_pay_id' => $nestedId,
-                            'session_id' => $sessionId,
+                            'error' => $e->getMessage(),
                         ]);
                     }
-                } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::warning('PayMongo webhook: payment retrieve failed', [
-                        'payment_pay_id' => $nestedId,
-                        'error' => $e->getMessage(),
-                    ]);
                 }
             }
         }
