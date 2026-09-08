@@ -6,28 +6,28 @@
     <title>Citation #{{ $citation->citation_number }}</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; color: #111; font-size: 12px; background: #e5e7eb; }
-        .ticket { width: 5in; height: 7in; margin: 16px auto; padding: 0.35in; background: #fff; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.15); display: flex; flex-direction: column; page-break-inside: avoid; break-inside: avoid; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; color: #111; font-size: 11px; background: #e5e7eb; }
+        .ticket { width: 5in; height: 7in; margin: 16px auto; padding: 0.3in; background: #fff; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.15); display: flex; flex-direction: column; page-break-inside: avoid; break-inside: avoid; overflow: hidden; }
 
-        .header { text-align: center; border-bottom: 2px solid #111; padding-bottom: 10px; margin-bottom: 14px; flex-shrink: 0; }
-        .header img { height: 52px; margin-bottom: 4px; }
-        .header .name { font-size: 17px; font-weight: 700; letter-spacing: 0.02em; }
-        .header .sub { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #444; }
+        .header { text-align: center; border-bottom: 2px solid #111; padding-bottom: 6px; margin-bottom: 8px; flex-shrink: 0; }
+        .header img { height: 40px; margin-bottom: 3px; }
+        .header .name { font-size: 15px; font-weight: 700; letter-spacing: 0.02em; }
+        .header .sub { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: #444; }
 
-        .title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-shrink: 0; }
-        .title-row h1 { font-size: 16px; }
-        .status { font-size: 11px; font-weight: 700; padding: 3px 10px; border: 2px solid #111; border-radius: 999px; }
+        .title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-shrink: 0; }
+        .title-row h1 { font-size: 14px; }
+        .status { font-size: 10px; font-weight: 700; padding: 2px 8px; border: 2px solid #111; border-radius: 999px; }
 
-        .copy-banner { font-size: 11px; font-weight: 700; text-align: center; border: 2px dashed #111; padding: 4px; margin-bottom: 10px; flex-shrink: 0; }
+        .copy-banner { font-size: 10px; font-weight: 700; text-align: center; border: 2px dashed #111; padding: 3px; margin-bottom: 6px; flex-shrink: 0; }
 
-        table { width: 100%; border-collapse: collapse; margin-bottom: 6px; flex-shrink: 0; }
-        td { padding: 4px 0; vertical-align: top; }
-        td.label { width: 40%; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: #555; }
-        td.value { font-weight: 600; font-size: 12px; text-align: right; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 4px; flex-shrink: 0; }
+        td { padding: 2px 0; vertical-align: top; }
+        td.label { width: 40%; font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; color: #555; }
+        td.value { font-weight: 600; font-size: 11px; text-align: right; }
 
-        .qr { text-align: center; margin: 8px 0; flex-shrink: 0; }
-        .qr img { max-width: 150px; height: auto; }
-        .qr .hint { font-size: 9px; color: #555; margin-top: 4px; }
+        .qr { text-align: center; margin: 4px 0; flex-shrink: 0; }
+        .qr img { max-width: 100px; height: auto; }
+        .qr .hint { font-size: 8px; color: #555; margin-top: 2px; }
 
         .stamp-paid {
             position: absolute;
@@ -45,20 +45,20 @@
             z-index: 1;
         }
 
-        .footer { margin-top: auto; padding-top: 8px; font-size: 9px; color: #333; flex-shrink: 0; }
-        .footer-divider { border-top: 1px solid #111; margin: 8px 0; }
-        .footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+        .footer { margin-top: auto; padding-top: 4px; font-size: 8px; color: #333; flex-shrink: 0; }
+        .footer-divider { border-top: 1px solid #111; margin: 4px 0; }
+        .footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
         .footer-col { text-align: center; }
-        .footer-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #555; margin-bottom: 4px; }
-        .officer-name { font-size: 11px; font-weight: 600; margin-bottom: 2px; }
-        .officer-role { font-size: 9px; color: #444; margin-bottom: 2px; }
-        .officer-id { font-size: 9px; color: #666; }
-        .inquiry-text { font-size: 9px; color: #444; margin-bottom: 2px; }
-        .inquiry-number { font-size: 10px; font-weight: 700; margin-bottom: 2px; }
-        .inquiry-location { font-size: 9px; color: #444; }
-        .footer-meta { text-align: center; border-top: 1px dashed #999; padding-top: 8px; }
-        .meta-line { margin-bottom: 3px; }
-        .system-notice { font-size: 8px; color: #888; font-style: italic; margin-top: 4px; }
+        .footer-label { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #555; margin-bottom: 2px; }
+        .officer-name { font-size: 10px; font-weight: 600; margin-bottom: 1px; }
+        .officer-role { font-size: 8px; color: #444; margin-bottom: 1px; }
+        .officer-id { font-size: 8px; color: #666; }
+        .inquiry-text { font-size: 8px; color: #444; margin-bottom: 1px; }
+        .inquiry-number { font-size: 9px; font-weight: 700; margin-bottom: 1px; }
+        .inquiry-location { font-size: 8px; color: #444; }
+        .footer-meta { text-align: center; border-top: 1px dashed #999; padding-top: 4px; }
+        .meta-line { margin-bottom: 2px; }
+        .system-notice { font-size: 7px; color: #888; font-style: italic; margin-top: 2px; }
 
         .print-btn { text-align: center; margin: 16px 0; }
         .print-btn button, .print-btn a {
@@ -69,7 +69,7 @@
         @media print {
             @page { size: 5in 7in; margin: 0; }
             body { background: #fff; }
-            .ticket { width: 5in; height: 7in; margin: 0; padding: 0.35in; box-shadow: none; }
+            .ticket { width: 5in; height: 7in; margin: 0; padding: 0.3in; box-shadow: none; }
             .print-btn { display: none !important; }
         }
     </style>
@@ -133,7 +133,7 @@
 
     @if (! $citation->isPaid())
         <div class="qr">
-            {!! $citation->getQRCodeSvg(150) !!}
+            {!! $citation->getQRCodeSvg(100) !!}
             <div class="hint">Scan to view citation details and pay online</div>
         </div>
     @endif
