@@ -130,4 +130,9 @@ class User extends Authenticatable
     {
         return $this->account_status === 'approved';
     }
+
+    public function getBadgeIdAttribute(): string
+    {
+        return 'TE-'.str_pad((string) $this->id, 6, '0', STR_PAD_LEFT);
+    }
 }

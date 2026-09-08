@@ -171,4 +171,13 @@ class PaymentController extends Controller
 
         return view('payments.show', compact('payment'));
     }
+
+    public function printReceipt(Payment $payment): View
+    {
+        $this->authorize('view', $payment);
+
+        $payment->load(['citation.violationType', 'cashier']);
+
+        return view('payments.print', compact('payment'));
+    }
 }

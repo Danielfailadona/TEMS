@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Citation #{{ $citation->citation_number }}</title>
+    <title>Payment Receipt #{{ $payment->receipt_number }}</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; color: #111; font-size: 12px; background: #e5e7eb; }
@@ -83,7 +83,7 @@
 </div>
 
 <div class="ticket">
-    @if ($citation->isPaid())
+    @if ($payment->paid_at)
         <div class="stamp-paid">PAID</div>
     @endif
 
@@ -94,55 +94,42 @@
     </div>
 
     <div class="title-row">
-        <h1>Citation Ticket <span style="color:#555;">#{{ $citation->citation_number }}</span></h1>
-        <span class="status">{{ $citation->status->label() }}</span>
+        <h1>Payment Receipt <span style="color:#555;">#{{ $payment->receipt_number }}</span></h1>
+        <span class="status">{{ $payment->paid_at ? 'PAID' : 'PENDING' }}</span>
     </div>
 
-    @if (! empty($isEnforcerCopy))
-        <div class="copy-banner">OFFICIAL COPY</div>
-    @else
-        <div class="copy-banner">VIOLATOR COPY</div>
-    @endif
+    <div class="copy-banner">OFFICIAL COPY</div>
 
     <table>
-        <tr><td class="label">Violation</td><td class="value">{{ $citation->violationType->name }}</td></tr>
-        <tr><td class="label">Penalty Amount</td><td class="value">₱{{ number_format($citation->penalty_amount, 2) }}</td></tr>
-        <tr><td class="label">Plate Number</td><td class="value">{{ $citation->vehicle_plate }}</td></tr>
-        <tr><td class="label">Vehicle</td><td class="value">{{ $citation->vehicle_make }} {{ $citation->vehicle_model }} {{ $citation->vehicle_type ? '('.$citation->vehicle_type.')' : '' }}</td></tr>
-        <tr><td class="label">Color</td><td class="value">{{ $citation->vehicle_color ?? '&mdash;' }}</td></tr>
-        <tr><td class="label">Driver</td><td class="value">{{ $citation->driver_name ?? '&mdash;' }}</td></tr>
-        <tr><td class="label">Date Issued</td><td class="value">{{ $citation->issued_at?->format('F d, Y h:i A') }}</td></tr>
-        <tr><td class="label">Due Date</td><td class="value">{{ $citation->due_date?->format('F d, Y') }}</td></tr>
-        <tr><td class="label">Location</td><td class="value">{{ $citation->location ?? '&mdash;' }}</td></tr>
-        <tr><td class="label">Issued By</td><td class="value">{{ $citation->enforcer->name ?? '&mdash;' }}</td></tr>
-        @if ($citation->notes)
-            <tr><td class="label">Notes</td><td class="value">{{ $citation->notes }}</td></tr>
+        <tr><td class="label">Receipt #</td><td class="value">{{ $payment->receipt_number }}</td></tr>
+        <tr><td class="label">Citation #</td><td class="value">{{ $payment->citation->citation_number }}</td></tr>
+        <tr><td class="label">Vehicle</td><td class="value">{{ $payment->citation->vehicle_plate }}</td></tr>
+        <tr><td class="label">Violation</td><td class="value">{{ $payment->citation->violationType->name }}</td></tr>
+        <tr><td class="label">Penalty Amount</td><td class="value">₱{{ number_format($payment->citation->penalty_amount, 2) }}</td></tr>
+        <tr><td class="label">Amount Paid</td><td class="value">₱{{ number_format($payment->amount, 2) }}</td></tr>
+        <tr><td class="label">Payment Method</td><td class="value">{{ $payment->isOnlinePayment() ? ucfirst($payment->online_payment_method ?? 'Online Payment') : $payment->payment_method->label() }}</td></tr>
+        @if ($payment->reference_number)
+            <tr><td class="label">Reference</td><td class="value">{{ $payment->reference_number }}</td></tr>
         @endif
+        @if ($payment->paymongo_checkout_id)
+            <tr><td class="label">Checkout ID</td><td class="value"><code class="small">{{ $payment->paymongo_checkout_id }}</code></td></tr>
+        @endif
+        <tr><td class="label">Cashier</td><td class="value">{{ $payment->cashier->name ?? 'Online Payment' }}</td></tr>
+        <tr><td class="label">Date Paid</td><td class="value">{{ $payment->paid_at?->format('F d, Y h:i A') ?? 'Pending' }}</td></tr>
     </table>
 
-    <table>
-        @if ($citation->payment)
-            <tr><td class="label">Receipt #</td><td class="value">{{ $citation->payment->receipt_number }}</td></tr>
-            <tr><td class="label">Amount Paid</td><td class="value">₱{{ number_format($citation->payment->amount, 2) }}</td></tr>
-            <tr><td class="label">Paid On</td><td class="value">{{ $citation->payment->paid_at?->format('F d, Y h:i A') ?? 'Pending' }}</td></tr>
-            <tr><td class="label">Method</td><td class="value">{{ $citation->payment->online_payment_method ? ucfirst($citation->payment->online_payment_method) : $citation->payment->payment_method->label() }}</td></tr>
-        @else
-            <tr><td class="label">Payment Status</td><td class="value">Pending</td></tr>
-        @endif
-    </table>
-
-    @if (! $citation->isPaid())
+    @if (! $payment->paid_at)
         <div class="qr">
-            {!! $citation->getQRCodeSvg(150) !!}
+            {!! $payment->citation->getQRCodeSvg(150) !!}
             <div class="hint">Scan to view citation details and pay online</div>
         </div>
     @endif
 
     <div class="footer">
         @include('partials.ticket-print-footer', [
-            'officer' => $citation->enforcer,
-            'docType' => 'Citation',
-            'docNumber' => $citation->citation_number,
+            'officer' => $payment->citation->enforcer,
+            'docType' => 'Receipt',
+            'docNumber' => $payment->receipt_number,
         ])
     </div>
 </div>
