@@ -225,6 +225,32 @@ class PayMongoController extends Controller
             'session_id' => $sessionId,
         ]);
 
+        // Some PayMongo test-simulator payloads omit `checkout_session_id`.
+        // Recover it by retrieving the Payment resource when only the `pay_*`
+        // id is available, then fall back to its `attributes.checkout_session_id`.
+        if (! $sessionId) {
+            $nestedId = $payload['data']['attributes']['data']['id'] ?? null;
+
+            if (is_string($nestedId) && str_starts_with($nestedId, 'pay_')) {
+                try {
+                    $paymentResource = $payMongo->retrievePayment($nestedId);
+                    $sessionId = $paymentResource['attributes']['checkout_session_id'] ?? null;
+
+                    if ($sessionId) {
+                        \Illuminate\Support\Facades\Log::info('PayMongo webhook: resolved session_id via payment retrieve', [
+                            'payment_pay_id' => $nestedId,
+                            'session_id' => $sessionId,
+                        ]);
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('PayMongo webhook: payment retrieve failed', [
+                        'payment_pay_id' => $nestedId,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
         if (! $sessionId) {
             \Illuminate\Support\Facades\Log::warning('PayMongo webhook: no checkout_session_id in payload.', compact('eventType'));
 

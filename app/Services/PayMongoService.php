@@ -85,6 +85,17 @@ class PayMongoService
         return $response->json('data');
     }
 
+    public function retrievePayment(string $id): array
+    {
+        $response = $this->client()->get("/payments/{$id}");
+
+        if ($response->failed()) {
+            throw new \RuntimeException('PayMongo payment retrieval failed: '.$response->body());
+        }
+
+        return $response->json('data');
+    }
+
     public function isAvailable(): bool
     {
         return ! empty($this->secretKey) && ! empty($this->publicKey);
