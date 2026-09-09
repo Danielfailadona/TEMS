@@ -53,11 +53,20 @@
     .tracking-title { color: #fff; font-weight: 800; font-size: 1.2rem; line-height: 1.1; }
     .tracking-subtitle { color: rgba(203, 213, 225, 0.8); font-size: 0.75rem; }
 
-    .tracking-stats-mini {
-        display: flex; gap: 1.25rem; margin-top: 0.5rem;
-    }
+    .tracking-stats-mini { display: flex; gap: 1.25rem; margin-top: 0.5rem; }
     .tracking-stats-mini .stat { font-size: 0.72rem; color: rgba(203, 213, 225, 0.85); }
     .tracking-stats-mini .stat-value { font-weight: 700; color: #fff; font-size: 0.9rem; }
+
+    .tracking-acc-legend {
+        display: flex; align-items: center; gap: 0.35rem 0.75rem; flex-wrap: wrap;
+        margin-top: 0.6rem; padding-top: 0.6rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.68rem; color: rgba(203, 213, 225, 0.8);
+    }
+    .tracking-acc-legend .legend-dot {
+        display: inline-block; width: 14px; height: 14px; border-radius: 50%;
+        margin-right: 0.2rem; vertical-align: -2px;
+    }
 
     /* ---------- Bottom bar: filter chips + controls ---------- */
     .tracking-overlay-bottom {
@@ -263,6 +272,11 @@
                     <div class="stat"><span class="stat-value" id="stat-active">0</span> active</div>
                     <div class="stat"><span class="stat-value" id="stat-zones">0</span> zones</div>
                 </div>
+                <div class="tracking-acc-legend">
+                    <span style="display:flex;align-items:center;"><span class="legend-dot" style="background:rgba(34,197,94,0.22);border:1px solid rgba(34,197,94,0.55);"></span>&le;50m good</span>
+                    <span style="display:flex;align-items:center;"><span class="legend-dot" style="background:rgba(245,158,11,0.20);border:1px solid rgba(245,158,11,0.55);"></span>&le;150m fair</span>
+                    <span style="display:flex;align-items:center;"><span class="legend-dot" style="background:rgba(239,68,68,0.20);border:1px solid rgba(239,68,68,0.55);"></span>&gt;150m poor</span>
+                </div>
             </div>
         </div>
 
@@ -430,6 +444,42 @@ document.addEventListener('DOMContentLoaded', () => {
             .addTo(map);
     }
 
+    function accuracyTag(m) {
+        if (!m || m <= 0) return '<span class="value">—</span>';
+        const cls = m <= 50 ? 'rgba(34, 197, 94, 0.18)' : (m <= 150 ? 'rgba(245, 158, 11, 0.18)' : 'rgba(239, 68, 68, 0.18)');
+        const color = m <= 50 ? '#4ade80' : (m <= 150 ? '#fbbf24' : '#f87171');
+        return `<span class="badge-inzone" style="background:${cls};color:${color};">±${Math.round(m)}m</span>`;
+    }
+
+    function renderAccuracyCircles() {
+        const layerId = 'enforcer-accuracy-fill';
+        try { if (map.getLayer(layerId)) map.removeLayer(layerId); } catch (e) {}
+        try { if (map.getSource('enforcer-accuracy')) map.removeSource('enforcer-accuracy'); } catch (e) {}
+
+        const features = state.enforcers.filter(matchesFilter)
+            .filter(e => e.accuracy_m > 0 && !isNaN(e.lng) && !isNaN(e.lat))
+            .map(e => ({
+                type: 'Feature',
+                properties: {
+                    color: e.accuracy_m <= 50 ? 'rgba(34, 197, 94, 0.22)' : (e.accuracy_m <= 150 ? 'rgba(245, 158, 11, 0.20)' : 'rgba(239, 68, 68, 0.20)'),
+                    outline: e.accuracy_m <= 50 ? 'rgba(34, 197, 94, 0.55)' : (e.accuracy_m <= 150 ? 'rgba(245, 158, 11, 0.55)' : 'rgba(239, 68, 68, 0.55)'),
+                },
+                geometry: { type: 'Polygon', coordinates: [buildCirclePolygon(e.lng, e.lat, Math.max(e.accuracy_m, 10))] },
+            }));
+
+        if (features.length === 0) return;
+        map.addSource('enforcer-accuracy', { type: 'geojson', data: { type: 'FeatureCollection', features } });
+        map.addLayer({
+            id: layerId,
+            type: 'fill',
+            source: 'enforcer-accuracy',
+            paint: {
+                'fill-color': ['get', 'color'],
+                'fill-outline-color': ['get', 'outline'],
+            },
+        });
+    }
+
     function renderEnforcers() {
         Object.values(state.markers).forEach(m => m.remove());
         state.markers = {};
@@ -442,6 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
             el.addEventListener('click', () => toggleEnforcer(e.id));
             state.markers[e.id] = createMarker(el, e);
         });
+        renderAccuracyCircles();
     }
 
     function buildCirclePolygon(lng, lat, radiusM, points = 64) {
@@ -521,6 +572,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="detail-row"><span class="label">Last seen</span><span class="value">${e.last_seen_label || '—'}</span></div>
             <div class="detail-row"><span class="label">Zone status</span><span class="${e.inside_zone ? 'badge-inzone' : 'badge-offzone'}">${e.inside_zone ? 'Inside zone' : 'Outside zone'}</span></div>
             <div class="detail-row"><span class="label">Distance to zone</span><span class="value">${e.distance_km != null ? e.distance_km + ' km' : '—'}</span></div>
+            <div class="detail-row"><span class="label">Accuracy</span>${accuracyTag(e.accuracy_m)}</div>
         `;
     }
 
@@ -568,7 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="status-dot ${e.status === 'active' ? 'active' : 'offline'}"></span>
                 <div class="flex-grow-1 min-width-0">
                     <div class="item-name">${e.name}</div>
-                    <div class="item-meta">${e.team || '—'} · ${e.last_seen_label || '—'}</div>
+                    <div class="item-meta">${e.team || '—'} · ${e.last_seen_label || '—'}${e.accuracy_m > 0 ? ' · ±' + Math.round(e.accuracy_m) + 'm' : ''}</div>
                 </div>
                 <span class="item-zone-tag">${e.zone_name || 'No zone'}</span>
                 <small class="item-dist">${e.distance_km != null ? e.distance_km + 'km' : ''}</small>
