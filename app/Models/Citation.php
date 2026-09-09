@@ -21,6 +21,8 @@ class Citation extends Model
         'penalty_amount',
         'status',
         'location',
+        'latitude',
+        'longitude',
         'notes',
         'issued_at',
         'due_date',

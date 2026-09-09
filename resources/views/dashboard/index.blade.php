@@ -322,47 +322,66 @@ document.addEventListener('DOMContentLoaded', () => {
     const appealLabels = @json($appealsByMonth->keys()->values());
     const appealData = @json($appealsByMonth->values());
 
-    new Chart(document.getElementById('citationsChart'), {
-        type: 'bar',
-        data: {
-            labels: citationLabels,
-            datasets: [{ label: 'Citations', data: citationData, backgroundColor: '#2563eb', borderRadius: 4 }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-        }
-    });
-
-    const revenueCanvas = document.getElementById('revenueChart');
-    if (revenueCanvas) {
-        new Chart(revenueCanvas, {
-            type: 'line',
-            data: {
-                labels: revenueLabels,
-                datasets: [{ label: 'Revenue (₱)', data: revenueData, borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)', fill: true, tension: 0.35 }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } } }
-            }
-        });
+    function initCitationChart() {
+        const el = document.getElementById('citationsChart');
+        if (!el || typeof Chart === 'undefined') return;
+        try {
+            new Chart(el, {
+                type: 'bar',
+                data: {
+                    labels: citationLabels,
+                    datasets: [{ label: 'Citations', data: citationData, backgroundColor: '#2563eb', borderRadius: 4 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+        } catch (e) { console.warn('Citation chart failed:', e); }
     }
 
-    new Chart(document.getElementById('appealsChart'), {
-        type: 'line',
-        data: {
-            labels: appealLabels,
-            datasets: [{ label: 'Appeals', data: appealData, borderColor: '#7c3aed', backgroundColor: 'rgba(124,58,237,0.08)', fill: true, tension: 0.35 }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-        }
-    });
+    function initRevenueChart() {
+        const el = document.getElementById('revenueChart');
+        if (!el || typeof Chart === 'undefined') return;
+        try {
+            new Chart(el, {
+                type: 'line',
+                data: {
+                    labels: revenueLabels,
+                    datasets: [{ label: 'Revenue (₱)', data: revenueData, borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)', fill: true, tension: 0.35 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } } }
+                }
+            });
+        } catch (e) { console.warn('Revenue chart failed:', e); }
+    }
+
+    function initAppealsChart() {
+        const el = document.getElementById('appealsChart');
+        if (!el || typeof Chart === 'undefined') return;
+        try {
+            new Chart(el, {
+                type: 'line',
+                data: {
+                    labels: appealLabels,
+                    datasets: [{ label: 'Appeals', data: appealData, borderColor: '#7c3aed', backgroundColor: 'rgba(124,58,237,0.08)', fill: true, tension: 0.35 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+        } catch (e) { console.warn('Appeals chart failed:', e); }
+    }
+
+    initCitationChart();
+    initRevenueChart();
+    initAppealsChart();
 
     if (window.__zonePicker?.initZoneViewer) {
         const zoneData = @json($zoneMapData);
@@ -372,8 +391,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+});
 
-    // Enforcer GPS toggle-based tracking
+document.addEventListener('DOMContentLoaded', () => {
+    // Enforcer GPS toggle-based tracking (isolated so chart failures can't block it)
     const gpsToggle = document.getElementById('gps-toggle');
     const gpsStatusEl = document.getElementById('gps-status');
     const gpsControls = document.getElementById('gps-controls');

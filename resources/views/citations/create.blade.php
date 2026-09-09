@@ -92,9 +92,22 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-6">
-                <label class="form-label">Location</label>
-                <input type="text" name="location" class="form-control" value="{{ old('location') }}" placeholder="Violation location">
+            <div class="col-12">
+                <label class="form-label">Location <span class="text-danger">*</span></label>
+                <input type="text" name="location" class="form-control" value="{{ old('location') }}" placeholder="Violation location" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Latitude</label>
+                <input type="number" step="0.0000001" name="latitude" id="latitude" class="form-control" value="{{ old('latitude') }}" placeholder="e.g. 15.4872">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Longitude</label>
+                <input type="number" step="0.0000001" name="longitude" id="longitude" class="form-control" value="{{ old('longitude') }}" placeholder="e.g. 120.9762">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="button" id="btnCurrentLocation" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-crosshair me-1"></i>Get Current Location
+                </button>
             </div>
             <div class="col-12">
                 <label class="form-label">Notes</label>
@@ -171,6 +184,38 @@
     [cameraInput, galleryInput].forEach(input => input.addEventListener('change', renderPreview));
     document.getElementById('btnCamera').addEventListener('click', () => cameraInput.click());
     document.getElementById('btnGallery').addEventListener('click', () => galleryInput.click());
+
+    const currentLocationBtn = document.getElementById('btnCurrentLocation');
+    const latInput = document.getElementById('latitude');
+    const lngInput = document.getElementById('longitude');
+
+    if (currentLocationBtn && latInput && lngInput) {
+        currentLocationBtn.addEventListener('click', function () {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                return;
+            }
+            this.disabled = true;
+            const original = this.innerHTML;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Getting location...';
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    latInput.value = position.coords.latitude.toFixed(7);
+                    lngInput.value = position.coords.longitude.toFixed(7);
+                    currentLocationBtn.disabled = false;
+                    currentLocationBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Location Set';
+                    setTimeout(() => {
+                        currentLocationBtn.innerHTML = original;
+                    }, 2500);
+                },
+                (error) => {
+                    alert('Unable to get GPS coordinates: ' + error.message);
+                    currentLocationBtn.disabled = false;
+                    currentLocationBtn.innerHTML = original;
+                }
+            );
+        });
+    }
 </script>
 @endpush
 @endsection
