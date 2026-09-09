@@ -19,10 +19,15 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\EnsureRole::class,
             'active' => \App\Http\Middleware\EnsureActiveUser::class,
             'approved' => \App\Http\Middleware\EnsureApprovedUser::class,
+            'throttle.message' => \App\Http\Middleware\ThrottleWithMessage::class,
         ]);
 
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn () => route('dashboard'));
+
+        $middleware->validateCsrfTokens(except: [
+            'webhook/paymongo',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

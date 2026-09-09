@@ -6,14 +6,17 @@ use Illuminate\Support\Facades\Http;
 
 class PayMongoService
 {
-    protected string $secretKey;
+    protected ?string $secretKey;
 
-    protected string $publicKey;
+    protected ?string $publicKey;
+
+    protected ?string $webhookSecret;
 
     public function __construct()
     {
         $this->secretKey = config('paymongo.secret_key');
         $this->publicKey = config('paymongo.public_key');
+        $this->webhookSecret = config('paymongo.webhook_secret');
     }
 
     protected function client(): \Illuminate\Http\Client\PendingRequest
@@ -25,14 +28,16 @@ class PayMongoService
 
     public function createCheckoutSession(array $params): array
     {
+        $billing = array_filter([
+            'name' => $params['billing_name'] ?? null,
+            'email' => $params['billing_email'] ?? null,
+            'phone' => $params['billing_phone'] ?? null,
+        ], fn ($v) => $v !== null && $v !== '');
+
         $payload = [
             'data' => [
                 'attributes' => [
-                    'billing' => [
-                        'name' => $params['billing_name'],
-                        'email' => $params['billing_email'],
-                        'phone' => $params['billing_phone'] ?? null,
-                    ],
+                    'billing' => $billing,
                     'line_items' => [
                         [
                             'name' => $params['description'],
@@ -41,7 +46,7 @@ class PayMongoService
                             'quantity' => 1,
                         ],
                     ],
-                    'payment_method_types' => ['gcash', 'maya', 'card', 'grab_pay'],
+                    'payment_method_types' => $params['payment_method_types'] ?? ['gcash', 'card', 'qrph'],
                     'success_url' => $params['success_url'],
                     'cancel_url' => $params['cancel_url'],
                     'description' => $params['description'],
@@ -83,5 +88,39 @@ class PayMongoService
     public function isAvailable(): bool
     {
         return ! empty($this->secretKey) && ! empty($this->publicKey);
+    }
+
+    public function verifyWebhookSignature(string $payload, string $signature): bool
+    {
+        if (! $this->webhookSecret) {
+            return true;
+        }
+
+        $parts = [];
+
+        foreach (explode(',', $signature) as $kv) {
+            [$key, $value] = array_pad(explode('=', $kv, 2), 2, '');
+            $parts[$key] = $value;
+        }
+
+        $timestamp = $parts['t'] ?? '';
+
+        // PayMongo sends two signatures per event: `te` for test-mode events
+        // and `li` for live-mode events. Only one is populated.
+        $received = '';
+
+        if (! empty($parts['te'])) {
+            $received = $parts['te'];
+        } elseif (! empty($parts['li'])) {
+            $received = $parts['li'];
+        }
+
+        if ($timestamp === '' || $received === '') {
+            return false;
+        }
+
+        $expected = hash_hmac('sha256', $timestamp.'.'.$payload, $this->webhookSecret);
+
+        return hash_equals($expected, $received);
     }
 }

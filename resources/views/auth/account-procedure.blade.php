@@ -384,6 +384,12 @@
                 @if(session('status'))
                     <div class="alert alert-success py-2 small">{{ session('status') }}</div>
                 @endif
+                @if($errors->has('throttle'))
+                    <div class="alert alert-warning py-2 small mb-3">
+                        <i class="bi bi-clock-history me-1"></i>
+                        <strong>Rate Limited:</strong> {{ $errors->first('throttle') }}
+                    </div>
+                @endif
                 <form method="POST" action="{{ route('account.procedure.store') }}">
                     @csrf
                     <input type="hidden" name="_action" value="login">

@@ -8,6 +8,7 @@
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color:#1e293b; background:#fff; padding:2rem; }
         .doc-header { text-align:center; border-bottom:3px solid #1e293b; padding-bottom:1rem; margin-bottom:1.5rem; }
+        .doc-header img { display:block; margin:0 auto 0.75rem; height:56px; }
         .doc-header h1 { font-size:1.4rem; letter-spacing:0.05em; text-transform:uppercase; color:#0f172a; }
         .doc-header .subtitle { font-size:0.75rem; color:#64748b; margin-top:0.25rem; }
         .type-badge { display:inline-flex; align-items:center; gap:0.4rem; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:0.3rem 0.75rem; border-radius:0.35rem; color:#fff; margin-bottom:1rem; }
@@ -36,6 +37,7 @@
     </div>
 
     <div class="doc-header">
+        <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs">
         <h1>TEMS Official Archive Record</h1>
         <div class="subtitle">Transportation Enforcement Management System — {{ config('app.name', 'TEMS') }}</div>
     </div>

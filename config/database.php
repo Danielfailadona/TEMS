@@ -97,6 +97,11 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'require'),
+            'options' => [
+                // Supabase pooler (PgBouncer transaction mode) does not persist
+                // server-side prepared statements; emulate them client-side.
+                PDO::ATTR_EMULATE_PREPARES => true,
+            ],
         ],
 
         'sqlsrv' => [

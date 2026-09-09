@@ -11,6 +11,7 @@ use App\Models\Payment;
 use App\Models\NumberSeries;
 use App\Models\SystemNotification;
 use App\Models\User;
+use App\Services\CitationNumberService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -34,17 +35,43 @@ class PaymentController extends Controller
         $this->authorize('create', Payment::class);
 
         $citation = null;
-        if ($request->filled('citation_number')) {
-            $citation = Citation::with(['violationType', 'payment'])
-                ->where('citation_number', $request->citation_number)
-                ->first();
-        } elseif ($request->filled('citation_id')) {
+        $suggestions = collect();
+
+        if ($request->filled('citation_id')) {
             $citation = Citation::with(['violationType', 'payment'])->find($request->citation_id);
+        } elseif ($request->filled('citation_number')) {
+            $search = trim($request->citation_number);
+
+            $citation = Citation::with(['violationType', 'payment'])
+                ->where(function ($q) use ($search) {
+                    $q->whereRaw('LOWER(citation_number) LIKE ?', ['%'.mb_strtolower($search).'%'])
+                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($search).'%']);
+                })
+                ->orderByRaw('citation_number = ? desc', [$search])
+                ->latest('issued_at')
+                ->first();
+        }
+
+        if (! $citation) {
+            $suggestions = Citation::with(['violationType', 'payment'])
+                ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped])
+                ->whereDoesntHave('payment')
+                ->when($request->filled('citation_number'), function ($q) use ($request) {
+                    $search = '%'.mb_strtolower(trim($request->citation_number)).'%';
+                    $q->where(function ($inner) use ($search) {
+                        $inner->whereRaw('LOWER(citation_number) LIKE ?', [$search])
+                            ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', [$search]);
+                    });
+                })
+                ->latest('issued_at')
+                ->limit(10)
+                ->get();
         }
 
         return view('payments.create', [
             'citation' => $citation,
             'paymentMethods' => PaymentMethod::cases(),
+            'suggestions' => $suggestions,
         ]);
     }
 
@@ -54,8 +81,13 @@ class PaymentController extends Controller
 
         $citation = Citation::with('payment')->findOrFail($request->citation_id);
 
-        if ($citation->payment) {
+        if ($citation->payment && $citation->payment->paid_at) {
             return back()->withErrors(['citation_id' => 'This citation has already been paid.']);
+        }
+
+        // If a pending/abandoned online payment exists, let the manual payment replace it.
+        if ($citation->payment && !$citation->payment->paid_at) {
+            $citation->payment->delete();
         }
 
         if (! $citation->isPayable()) {

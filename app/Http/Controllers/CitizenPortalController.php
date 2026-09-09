@@ -10,6 +10,32 @@ use Illuminate\View\View;
 
 class CitizenPortalController extends Controller
 {
+    public function citationTicket(Request $request, $id, $token): View
+    {
+        $citation = Citation::with(['violationType', 'enforcer', 'evidence', 'payment'])
+            ->find($id);
+
+        if (! $citation || ! hash_equals($citation->getValidationToken(), (string) $token)) {
+            abort(404);
+        }
+
+        return view('citations.ticket', compact('citation'));
+    }
+
+    public function citationPrint(Request $request, $id, $token): View
+    {
+        $citation = Citation::with(['violationType', 'enforcer', 'evidence', 'payment'])
+            ->find($id);
+
+        if (! $citation || ! hash_equals($citation->getValidationToken(), (string) $token)) {
+            abort(404);
+        }
+
+        $isEnforcerCopy = false;
+
+        return view('citations.print', compact('citation', 'isEnforcerCopy'));
+    }
+
     public function citationLookup(Request $request): View
     {
         return view('citizen.citation-lookup');

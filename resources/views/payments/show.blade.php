@@ -13,10 +13,22 @@
     </div>
 </div>
 
-<div class="card stat-card mx-auto" style="max-width:640px">
+<div class="alert alert-info py-2 no-print" role="alert" style="max-width:640px; margin: 0 auto 1rem;">
+    <small>
+        <i class="bi bi-info-circle me-1"></i>
+        <strong>Tip:</strong> In the print dialog, click ⋯ &rarr; <em>More settings</em> &rarr; toggle off
+        <em>Headers and footers</em> to remove the URL and page number.
+    </small>
+</div>
+
+<div class="card stat-card mx-auto print-page-receipt" style="max-width:640px">
     <div class="card-body p-4">
         <div class="text-center mb-4">
-            <h4 class="mb-0">{{ config('itevcms.app_name') }}</h4>
+            <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" height="64" class="mb-2">
+            <h4 class="mb-0 fw-bold">{{ config('itevcms.app_name') }}</h4>
+            <div class="text-muted small mb-1" style="font-size: 0.7rem; letter-spacing: 0.04em;">
+                Transportation Enforcement Management System
+            </div>
             <small class="text-muted">Official Payment Receipt</small>
         </div>
         <hr>
@@ -32,7 +44,7 @@
         @if ($payment->paymongo_checkout_id)
             <div class="row mb-2"><div class="col-5 text-muted">Checkout ID</div><div class="col-7"><code class="small">{{ $payment->paymongo_checkout_id }}</code></div></div>
         @endif
-        <div class="row mb-2"><div class="col-5 text-muted">Cashier</div><div class="col-7">{{ $payment->cashier->name }}</div></div>
+        <div class="row mb-2"><div class="col-5 text-muted">Cashier</div><div class="col-7">{{ $payment->cashier->name ?? 'Online Payment' }}</div></div>
         <div class="row mb-2"><div class="col-5 text-muted">Date Paid</div><div class="col-7">{{ $payment->paid_at?->format('M d, Y h:i A') ?? 'Pending' }}</div></div>
         <hr>
         <p class="text-muted small mb-0 text-center">This receipt serves as proof of payment for the cited violation.</p>

@@ -23,6 +23,7 @@ class Payment extends Model
         'paid_at',
         'paymongo_checkout_id',
         'paymongo_payment_intent_id',
+        'paymongo_session_ids',
         'paymongo_status',
         'online_payment_method',
     ];
@@ -33,6 +34,7 @@ class Payment extends Model
             'amount' => 'decimal:2',
             'payment_method' => PaymentMethod::class,
             'paid_at' => 'datetime',
+            'paymongo_session_ids' => 'array',
         ];
     }
 

@@ -37,7 +37,7 @@ Route::get('/health', fn () => response('ok', 200));
 
 Route::middleware('guest')->group(function () {
     Route::get('account-procedure', [LoginController::class, 'accountProcedure'])->name('account.procedure');
-    Route::post('account-procedure', [LoginController::class, 'store'])->middleware('throttle:5,5')->name('account.procedure.store');
+    Route::post('account-procedure', [LoginController::class, 'store'])->middleware('throttle.message:5,5')->name('account.procedure.store');
 
     Route::get('login', [LoginController::class, 'create'])->name('login');
     Route::post('login', [LoginController::class, 'store'])->middleware('throttle:5,5');
@@ -63,6 +63,16 @@ Route::middleware('guest')->group(function () {
 
     // PayMongo Webhook (public, verified by signature)
     Route::post('webhook/paymongo', [PayMongoController::class, 'webhook'])->name('webhook.paymongo');
+
+    // Public citation ticket (scanned from enforcer QR code)
+    Route::prefix('cite')->name('public.citation.')->group(function () {
+        Route::get('{id}/{token}', [CitizenPortalController::class, 'citationTicket'])->name('ticket');
+        Route::get('{id}/{token}/print', [CitizenPortalController::class, 'citationPrint'])->name('print');
+        Route::post('{id}/{token}/pay-online', [PayMongoController::class, 'publicCheckout'])
+            ->middleware('throttle:10,5')
+            ->name('checkout');
+        Route::get('{id}/{token}/payment/{payment}/success', [PayMongoController::class, 'publicSuccess'])->name('success');
+    });
 });
 
 Route::get('account/pending', [LoginController::class, 'pending'])->name('account.pending');
@@ -88,6 +98,8 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('citations', CitationController::class)->only(['index', 'create', 'store', 'show']);
+    Route::get('citations/{citation}/handoff', [CitationController::class, 'handoff'])->name('citations.handoff');
+    Route::get('citations/{citation}/print', [CitationController::class, 'printCitation'])->name('citations.print');
     Route::post('citations/{citation}/refer-impounding', [CitationController::class, 'referToImpounding'])->name('citations.refer-impounding');
     Route::resource('payments', PaymentController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
     Route::resource('clamping', ClampingController::class)->only(['index', 'create', 'store', 'show']);

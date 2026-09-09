@@ -90,17 +90,40 @@ class Citation extends Model
             || $this->status === CitationStatus::Released;
     }
 
+    public function getValidationToken(): string
+    {
+        return substr(
+            hash_hmac('sha256', $this->id.'|'.$this->citation_number, config('app.key')),
+            0,
+            32
+        );
+    }
+
+    public function getPublicPaymentUrl(): string
+    {
+        return route('public.citation.ticket', [
+            'id' => $this->id,
+            'token' => $this->getValidationToken(),
+        ]);
+    }
+
+    public function getQRCodeSvg(int $size = 280): string
+    {
+        return \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+            ->size($size)
+            ->errorCorrection('M')
+            ->margin(1)
+            ->generate($this->getPublicPaymentUrl());
+    }
+
     public function getQRCodeUrl(): string
     {
-        $data = "Citation: {$this->citation_number} | Vehicle: {$this->vehicle_plate} | Amount: ₱{$this->penalty_amount}";
-        $encoded = urlencode($data);
-
-        return "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={$encoded}";
+        return 'data:image/svg+xml;base64,'.base64_encode($this->getQRCodeSvg(160));
     }
 
     public function getQRCode(): string
     {
-        return '<img src="' . e($this->getQRCodeUrl()) . '" alt="QR Code" class="img-fluid" style="max-width:120px">';
+        return $this->getQRCodeSvg(160);
     }
 
     public function getActivitylogOptions(): LogOptions
