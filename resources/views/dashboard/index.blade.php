@@ -539,6 +539,74 @@
 @vite('resources/js/zone-picker.js')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    const citationLabels = @json($citationsByMonth->keys()->values());
+    const citationData = @json($citationsByMonth->values());
+    const revenueLabels = @json($revenueByMonth->keys()->values());
+    const revenueData = @json($revenueByMonth->values());
+    const appealLabels = @json($appealsByMonth->keys()->values());
+    const appealData = @json($appealsByMonth->values());
+
+    function initCitationChart() {
+        const el = document.getElementById('citationsChart');
+        if (!el || typeof Chart === 'undefined') return;
+        try {
+            new Chart(el, {
+                type: 'bar',
+                data: {
+                    labels: citationLabels,
+                    datasets: [{ label: 'Citations', data: citationData, backgroundColor: '#2563eb', borderRadius: 4 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+        } catch (e) { console.warn('Citation chart failed:', e); }
+    }
+
+    function initRevenueChart() {
+        const el = document.getElementById('revenueChart');
+        if (!el || typeof Chart === 'undefined') return;
+        try {
+            new Chart(el, {
+                type: 'line',
+                data: {
+                    labels: revenueLabels,
+                    datasets: [{ label: 'Revenue (₱)', data: revenueData, borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)', fill: true, tension: 0.35 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } } }
+                }
+            });
+        } catch (e) { console.warn('Revenue chart failed:', e); }
+    }
+
+    function initAppealsChart() {
+        const el = document.getElementById('appealsChart');
+        if (!el || typeof Chart === 'undefined') return;
+        try {
+            new Chart(el, {
+                type: 'line',
+                data: {
+                    labels: appealLabels,
+                    datasets: [{ label: 'Appeals', data: appealData, borderColor: '#7c3aed', backgroundColor: 'rgba(124,58,237,0.08)', fill: true, tension: 0.35 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+        } catch (e) { console.warn('Appeals chart failed:', e); }
+    }
+
+    initCitationChart();
+    initRevenueChart();
+    initAppealsChart();
+
     if (window.__zonePicker?.initZoneViewer) {
         const zoneData = @json($zoneMapData);
         if (zoneData.length) {
@@ -547,75 +615,118 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+});
 
-    // Enforcer GPS toggle-based tracking
+document.addEventListener('DOMContentLoaded', () => {
+    // Enforcer GPS toggle-based tracking (isolated so chart failures can't block it)
+    const ACCURACY_GOOD = 50;
+    const ACCURACY_FAIR = 150;
+    const ACCURACY_TARGET = 75;
+    const MAX_ACQUIRE_ATTEMPTS = 8;
+    const MAX_ACQUIRE_MS = 20000;
+
     const gpsToggle = document.getElementById('gps-toggle');
     const gpsStatusEl = document.getElementById('gps-status');
     const gpsControls = document.getElementById('gps-controls');
     const gpsUpdateNow = document.getElementById('gps-update-now');
     const gpsIntervalSelect = document.getElementById('gps-interval');
     let gpsPollTimer = null;
+    let gpsWatchId = null;
 
     if (gpsToggle && gpsStatusEl) {
-        async function sendGPSOnce() {
+        function accuracyClass(m) {
+            if (m <= ACCURACY_GOOD) return 'bg-success';
+            if (m <= ACCURACY_FAIR) return 'bg-warning text-dark';
+            return 'bg-danger';
+        }
+
+        function acquiringBadge(m) {
+            return '<span class="badge ' + accuracyClass(m) + '">Acquiring… ±' + Math.round(m) + 'm</span>';
+        }
+
+        function stopAcquiringWatch() {
+            if (gpsWatchId !== null) {
+                navigator.geolocation.clearWatch(gpsWatchId);
+                gpsWatchId = null;
+            }
+        }
+
+        async function sendFixToServer(lat, lng, accuracy) {
+            gpsStatusEl.innerHTML = '<span class="badge bg-info"><span class="spinner-border spinner-border-sm me-1"></span>Sending…</span>';
+            try {
+                const res = await fetch('{{ route("location.update") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    },
+                    body: JSON.stringify({ latitude: lat, longitude: lng, accuracy_m: Math.round(accuracy) })
+                });
+                if (res.ok) {
+                    const sec = gpsToggle.checked ? Math.round(parseInt(gpsIntervalSelect.value) / 1000) : null;
+                    gpsStatusEl.innerHTML = sec
+                        ? '<span class="badge bg-success">Active · ±' + Math.round(accuracy) + 'm · every ' + sec + 's</span>'
+                        : '<span class="badge bg-success">Location updated ✓ · ±' + Math.round(accuracy) + 'm</span>';
+                } else {
+                    let msg = 'Server error (' + res.status + ')';
+                    try {
+                        const errBody = await res.text();
+                        try { const j = JSON.parse(errBody); msg = j.message || j.error || msg; } catch (_) { if (errBody) msg = errBody.substring(0, 80); }
+                    } catch (_) {}
+                    gpsStatusEl.innerHTML = '<span class="badge bg-danger">Failed: ' + msg + '</span>';
+                }
+            } catch (e) {
+                gpsStatusEl.innerHTML = '<span class="badge bg-danger">Network error</span>';
+            }
+        }
+
+        function acquireAndSend() {
             if (!navigator.geolocation) {
                 gpsStatusEl.innerHTML = '<span class="badge bg-danger">Geolocation not supported</span>';
                 return;
             }
-            gpsStatusEl.innerHTML = '<span class="badge bg-info"><span class="spinner-border spinner-border-sm me-1"></span>Acquiring GPS...</span>';
-            return new Promise((resolve) => {
-                navigator.geolocation.getCurrentPosition(
-                    async (pos) => {
-                        const { latitude, longitude, accuracy } = pos.coords;
-                        gpsStatusEl.innerHTML = '<span class="badge bg-info"><span class="spinner-border spinner-border-sm me-1"></span>Sending...</span>';
-                        try {
-                            const res = await fetch('{{ route("location.update") }}', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Accept': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
-                                },
-                                body: JSON.stringify({ latitude, longitude, accuracy_m: Math.round(accuracy) })
-                            });
-                            if (res.ok) {
-                                const sec = gpsToggle.checked ? Math.round(parseInt(gpsIntervalSelect.value) / 1000) : null;
-                                gpsStatusEl.innerHTML = sec
-                                    ? '<span class="badge bg-success">Active · updated every ' + sec + 's</span>'
-                                    : '<span class="badge bg-success">Location updated ✓</span>';
-                            } else {
-                                let msg = 'Server error (' + res.status + ')';
-                                try {
-                                    const errBody = await res.text();
-                                    try { const j = JSON.parse(errBody); msg = j.message || j.error || msg; } catch (_) { if (errBody) msg = errBody.substring(0, 80); }
-                                } catch (_) {}
-                                gpsStatusEl.innerHTML = '<span class="badge bg-danger">Failed: ' + msg + '</span>';
-                            }
-                        } catch (e) {
-                            gpsStatusEl.innerHTML = '<span class="badge bg-danger">Network error</span>';
-                        }
-                        resolve();
-                    },
-                    (err) => {
-                        const gpsErrors = { 1: 'GPS permission denied', 2: 'GPS position unavailable', 3: 'GPS request timed out' };
-                        gpsStatusEl.innerHTML = '<span class="badge bg-danger">' + (gpsErrors[err.code] || 'GPS error') + '</span>';
-                        resolve();
-                    },
-                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-                );
-            });
+
+            let best = null;
+            let attempts = 0;
+            const startedAt = Date.now();
+            gpsStatusEl.innerHTML = '<span class="badge bg-info"><span class="spinner-border spinner-border-sm me-1"></span>Acquiring GPS…</span>';
+
+            stopAcquiringWatch();
+
+            gpsWatchId = navigator.geolocation.watchPosition(
+                (pos) => {
+                    const { latitude, longitude, accuracy } = pos.coords;
+                    attempts++;
+                    if (!best || accuracy < best.accuracy) best = { latitude, longitude, accuracy };
+                    gpsStatusEl.innerHTML = acquiringBadge(best.accuracy);
+
+                    const converged = best.accuracy <= ACCURACY_TARGET;
+                    const capped = attempts >= MAX_ACQUIRE_ATTEMPTS || (Date.now() - startedAt) >= MAX_ACQUIRE_MS;
+                    if (converged || capped) {
+                        stopAcquiringWatch();
+                        sendFixToServer(best.latitude, best.longitude, best.accuracy);
+                    }
+                },
+                (err) => {
+                    stopAcquiringWatch();
+                    const gpsErrors = { 1: 'GPS permission denied', 2: 'GPS position unavailable', 3: 'GPS request timed out' };
+                    gpsStatusEl.innerHTML = '<span class="badge bg-danger">' + (gpsErrors[err.code] || 'GPS error') + '</span>';
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
         }
 
         function startGPSPolling() {
             const ms = parseInt(gpsIntervalSelect.value) || 5000;
-            sendGPSOnce();
-            gpsPollTimer = setInterval(sendGPSOnce, ms);
-            const sec = Math.round(ms / 1000);
-            gpsStatusEl.innerHTML = '<span class="badge bg-success">Active · updating every ' + sec + 's</span>';
+            acquireAndSend();
+            if (gpsPollTimer) clearInterval(gpsPollTimer);
+            gpsPollTimer = setInterval(acquireAndSend, ms);
         }
 
         function stopGPSPolling() {
             if (gpsPollTimer) { clearInterval(gpsPollTimer); gpsPollTimer = null; }
+            stopAcquiringWatch();
             gpsStatusEl.innerHTML = '<span class="badge bg-secondary">Tracking paused</span>';
         }
 
@@ -629,17 +740,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        gpsUpdateNow?.addEventListener('click', () => sendGPSOnce());
+        gpsUpdateNow?.addEventListener('click', () => acquireAndSend());
 
         gpsIntervalSelect?.addEventListener('change', () => {
-            if (gpsToggle.checked) {
-                if (gpsPollTimer) clearInterval(gpsPollTimer);
-                const ms = parseInt(gpsIntervalSelect.value) || 5000;
-                gpsPollTimer = setInterval(sendGPSOnce, ms);
-                const sec = Math.round(ms / 1000);
-                gpsStatusEl.innerHTML = '<span class="badge bg-success">Active · updating every ' + sec + 's</span>';
-            }
+            if (gpsToggle.checked) startGPSPolling();
         });
+
+        window.addEventListener('pagehide', stopGPSPolling);
+        window.addEventListener('beforeunload', stopGPSPolling);
     }
 });
 </script>

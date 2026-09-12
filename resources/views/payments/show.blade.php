@@ -9,7 +9,7 @@
         @can('update', $payment)
             <a href="{{ route('payments.edit', $payment) }}" class="btn btn-outline-secondary">Edit</a>
         @endcan
-        <button onclick="window.print()" class="btn btn-outline-primary">Print Receipt</button>
+        <a href="{{ route('payments.print', $payment) }}" target="_blank" class="btn btn-outline-primary">Print Receipt</a>
     </div>
 </div>
 

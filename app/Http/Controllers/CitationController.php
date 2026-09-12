@@ -71,6 +71,8 @@ class CitationController extends Controller
                 'penalty_amount' => $violationType->penalty_amount,
                 'status' => CitationStatus::Issued,
                 'location' => $request->location,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
                 'notes' => $request->notes,
                 'issued_at' => now(),
                 'due_date' => $numberService->dueDate(),

@@ -2,6 +2,27 @@
 
 @section('title', $citation->citation_number)
 
+@push('styles')
+@if ($citation->latitude && $citation->longitude)
+<style>
+    #citation-map { width:100%; height:360px; border-radius:0.75rem; position:relative; }
+    .map-detail-overlay {
+        position:absolute; bottom:12px; left:12px; z-index:10;
+        background:rgba(15,23,42,0.92); backdrop-filter:blur(12px);
+        border:1px solid rgba(255,255,255,0.12); border-radius:0.75rem;
+        padding:0.85rem 1rem; color:#e2e8f0; font-family:system-ui,sans-serif;
+        max-width:300px; pointer-events:auto;
+    }
+    .map-detail-overlay .mdo-title { font-weight:700; font-size:0.9rem; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.4rem; }
+    .map-detail-overlay .mdo-row { display:flex; justify-content:space-between; padding:0.15rem 0; font-size:0.75rem; }
+    .map-detail-overlay .mdo-row .mdo-lbl { color:rgba(148,163,184,0.9); }
+    .map-detail-overlay .mdo-row .mdo-val { font-weight:600; text-align:right; }
+    .map-detail-overlay .mdo-close { position:absolute; top:6px; right:8px; background:none; border:none; color:rgba(203,213,225,0.6); cursor:pointer; font-size:0.85rem; padding:2px 4px; }
+    .map-detail-overlay .mdo-close:hover { color:#fff; }
+</style>
+@endif
+@endpush
+
 @section('content')
 <div class="d-flex justify-content-between align-items-start mb-4">
     <div>
@@ -23,13 +44,22 @@
                     <div class="col-md-6"><strong class="text-muted small d-block">Due Date</strong>{{ $citation->due_date->format('M d, Y') }}</div>
                     <div class="col-md-6"><strong class="text-muted small d-block">Issued By</strong>{{ $citation->enforcer->name }}</div>
                     <div class="col-md-6"><strong class="text-muted small d-block">Issued At</strong>{{ $citation->issued_at->format('M d, Y h:i A') }}</div>
-                    <div class="col-12"><strong class="text-muted small d-block">Location</strong>{{ $citation->location ?? '—' }}</div>
+                    <div class="col-12"><strong class="text-muted small d-block">Location</strong>{{ $citation->location ?? '—' }} @if (!$citation->latitude || !$citation->longitude)<span class="text-muted small d-block mt-1">Coordinates not captured</span>@endif</div>
                     @if ($citation->notes)
                         <div class="col-12"><strong class="text-muted small d-block">Notes</strong>{{ $citation->notes }}</div>
                     @endif
                 </div>
             </div>
         </div>
+        @if ($citation->latitude && $citation->longitude)
+            <div class="card stat-card mb-4">
+                <div class="card-header bg-white"><strong><i class="bi bi-geo-alt me-2"></i>Location Map</strong></div>
+                <div class="card-body position-relative">
+                    <div id="citation-map"></div>
+                    <div class="map-detail-overlay" id="citation-map-detail"></div>
+                </div>
+            </div>
+        @endif
         @if ($citation->evidence->isNotEmpty())
             <div class="card stat-card">
                 <div class="card-header bg-white"><strong>Evidence</strong></div>
@@ -111,3 +141,68 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+@if ($citation->latitude && $citation->longitude)
+<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<script>
+    (function () {
+        const lat = {{ $citation->latitude }};
+        const lng = {{ $citation->longitude }};
+        const citationNumber = {!! json_encode($citation->citation_number) !!};
+        const location = {!! json_encode($citation->location) !!};
+        const vehiclePlate = {!! json_encode($citation->vehicle_plate ?? 'N/A') !!};
+
+        const map = new maplibregl.Map({
+            container: 'citation-map',
+            style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+            center: [lng, lat],
+            zoom: 15,
+        });
+
+        map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+        map.on('load', function () {
+            map.addSource('pin', {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: [{
+                        type: 'Feature',
+                        geometry: { type: 'Point', coordinates: [lng, lat] },
+                        properties: {},
+                    }],
+                },
+            });
+
+            map.addLayer({
+                id: 'pin-layer',
+                type: 'circle',
+                source: 'pin',
+                paint: {
+                    'circle-radius': 10,
+                    'circle-color': '#2563eb',
+                    'circle-stroke-width': 3,
+                    'circle-stroke-color': '#fff',
+                },
+            });
+
+            const detailEl = document.getElementById('citation-map-detail');
+            if (detailEl) {
+                detailEl.innerHTML = `
+                    <button class="mdo-close" onclick="document.getElementById('citation-map-detail').style.display='none'">&times;</button>
+                    <div class="mdo-title">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#38bdf8" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>
+                        Citation Location
+                    </div>
+                    <div class="mdo-row"><span class="mdo-lbl">Citation</span><span class="mdo-val">${citationNumber}</span></div>
+                    <div class="mdo-row"><span class="mdo-lbl">Vehicle</span><span class="mdo-val">${vehiclePlate}</span></div>
+                    <div class="mdo-row"><span class="mdo-lbl">Location</span><span class="mdo-val">${location || '—'}</span></div>
+                    <div class="mdo-row"><span class="mdo-lbl">Coordinates</span><span class="mdo-val">${lat.toFixed(7)}, ${lng.toFixed(7)}</span></div>
+                `;
+            }
+        });
+    })();
+</script>
+@endif
+@endpush

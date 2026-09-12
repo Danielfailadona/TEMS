@@ -9,10 +9,10 @@
 
 <form method="GET" class="row g-2 mb-4">
     <div class="col-auto">
-        <input type="date" name="date_from" class="form-control" value="{{ $from->format('Y-m-d') }}">
+        <input type="date" name="date_from" class="form-control" value="{{ optional($from)->format('Y-m-d') }}">
     </div>
     <div class="col-auto">
-        <input type="date" name="date_to" class="form-control" value="{{ $to->format('Y-m-d') }}">
+        <input type="date" name="date_to" class="form-control" value="{{ optional($to)->format('Y-m-d') }}">
     </div>
     <div class="col-auto">
         <button class="btn btn-primary"><i class="bi bi-filter"></i> Filter</button>
