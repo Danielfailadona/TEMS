@@ -743,3 +743,92 @@ The count for each violation type already comes from the database via `Dashboard
 - `php artisan view:cache` — all Blade templates compiled successfully
 - `npm.cmd run build` — assets rebuilt
 - Visual QA on `/dashboard` — zero-count types show empty gray bars, non-zero types show proportional blue bars
+
+---
+
+## Fix narrow-screen (320–375px) cut-offs on the landing page `/`
+
+### Date Edited / Applied `(required)`
+
+- Edited and applied: 2026-09-04
+
+### Type of Change `(required)`
+
+- Bug fix / responsive CSS
+
+### Requested By / Source `(optional)`
+
+- Reported by user by scanning `/` (landing page) at viewport widths 320–375px.
+
+### Problem `(required)`
+
+On narrow phone screens (320–375px) several elements on the landing page (`/`, `welcome.blade.php`) were cut off or overflowing:
+
+- The hero stat boxes ("2.4K+", "₱1.2M", "98%", "24/7") stayed in a fixed 2-column grid, and each box became so narrow that the large values spilled past the edges and were clipped (the `.hero` section has `overflow: hidden`).
+- The hero heading (`Modern Traffic Enforcement Management`) used a minimum font size of 2.5rem (40px), too large for 320px, so it wrapped awkwardly / overflowed.
+- The `.hero-content` and `.hero` paddings were not reduced on phones, leaving very little usable width.
+
+### Root Cause `(required)`
+
+The page only had a single responsive breakpoint `@media (max-width: 768px)` (which collapses the hero to one column and stacks buttons) but no narrow-phone handling. Key styles that caused cut-offs:
+- `.hero-visual-grid { grid-template-columns: 1fr 1fr }` — never switched to one column on phones.
+- `.stat-box-value { font-size: 2rem }` — too large for the ~48px inner width per 2-col box at 320px.
+- `.hero-text h1 { font-size: clamp(2.5rem, 5vw, 3.5rem) }` — clamp min of 2.5rem too big at 320px.
+- `.hero-content { padding: 2rem }` / `.hero { min-height:100vh }` not adjusted for phones.
+
+### Files Changed `(required)`
+
+- `resources/views/welcome.blade.php`
+
+### What Parts Changed `(required)`
+
+#### `resources/views/welcome.blade.php` — added `@media (max-width: 480px)` block
+
+**Before:** no narrow-phone CSS existed (only the 768px query).
+
+**After:**
+```css
+@media (max-width: 480px) {
+    .hero-content { padding: 1.25rem; }
+    .hero { min-height: auto; padding: 2.5rem 0; }
+    .hero-text h1 { font-size: clamp(1.9rem, 7.5vw, 3rem); line-height: 1.2; }
+    .hero-text p { font-size: 1rem; }
+    .hero-visual-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+    .stat-box { padding: 1rem; }
+    .stat-box-value { font-size: clamp(1.5rem, 8vw, 2rem); }
+    .cta-section > div { gap: 0.6rem; }
+}
+```
+
+### Behavior of the New Changes `(required)`
+
+| Scenario | Before | After |
+|---|---|---|
+| Stat boxes at 320px | 2 columns, values clipped | 1 column, full width, fully visible |
+| Hero heading at 320px | 40px min size, overflows/wraps | `clamp(1.9rem, 7.5vw, 3rem)`, fits width |
+| Hero/hero-content padding | 2rem (too large) | 1.25rem usable space |
+| Hero height | `min-height:100vh` | `min-height:auto` + `2.5rem` vertical pad |
+| Desktop/tablet (>480px) | normal layout | unchanged |
+
+### Impact & Risk `(required)`
+
+- Affects: `/` landing page only, at widths ≤ 480px.
+- Risk: Low. Only a new narrower breakpoint added; no change above 480px.
+
+### Database / Migration Impact `(optional)`
+
+- None
+
+### Untouched `(optional)`
+
+- Navbar, features grid, FAQ, footer, all desktop/tablet styling, and all other pages (including `/dashboard`).
+
+### Known Issues / Follow-ups `(optional)`
+
+- None
+
+### Testing / Verification `(required)`
+
+- `php -l resources/views/welcome.blade.php` — no syntax errors
+- `php artisan view:cache` — all Blade templates compiled successfully
+- Visual QA on `/` at 320px and 375px widths — no element is cut off (stat boxes full width, heading fits, buttons fit)

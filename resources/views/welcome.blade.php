@@ -346,6 +346,43 @@
                 padding: 3rem 1rem;
             }
         }
+
+        @media (max-width: 480px) {
+            .hero-content {
+                padding: 1.25rem;
+            }
+
+            .hero {
+                min-height: auto;
+                padding: 2.5rem 0;
+            }
+
+            .hero-text h1 {
+                font-size: clamp(1.9rem, 7.5vw, 3rem);
+                line-height: 1.2;
+            }
+
+            .hero-text p {
+                font-size: 1rem;
+            }
+
+            .hero-visual-grid {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .stat-box {
+                padding: 1rem;
+            }
+
+            .stat-box-value {
+                font-size: clamp(1.5rem, 8vw, 2rem);
+            }
+
+            .cta-section > div {
+                gap: 0.6rem;
+            }
+        }
     </style>
 </head>
 <body>
