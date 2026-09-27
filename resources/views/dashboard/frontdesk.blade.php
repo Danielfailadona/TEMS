@@ -75,62 +75,22 @@
     @endforeach
 </div>
 
-{{-- Recent Activity --}}
+{{-- Pending Work Queue --}}
 <div class="card stat-card mb-4 animate-on-load">
-    <div class="card-header bg-white"><strong>Recent Activity</strong></div>
-    <div class="card-body">
-        @forelse ($recentActivity as $item)
-            <div class="d-flex align-items-start justify-content-between gap-3 border-bottom py-3 min-width-0">
-                <div class="d-flex gap-3 min-width-0 flex-grow-1">
-                    <div class="activity-icon flex-shrink-0 bg-{{ $item['type'] === 'citation' ? 'primary' : ($item['type'] === 'payment' ? 'success' : 'danger') }}-subtle text-{{ $item['type'] === 'citation' ? 'primary' : ($item['type'] === 'payment' ? 'success' : 'danger') }} d-inline-flex align-items-center justify-content-center rounded-circle" style="width:36px;height:36px;">
-                        <i class="{{ $item['icon'] }}"></i>
-                    </div>
-                    <div class="min-width-0">
-                        <div class="fw-semibold small">{{ $item['title'] }}</div>
-                        <div class="text-muted small text-truncate">{{ $item['description'] }}</div>
-                        <div class="text-muted" style="font-size:0.7rem;">{{ $item['meta'] }}</div>
-                    </div>
-                </div>
-                <div class="text-muted small text-nowrap flex-shrink-0">{{ $item['timestamp_label'] }}</div>
-            </div>
-        @empty
-            <div class="text-muted text-center py-4">No recent activity yet.</div>
-        @endforelse
+    <div class="card-header bg-white">
+        <strong>Pending Work Queue</strong>
+        <span class="text-muted small">Needs attention</span>
     </div>
-</div>
-
-{{-- Pending Work Queue + Quick Actions --}}
-<div class="row g-4 mb-4 animate-on-load">
-    <div class="col-xl-6">
-        <div class="card stat-card h-100">
-            <div class="card-header bg-white">
-                <strong>Pending Work Queue</strong>
-                <span class="text-muted small">Needs attention</span>
+    <div class="card-body d-flex flex-column gap-3">
+        <div class="pending-card">
+            <div class="pending-count" style="color:#d97706;background:#d9770615;">
+                {{ $pendingQueue['waiting_releases'] }}
             </div>
-            <div class="card-body d-flex flex-column gap-3">
-                <div class="pending-card">
-                    <div class="pending-count" style="color:#d97706;background:#d9770615;">
-                        {{ $pendingQueue['waiting_releases'] }}
-                    </div>
-                    <div class="flex-grow-1">
-                        <div class="fw-semibold small">Waiting Releases</div>
-                        <div class="text-muted" style="font-size:0.7rem;">Vehicles ready for release</div>
-                    </div>
-                    <a href="{{ route('impounding.index', ['status' => 'waiting_release']) }}" class="btn btn-sm btn-outline-primary" style="font-size:0.7rem;">View</a>
-                </div>
+            <div class="flex-grow-1">
+                <div class="fw-semibold small">Waiting Releases</div>
+                <div class="text-muted" style="font-size:0.7rem;">Vehicles ready for release</div>
             </div>
-        </div>
-    </div>
-
-    <div class="col-xl-6">
-        <div class="card stat-card h-100">
-            <div class="card-header bg-white">
-                <strong>Quick Actions</strong>
-            </div>
-            <div class="card-body d-grid gap-2">
-                <a href="{{ route('frontdesk.index') }}" class="btn btn-outline-primary text-start"><i class="bi bi-search me-2"></i>Look Up Citation</a>
-                <a href="{{ route('impounding.index') }}" class="btn btn-outline-danger text-start"><i class="bi bi-truck me-2"></i>Impounding</a>
-            </div>
+            <a href="{{ route('impounding.index', ['status' => 'waiting_release']) }}" class="btn btn-sm btn-outline-primary" style="font-size:0.7rem;">View</a>
         </div>
     </div>
 </div>
