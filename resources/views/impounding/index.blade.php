@@ -5,7 +5,7 @@
 @section('content')
 <div class="mb-4">
     <div class="d-flex flex-column flex-md-row gap-3 justify-content-md-end align-items-md-center">
-        <form method="GET" class="d-flex gap-2 w-100 w-md-auto">
+        <form method="GET" class="d-flex gap-2 w-100 w-md-auto flex-shrink-0">
             <input type="hidden" name="status" value="{{ request('status') }}">
             <div class="input-group" style="min-width: 280px;">
                 <input type="search" name="q" class="form-control form-control-sm" placeholder="Search plate, notice, or citation #" value="{{ request('q') }}">
@@ -16,12 +16,12 @@
             </div>
         </form>
 
-        <div class="d-flex gap-2 flex-wrap">
-            <a href="{{ route('impounding.index') }}" class="btn btn-outline-secondary btn-sm @if(!request('status')) active @endif">Active</a>
-            <a href="{{ route('impounding.index', ['status' => 'awaiting_payment', 'q' => request('q')]) }}" class="btn btn-outline-danger btn-sm @if(request('status') === 'awaiting_payment') active @endif">Awaiting Payment</a>
-            <a href="{{ route('impounding.index', ['status' => 'paid', 'q' => request('q')]) }}" class="btn btn-outline-primary btn-sm @if(request('status') === 'paid') active @endif">Paid</a>
-            <a href="{{ route('impounding.index', ['status' => 'waiting_release', 'q' => request('q')]) }}" class="btn btn-outline-warning btn-sm @if(request('status') === 'waiting_release') active @endif">Waiting Release</a>
-            <a href="{{ route('impounding.index', ['status' => 'released', 'q' => request('q')]) }}" class="btn btn-outline-success btn-sm @if(request('status') === 'released') active @endif">Released</a>
+        <div class="d-flex flex-wrap gap-1 flex-shrink-0">
+            <a href="{{ route('impounding.index', ['q' => request('q')]) }}" class="btn btn-outline-secondary btn-sm px-3 @if(!request('status')) active @endif" style="white-space: nowrap;">Active</a>
+            <a href="{{ route('impounding.index', ['status' => 'awaiting_payment', 'q' => request('q')]) }}" class="btn btn-outline-danger btn-sm px-3 @if(request('status') === 'awaiting_payment') active @endif" style="white-space: nowrap;">Awaiting</a>
+            <a href="{{ route('impounding.index', ['status' => 'paid', 'q' => request('q')]) }}" class="btn btn-outline-primary btn-sm px-3 @if(request('status') === 'paid') active @endif" style="white-space: nowrap;">Paid</a>
+            <a href="{{ route('impounding.index', ['status' => 'waiting_release', 'q' => request('q')]) }}" class="btn btn-outline-warning btn-sm px-3 @if(request('status') === 'waiting_release') active @endif" style="white-space: nowrap;">Waiting</a>
+            <a href="{{ route('impounding.index', ['status' => 'released', 'q' => request('q')]) }}" class="btn btn-outline-success btn-sm px-3 @if(request('status') === 'released') active @endif" style="white-space: nowrap;">Released</a>
         </div>
     </div>
 </div>
@@ -86,7 +86,7 @@
 
 @foreach ($records as $record)
     @can('markPaid', $record)
-        <div class="modal fade" id="payModal-{{ $record->id }}" tabindex="-1">
+        <div class="modal fade" id="payModal-{{ $record->id }}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
             <div class="modal-dialog">
                 <form method="POST" action="{{ route('impounding.mark-paid', $record) }}">
                     @csrf
@@ -121,7 +121,7 @@
     @endcan
 
     @can('processRelease', $record)
-        <div class="modal fade" id="releaseModal-{{ $record->id }}" tabindex="-1">
+        <div class="modal fade" id="releaseModal-{{ $record->id }}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
             <div class="modal-dialog">
                 <form method="POST" action="{{ route('impounding.process-release', $record) }}">
                     @csrf

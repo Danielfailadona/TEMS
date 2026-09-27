@@ -21,8 +21,9 @@
                 <label class="form-label">Citation Number</label>
                 <input type="text" name="citation_number" class="form-control" placeholder="CIT-20260614-XXXXXX" value="{{ $citationNumber ?? '' }}">
             </div>
-            <div class="col-md-2 align-self-end">
+            <div class="col-md-2 align-self-end d-flex gap-2">
                 <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Look Up</button>
+                <a href="{{ route('frontdesk.index') }}" class="btn btn-outline-secondary w-100" title="Reset filters"><i class="bi bi-arrow-clockwise"></i> Reset</a>
             </div>
         </form>
     </div>

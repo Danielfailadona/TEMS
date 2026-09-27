@@ -5,9 +5,10 @@
 @push('styles')
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
 <style>
-    .trend-up { color:#16a34a; }
-    .trend-down { color:#dc2626; }
-    .trend-flat { color:#6b7280; }
+    .trend-badge { font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: 0.35rem; }
+    .trend-up { background: rgba(22, 163, 74, 0.15); color: #16a34a; }
+    .trend-down { background: rgba(220, 38, 38, 0.15); color: #dc2626; }
+    .trend-flat { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
     .pending-card {
         display:flex; align-items:center; gap:0.75rem;
         padding:0.75rem 1rem; border-radius:0.5rem;
@@ -77,13 +78,13 @@
                     <div class="h3 mb-0 text-{{ $k['tone'] }}">{{ $k['value'] }}</div>
                     <div class="small mt-1">
                         @if ($t['direction'] === 'up')
-                            <span class="trend-up"><i class="bi bi-arrow-up-short"></i>{{ $t['percent'] }}%</span>
+                            <span class="trend-badge trend-up"><i class="bi bi-arrow-up-short"></i>{{ $t['percent'] }}%</span>
                         @elseif ($t['direction'] === 'down')
-                            <span class="trend-down"><i class="bi bi-arrow-down-short"></i>{{ $t['percent'] }}%</span>
+                            <span class="trend-badge trend-down"><i class="bi bi-arrow-down-short"></i>{{ $t['percent'] }}%</span>
                         @else
-                            <span class="trend-flat"><i class="bi bi-dash"></i>0%</span>
+                            <span class="trend-badge trend-flat"><i class="bi bi-dash"></i>0%</span>
                         @endif
-                        <span class="text-muted">vs last week</span>
+                        <span class="text-muted ms-1">vs last week</span>
                     </div>
                 </div>
             </div>
@@ -222,8 +223,8 @@
 </div>
 @endif
 
-{{-- Pending Work Queue + Quick Actions + Zone Map --}}
-<div class="row g-4 animate-on-load">
+ {{-- Pending Work Queue + Quick Actions + Zone Map --}}
+<div class="row g-4 mb-4 animate-on-load">
     <div class="col-xl-4">
         <div class="card stat-card h-100">
             <div class="card-header bg-white">
@@ -322,66 +323,87 @@ document.addEventListener('DOMContentLoaded', () => {
     const appealLabels = @json($appealsByMonth->keys()->values());
     const appealData = @json($appealsByMonth->values());
 
-    function initCitationChart() {
-        const el = document.getElementById('citationsChart');
-        if (!el || typeof Chart === 'undefined') return;
-        try {
-            new Chart(el, {
-                type: 'bar',
-                data: {
-                    labels: citationLabels,
-                    datasets: [{ label: 'Citations', data: citationData, backgroundColor: '#2563eb', borderRadius: 4 }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-                }
-            });
-        } catch (e) { console.warn('Citation chart failed:', e); }
+    // Robust Chart.js initialization with fallback
+    function waitForChart(attempts = 0) {
+        return new Promise((resolve) => {
+            if (typeof Chart !== 'undefined') {
+                resolve(Chart);
+            } else if (attempts < 50) {
+                setTimeout(() => waitForChart(attempts + 1).then(resolve), 50);
+            } else {
+                // Fallback: load Chart.js from CDN
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+                script.onload = () => resolve(window.Chart);
+                script.onerror = () => resolve(null);
+                document.head.appendChild(script);
+            }
+        });
     }
 
-    function initRevenueChart() {
-        const el = document.getElementById('revenueChart');
-        if (!el || typeof Chart === 'undefined') return;
-        try {
-            new Chart(el, {
-                type: 'line',
-                data: {
-                    labels: revenueLabels,
-                    datasets: [{ label: 'Payments (₱)', data: revenueData, borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)', fill: true, tension: 0.35 }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } } }
-                }
-            });
-        } catch (e) { console.warn('Revenue chart failed:', e); }
+    async function initCharts() {
+        const Chart = await waitForChart();
+        if (!Chart) {
+            console.warn('Chart.js failed to load, charts disabled');
+            return;
+        }
+
+        const citationEl = document.getElementById('citationsChart');
+        if (citationEl) {
+            try {
+                new Chart(citationEl, {
+                    type: 'bar',
+                    data: {
+                        labels: citationLabels,
+                        datasets: [{ label: 'Citations', data: citationData, backgroundColor: '#2563eb', borderRadius: 4 }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                    }
+                });
+            } catch (e) { console.warn('Citation chart failed:', e); }
+        }
+
+        const revenueEl = document.getElementById('revenueChart');
+        if (revenueEl) {
+            try {
+                new Chart(revenueEl, {
+                    type: 'line',
+                    data: {
+                        labels: revenueLabels,
+                        datasets: [{ label: 'Payments (₱)', data: revenueData, borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)', fill: true, tension: 0.35 }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } } }
+                    }
+                });
+            } catch (e) { console.warn('Revenue chart failed:', e); }
+        }
+
+        const appealsEl = document.getElementById('appealsChart');
+        if (appealsEl) {
+            try {
+                new Chart(appealsEl, {
+                    type: 'line',
+                    data: {
+                        labels: appealLabels,
+                        datasets: [{ label: 'Appeals', data: appealData, borderColor: '#7c3aed', backgroundColor: 'rgba(124,58,237,0.08)', fill: true, tension: 0.35 }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                    }
+                });
+            } catch (e) { console.warn('Appeals chart failed:', e); }
+        }
     }
 
-    function initAppealsChart() {
-        const el = document.getElementById('appealsChart');
-        if (!el || typeof Chart === 'undefined') return;
-        try {
-            new Chart(el, {
-                type: 'line',
-                data: {
-                    labels: appealLabels,
-                    datasets: [{ label: 'Appeals', data: appealData, borderColor: '#7c3aed', backgroundColor: 'rgba(124,58,237,0.08)', fill: true, tension: 0.35 }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-                }
-            });
-        } catch (e) { console.warn('Appeals chart failed:', e); }
-    }
-
-    initCitationChart();
-    initRevenueChart();
-    initAppealsChart();
+    initCharts();
 
     if (window.__zonePicker?.initZoneViewer) {
         const zoneData = @json($zoneMapData);
@@ -390,140 +412,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 zones: zoneData, zoom: 10,
             });
         }
-    }
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Enforcer GPS toggle-based tracking (isolated so chart failures can't block it)
-    const ACCURACY_GOOD = 50;
-    const ACCURACY_FAIR = 150;
-    const ACCURACY_TARGET = 75;
-    const MAX_ACQUIRE_ATTEMPTS = 8;
-    const MAX_ACQUIRE_MS = 20000;
-
-    const gpsToggle = document.getElementById('gps-toggle');
-    const gpsStatusEl = document.getElementById('gps-status');
-    const gpsControls = document.getElementById('gps-controls');
-    const gpsUpdateNow = document.getElementById('gps-update-now');
-    const gpsIntervalSelect = document.getElementById('gps-interval');
-    let gpsPollTimer = null;
-    let gpsWatchId = null;
-
-    if (gpsToggle && gpsStatusEl) {
-        function accuracyClass(m) {
-            if (m <= ACCURACY_GOOD) return 'bg-success';
-            if (m <= ACCURACY_FAIR) return 'bg-warning text-dark';
-            return 'bg-danger';
-        }
-
-        function acquiringBadge(m) {
-            return '<span class="badge ' + accuracyClass(m) + '">Acquiring… ±' + Math.round(m) + 'm</span>';
-        }
-
-        function stopAcquiringWatch() {
-            if (gpsWatchId !== null) {
-                navigator.geolocation.clearWatch(gpsWatchId);
-                gpsWatchId = null;
-            }
-        }
-
-        async function sendFixToServer(lat, lng, accuracy) {
-            gpsStatusEl.innerHTML = '<span class="badge bg-info"><span class="spinner-border spinner-border-sm me-1"></span>Sending…</span>';
-            try {
-                const res = await fetch('{{ route("location.update") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
-                    },
-                    body: JSON.stringify({ latitude: lat, longitude: lng, accuracy_m: Math.round(accuracy) })
-                });
-                if (res.ok) {
-                    const sec = gpsToggle.checked ? Math.round(parseInt(gpsIntervalSelect.value) / 1000) : null;
-                    gpsStatusEl.innerHTML = sec
-                        ? '<span class="badge bg-success">Active · ±' + Math.round(accuracy) + 'm · every ' + sec + 's</span>'
-                        : '<span class="badge bg-success">Location updated ✓ · ±' + Math.round(accuracy) + 'm</span>';
-                } else {
-                    let msg = 'Server error (' + res.status + ')';
-                    try {
-                        const errBody = await res.text();
-                        try { const j = JSON.parse(errBody); msg = j.message || j.error || msg; } catch (_) { if (errBody) msg = errBody.substring(0, 80); }
-                    } catch (_) {}
-                    gpsStatusEl.innerHTML = '<span class="badge bg-danger">Failed: ' + msg + '</span>';
-                }
-            } catch (e) {
-                gpsStatusEl.innerHTML = '<span class="badge bg-danger">Network error</span>';
-            }
-        }
-
-        function acquireAndSend() {
-            if (!navigator.geolocation) {
-                gpsStatusEl.innerHTML = '<span class="badge bg-danger">Geolocation not supported</span>';
-                return;
-            }
-
-            let best = null;
-            let attempts = 0;
-            const startedAt = Date.now();
-            gpsStatusEl.innerHTML = '<span class="badge bg-info"><span class="spinner-border spinner-border-sm me-1"></span>Acquiring GPS…</span>';
-
-            stopAcquiringWatch();
-
-            gpsWatchId = navigator.geolocation.watchPosition(
-                (pos) => {
-                    const { latitude, longitude, accuracy } = pos.coords;
-                    attempts++;
-                    if (!best || accuracy < best.accuracy) best = { latitude, longitude, accuracy };
-                    gpsStatusEl.innerHTML = acquiringBadge(best.accuracy);
-
-                    const converged = best.accuracy <= ACCURACY_TARGET;
-                    const capped = attempts >= MAX_ACQUIRE_ATTEMPTS || (Date.now() - startedAt) >= MAX_ACQUIRE_MS;
-                    if (converged || capped) {
-                        stopAcquiringWatch();
-                        sendFixToServer(best.latitude, best.longitude, best.accuracy);
-                    }
-                },
-                (err) => {
-                    stopAcquiringWatch();
-                    const gpsErrors = { 1: 'GPS permission denied', 2: 'GPS position unavailable', 3: 'GPS request timed out' };
-                    gpsStatusEl.innerHTML = '<span class="badge bg-danger">' + (gpsErrors[err.code] || 'GPS error') + '</span>';
-                },
-                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-            );
-        }
-
-        function startGPSPolling() {
-            const ms = parseInt(gpsIntervalSelect.value) || 5000;
-            acquireAndSend();
-            if (gpsPollTimer) clearInterval(gpsPollTimer);
-            gpsPollTimer = setInterval(acquireAndSend, ms);
-        }
-
-        function stopGPSPolling() {
-            if (gpsPollTimer) { clearInterval(gpsPollTimer); gpsPollTimer = null; }
-            stopAcquiringWatch();
-            gpsStatusEl.innerHTML = '<span class="badge bg-secondary">Tracking paused</span>';
-        }
-
-        gpsToggle.addEventListener('change', () => {
-            if (gpsToggle.checked) {
-                gpsControls.style.display = 'flex';
-                startGPSPolling();
-            } else {
-                gpsControls.style.display = 'none';
-                stopGPSPolling();
-            }
-        });
-
-        gpsUpdateNow?.addEventListener('click', () => acquireAndSend());
-
-        gpsIntervalSelect?.addEventListener('change', () => {
-            if (gpsToggle.checked) startGPSPolling();
-        });
-
-        window.addEventListener('pagehide', stopGPSPolling);
-        window.addEventListener('beforeunload', stopGPSPolling);
     }
 });
 </script>
