@@ -465,7 +465,7 @@
         <div class="feature-card">
             <div class="feature-card-icon"><i class="bi bi-graph-up-arrow"></i></div>
             <h3>Analytics & Reports</h3>
-            <p>Comprehensive dashboards with violation trends, revenue reports, and officer performance metrics.</p>
+            <p>Comprehensive dashboards with violation trends, payment reports, and officer performance metrics.</p>
         </div>
 
         <div class="feature-card">
@@ -502,7 +502,7 @@
         </div>
 
         <div class="benefit-box">
-            <h4><i class="bi bi-cash-stack text-success me-2"></i>Maximize Revenue</h4>
+            <h4><i class="bi bi-cash-stack text-success me-2"></i>Maximize Payments</h4>
             <p>Improve collection rates with automated reminders, multiple payment options, and transparent tracking for every citation.</p>
         </div>
 
@@ -540,7 +540,7 @@
 
 <!-- Footer -->
 <footer class="welcome-footer">
-    <p>&copy; 2026 Transportation Enforcement Management System (TEMs). All rights reserved.</p>
+    <p>&copy; 2026 Traffic Enforcement Management System (TEMs). All rights reserved.</p>
     <p style="font-size: 0.85rem; margin-top: 1rem;">
         <a href="#" style="color: rgba(255,255,255,0.7); text-decoration: none;">Privacy Policy</a> • 
         <a href="#" style="color: rgba(255,255,255,0.7); text-decoration: none;">Terms of Service</a> • 

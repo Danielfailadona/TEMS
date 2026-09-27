@@ -39,7 +39,7 @@
     <div class="doc-header">
         <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs">
         <h1>TEMS Official Archive Record</h1>
-        <div class="subtitle">Transportation Enforcement Management System — {{ config('app.name', 'TEMS') }}</div>
+        <div class="subtitle">Traffic Enforcement Management System — {{ config('app.name', 'TEMS') }}</div>
     </div>
 
     @php

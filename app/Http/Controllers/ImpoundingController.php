@@ -33,7 +33,15 @@ class ImpoundingController extends Controller
             ]);
         }
 
-        $records = $query->latest('clamped_at')->paginate(10);
+        if ($search = trim($request->query('q'))) {
+            $query->where(function ($w) use ($search) {
+                $w->where('vehicle_plate', 'like', "%{$search}%")
+                  ->orWhere('notice_number', 'like', "%{$search}%")
+                  ->orWhereHas('citation', fn ($c) => $c->where('citation_number', 'like', "%{$search}%"));
+            });
+        }
+
+        $records = $query->latest('clamped_at')->paginate(10)->appends($request->query());
 
         return view('impounding.index', compact('records'));
     }

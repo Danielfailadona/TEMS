@@ -8,7 +8,7 @@
 </div>
 
 <div class="row g-4">
-  <div class="col-md-6">
+  <div class="col-md-4">
     <a href="{{ route('reports.citations') }}" class="text-decoration-none">
       <div class="card stat-card h-100 border-0">
         <div class="card-body text-center py-5">
@@ -19,7 +19,18 @@
       </div>
     </a>
   </div>
-  <div class="col-md-6">
+  <div class="col-md-4">
+    <a href="{{ route('reports.revenue') }}" class="text-decoration-none">
+      <div class="card stat-card h-100 border-0">
+        <div class="card-body text-center py-5">
+          <i class="bi bi-cash-stack fs-1 text-success mb-3 d-block"></i>
+          <h5 class="card-title">Payments Report</h5>
+          <p class="text-muted mb-0">Payments by method, daily collections, and trends.</p>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-4">
     <a href="{{ route('reports.enforcer-performance') }}" class="text-decoration-none">
       <div class="card stat-card h-100 border-0">
         <div class="card-body text-center py-5">

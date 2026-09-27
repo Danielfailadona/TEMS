@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Revenue Report')
+@section('title', 'Payments Report')
 
 @section('content')
 <div class="mb-4">
@@ -23,7 +23,7 @@
     <div class="col-md-4">
         <div class="card stat-card">
             <div class="card-body">
-                <div class="text-muted small">Total Revenue</div>
+                <div class="text-muted small">Total Payments</div>
                 <div class="h3 mb-0 text-success">₱{{ number_format($totalRevenue, 2) }}</div>
             </div>
         </div>
@@ -49,7 +49,7 @@
 <div class="row g-4">
     <div class="col-lg-6">
         <div class="card stat-card h-100">
-            <div class="card-header bg-white"><strong>Revenue by Payment Method</strong></div>
+            <div class="card-header bg-white"><strong>Payments by Method</strong></div>
             <div class="card-body">
                 <table class="table mb-0">
                     <thead><tr><th>Method</th><th class="text-end">Count</th><th class="text-end">Amount</th></tr></thead>
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const data = @json($dailyTotals->values());
     new Chart(document.getElementById('revenueChart'), {
         type: 'line',
-        data: { labels, datasets: [{ label: 'Revenue (₱)', data, borderColor: '#16a34a', fill: true, backgroundColor: 'rgba(22,163,74,0.1)' }] },
+        data: { labels, datasets: [{ label: 'Payments (₱)', data, borderColor: '#16a34a', fill: true, backgroundColor: 'rgba(22,163,74,0.1)' }] },
         options: { responsive: true, plugins: { legend: { display: false } } }
     });
 });

@@ -3,13 +3,26 @@
 @section('title', 'Impounding')
 
 @section('content')
-<div class="mb-4 text-end">
-    <div class="d-flex gap-2 flex-wrap justify-content-end">
-        <a href="{{ route('impounding.index') }}" class="btn btn-outline-secondary btn-sm @if(!request('status')) active @endif">Active</a>
-        <a href="{{ route('impounding.index', ['status' => 'awaiting_payment']) }}" class="btn btn-outline-danger btn-sm @if(request('status') === 'awaiting_payment') active @endif">Awaiting Payment</a>
-        <a href="{{ route('impounding.index', ['status' => 'paid']) }}" class="btn btn-outline-primary btn-sm @if(request('status') === 'paid') active @endif">Paid</a>
-        <a href="{{ route('impounding.index', ['status' => 'waiting_release']) }}" class="btn btn-outline-warning btn-sm @if(request('status') === 'waiting_release') active @endif">Waiting Release</a>
-        <a href="{{ route('impounding.index', ['status' => 'released']) }}" class="btn btn-outline-success btn-sm @if(request('status') === 'released') active @endif">Released</a>
+<div class="mb-4">
+    <div class="d-flex flex-column flex-md-row gap-3 justify-content-md-end align-items-md-center">
+        <form method="GET" class="d-flex gap-2 w-100 w-md-auto">
+            <input type="hidden" name="status" value="{{ request('status') }}">
+            <div class="input-group" style="min-width: 280px;">
+                <input type="search" name="q" class="form-control form-control-sm" placeholder="Search plate, notice, or citation #" value="{{ request('q') }}">
+                <button class="btn btn-outline-primary btn-sm" type="submit"><i class="bi bi-search"></i></button>
+                @if(request('q'))
+                    <a href="{{ route('impounding.index', ['status' => request('status')]) }}" class="btn btn-outline-secondary btn-sm">Clear</a>
+                @endif
+            </div>
+        </form>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ route('impounding.index') }}" class="btn btn-outline-secondary btn-sm @if(!request('status')) active @endif">Active</a>
+            <a href="{{ route('impounding.index', ['status' => 'awaiting_payment', 'q' => request('q')]) }}" class="btn btn-outline-danger btn-sm @if(request('status') === 'awaiting_payment') active @endif">Awaiting Payment</a>
+            <a href="{{ route('impounding.index', ['status' => 'paid', 'q' => request('q')]) }}" class="btn btn-outline-primary btn-sm @if(request('status') === 'paid') active @endif">Paid</a>
+            <a href="{{ route('impounding.index', ['status' => 'waiting_release', 'q' => request('q')]) }}" class="btn btn-outline-warning btn-sm @if(request('status') === 'waiting_release') active @endif">Waiting Release</a>
+            <a href="{{ route('impounding.index', ['status' => 'released', 'q' => request('q')]) }}" class="btn btn-outline-success btn-sm @if(request('status') === 'released') active @endif">Released</a>
+        </div>
     </div>
 </div>
 

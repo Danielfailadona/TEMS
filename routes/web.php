@@ -156,7 +156,6 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
 
     // Front Desk
     Route::get('front-desk', [FrontDeskController::class, 'index'])->name('frontdesk.index');
-    Route::get('front-desk/search', [FrontDeskController::class, 'search'])->name('frontdesk.search');
 
     // Reports
     Route::prefix('reports')->name('reports.')->group(function () {

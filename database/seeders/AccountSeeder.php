@@ -20,7 +20,7 @@ class AccountSeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'name' => 'Transportation Enforcer',
+                'name' => 'Traffic Enforcer',
                 'email' => 'enforcer@example.com',
                 'password' => Hash::make('Enforcer@123'),
                 'role' => Role::Enforcer->value,

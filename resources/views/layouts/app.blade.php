@@ -15,7 +15,7 @@
         <div class="sidebar-brand">
             <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" class="sidebar-logo">
             <div class="sidebar-brand-title">TEMs</div>
-            <div class="sidebar-brand-sub">Transportation Enforcement Management System</div>
+            <div class="sidebar-brand-sub">Traffic Enforcement Management System</div>
         </div>
 
         <nav class="sidebar-nav">

@@ -147,11 +147,11 @@
             </div>
         </div>
     </div>
-    {{-- Revenue Trend --}}
+    {{-- Payments Trend --}}
     @if (!auth()->user()->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::ClampingOfficer))
     <div class="col-md-6">
         <div class="card stat-card h-100">
-            <div class="card-header bg-white"><strong>Revenue Trend</strong></div>
+            <div class="card-header bg-white"><strong>Payments Trend</strong></div>
             <div class="card-body chart-box">
                 <canvas id="revenueChart"></canvas>
             </div>
@@ -349,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 type: 'line',
                 data: {
                     labels: revenueLabels,
-                    datasets: [{ label: 'Revenue (₱)', data: revenueData, borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)', fill: true, tension: 0.35 }]
+                    datasets: [{ label: 'Payments (₱)', data: revenueData, borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)', fill: true, tension: 0.35 }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,

@@ -5,7 +5,7 @@
 @section('content')
 <div class="text-center mb-4 animate-on-load">
     <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" height="48" class="mb-2">
-    <p class="text-muted mb-0">Transportation Enforcement Management System</p>
+    <p class="text-muted mb-0">Traffic Enforcement Management System</p>
 </div>
 
 <form method="POST" action="{{ route('login') }}" class="animate-on-load">
