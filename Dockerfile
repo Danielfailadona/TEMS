@@ -34,8 +34,6 @@ RUN apk add --no-cache \
 COPY --from=composer-build /app /var/www/html
 COPY . /var/www/html
 
-RUN php artisan storage:link
-
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 COPY docker/supervisord.conf /etc/supervisord.conf
 
@@ -48,6 +46,8 @@ RUN mkdir -p /var/www/html/storage/framework/sessions \
     && touch /var/www/html/storage/logs/laravel.log \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+RUN php artisan storage:link
 
 RUN rm -rf /var/www/html/node_modules /var/www/html/.env /var/www/html/docker/nginx.conf \
     /var/www/html/docker/supervisord.conf
