@@ -269,6 +269,40 @@ class DashboardController extends Controller
             ),
         ];
 
+        // Analytics: Citations by Month
+        $citationsByMonth = Citation::query()
+            ->where('issued_at', '>=', now()->subMonths(6))
+            ->get()
+            ->groupBy(fn (Citation $c) => $c->issued_at->format('Y-m'))
+            ->map->count()
+            ->sortKeys();
+
+        // Analytics: Revenue by Month
+        $revenueByMonth = Payment::query()
+            ->where('paid_at', '>=', now()->subMonths(6))
+            ->get()
+            ->groupBy(fn (Payment $p) => $p->paid_at->format('Y-m'))
+            ->map(fn ($group) => $group->sum('amount'))
+            ->sortKeys();
+
+        // Analytics: Appeals by Month
+        $appealsByMonth = Appeal::query()
+            ->where('submitted_at', '>=', now()->subMonths(6))
+            ->get()
+            ->groupBy(fn (Appeal $a) => $a->submitted_at->format('Y-m'))
+            ->map->count()
+            ->sortKeys();
+
+        // Analytics: Top Violation Types
+        $topViolations = ViolationType::withCount(['citations' => fn ($q) => $q->where('issued_at', '>=', now()->subMonths(3))])
+            ->orderByDesc('citations_count')
+            ->take(10)
+            ->get()
+            ->filter(fn ($v) => $v->citations_count > 0)
+            ->take(5)
+            ->map(fn ($v) => ['name' => $v->name, 'count' => (int) $v->citations_count])
+            ->values();
+
         // Recent Activity (citations + payments + clamps - front desk relevant)
         $recentCitations = Citation::with(['violationType', 'enforcer'])
             ->latest('issued_at')->take(5)->get();
@@ -315,6 +349,10 @@ class DashboardController extends Controller
         return view('dashboard.frontdesk', compact(
             'stats',
             'trends',
+            'citationsByMonth',
+            'revenueByMonth',
+            'appealsByMonth',
+            'topViolations',
             'recentActivity',
             'pendingQueue',
         ));
