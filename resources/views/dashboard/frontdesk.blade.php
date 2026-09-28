@@ -57,31 +57,33 @@
 <div class="row g-3 mb-4 animate-on-load row-cols-2 row-cols-md-3 row-cols-xl-5">
     @php
         $kpis = [
-            ['icon' => 'bi-file-earmark-text', 'label' => 'Total Citations', 'value' => $stats['total_citations'], 'tone' => 'primary', 'key' => 'total_citations'],
-            ['icon' => 'bi-file-earmark-x', 'label' => 'Unpaid Citations', 'value' => $stats['unpaid_citations'], 'tone' => 'warning', 'key' => 'unpaid_citations'],
+            ['icon' => 'bi-receipt', 'label' => 'Total Citations', 'value' => number_format($stats['total_citations']), 'tone' => 'primary', 'key' => 'total_citations'],
+            ['icon' => 'bi-file-earmark-x', 'label' => 'Unpaid Citations', 'value' => number_format($stats['unpaid_citations']), 'tone' => 'warning', 'key' => 'unpaid_citations'],
             ['icon' => 'bi-cash-stack', 'label' => 'Payments Today', 'value' => '₱'.number_format($stats['revenue_today'], 2), 'tone' => 'success', 'key' => 'revenue_today'],
-            ['icon' => 'bi-lock', 'label' => 'Active Clamps', 'value' => $stats['active_clamps'], 'tone' => 'danger', 'key' => 'active_clamps'],
-            ['icon' => 'bi-exclamation-circle', 'label' => 'Pending Appeals', 'value' => $stats['pending_appeals'], 'tone' => 'info', 'key' => 'pending_appeals'],
+            ['icon' => 'bi-lock', 'label' => 'Active Clamps', 'value' => number_format($stats['active_clamps']), 'tone' => 'danger', 'key' => 'active_clamps'],
+            ['icon' => 'bi-chat-square-text', 'label' => 'Pending Appeals', 'value' => number_format($stats['pending_appeals']), 'tone' => 'info', 'key' => 'pending_appeals'],
         ];
     @endphp
-    @foreach ($kpis as $kpi)
-        @php $t = $trends[$kpi['key']] ?? ['direction' => 'flat', 'percent' => 0]; @endphp
+    @foreach ($kpis as $k)
+        @php $t = $trends[$k['key']] ?? ['direction' => 'flat', 'percent' => 0]; @endphp
         <div class="col">
             <div class="card stat-card border-0 h-100">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div class="stat-icon bg-{{ $kpi['tone'] }}-subtle text-{{ $kpi['tone'] }} rounded-circle d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
-                            <i class="{{ $kpi['icon'] }} fs-5"></i>
-                        </div>
-                        @if (isset($trends[$kpi['key']]))
-                            <span class="trend-badge {{ $trends[$kpi['key']]['direction'] === 'up' ? 'trend-up' : ($trends[$kpi['key']]['direction'] === 'down' ? 'trend-down' : 'trend-flat') }}">
-                                <i class="bi bi-arrow-{{ $trends[$kpi['key']]['direction'] === 'up' ? 'up' : ($trends[$kpi['key']]['direction'] === 'down' ? 'down' : 'right') }}-circle me-1"></i>
-                                {{ abs($trends[$kpi['key']]['percent']) }}%
-                            </span>
-                        @endif
+                    <div class="d-flex align-items-center gap-2 text-muted small mb-1">
+                        <i class="bi {{ $k['icon'] }} text-{{ $k['tone'] }}"></i>
+                        <span>{{ $k['label'] }}</span>
                     </div>
-                    <h2 class="mb-0 mt-2">{{ $kpi['value'] }}</h2>
-                    <p class="text-muted small mb-0">{{ $kpi['label'] }}</p>
+                    <div class="h3 mb-0 text-{{ $k['tone'] }}">{{ $k['value'] }}</div>
+                    <div class="small mt-1">
+                        @if ($t['direction'] === 'up')
+                            <span class="trend-badge trend-up"><i class="bi bi-arrow-up-short"></i>{{ $t['percent'] }}%</span>
+                        @elseif ($t['direction'] === 'down')
+                            <span class="trend-badge trend-down"><i class="bi bi-arrow-down-short"></i>{{ $t['percent'] }}%</span>
+                        @else
+                            <span class="trend-badge trend-flat"><i class="bi bi-dash"></i>0%</span>
+                        @endif
+                        <span class="text-muted ms-1">vs last week</span>
+                    </div>
                 </div>
             </div>
         </div>

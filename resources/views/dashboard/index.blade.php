@@ -195,7 +195,7 @@
 </div>
 
 {{-- Recent Activity (full width) — admin only --}}
-@if (!auth()->user()->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::ClampingOfficer))
+@if (!auth()->user()->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::ClampingOfficer, \App\Enums\Role::Cashier))
 <div class="card stat-card mb-4 animate-on-load">
     <div class="card-header bg-white">
         <strong>Recent Activity</strong>
@@ -223,7 +223,8 @@
 </div>
 @endif
 
- {{-- Pending Work Queue + Quick Actions + Zone Map --}}
+ @if (!auth()->user()->isRole(\App\Enums\Role::Cashier))
+{{-- Pending Work Queue + Quick Actions + Zone Map --}}
 <div class="row g-4 mb-4 animate-on-load">
     <div class="col-xl-4">
         <div class="card stat-card h-100">
@@ -310,6 +311,7 @@
     </div>
     @endif
 </div>
+@endif
 @endsection
 
 @push('scripts')
