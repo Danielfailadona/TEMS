@@ -32,8 +32,12 @@ class ArchiveController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('reason', 'like', "%{$search}%")
                   ->orWhere('archivable_type', 'like', "%{$search}%")
-                  ->orWhereHas('archivedBy', fn ($q) => $q->where('name', 'like', "%{$search}%"))
-                  ->orWhereDate('archived_at', '=', $search);
+                  ->orWhereHas('archivedBy', fn ($q) => $q->where('name', 'like', "%{$search}%"));
+                
+                // Only apply date filter if search looks like a valid date (YYYY-MM-DD)
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $search)) {
+                    $q->orWhereDate('archived_at', '=', $search);
+                }
             });
         }
 

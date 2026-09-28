@@ -4,10 +4,10 @@
 
 @section('content')
 <div class="mb-4">
-    <div class="d-flex flex-column flex-md-row gap-3 justify-content-md-end align-items-md-center">
-        <form method="GET" class="d-flex gap-2 w-100 w-md-auto flex-shrink-0">
+    <div class="d-flex flex-column flex-md-row gap-3 justify-content-md-end align-items-md-center flex-wrap">
+        <form method="GET" class="d-flex gap-2 flex-grow-1" style="min-width: 0;">
             <input type="hidden" name="status" value="{{ request('status') }}">
-            <div class="input-group" style="min-width: 280px;">
+            <div class="input-group" style="min-width: 0;">
                 <input type="search" name="q" class="form-control form-control-sm" placeholder="Search plate, notice, or citation #" value="{{ request('q') }}">
                 <button class="btn btn-outline-primary btn-sm" type="submit"><i class="bi bi-search"></i></button>
                 @if(request('q'))
