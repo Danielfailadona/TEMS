@@ -145,6 +145,7 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
     Route::post('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
     Route::get('users/{user}/devices', [UserController::class, 'devices'])->name('users.devices');
     Route::delete('devices/{device}/force-logout', [UserController::class, 'forceLogout'])->name('devices.force-logout');
+    Route::post('users/batch-action', [UserController::class, 'batchAction'])->name('users.batch-action');
 
     // Notifications
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');

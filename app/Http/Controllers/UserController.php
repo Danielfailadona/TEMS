@@ -156,6 +156,85 @@ class UserController extends Controller
         return back()->with('success', 'Device session terminated.');
     }
 
+    public function batchAction(Request $request): RedirectResponse
+    {
+        $this->authorizeAdmin();
+
+        $validated = $request->validate([
+            'action' => 'required|in:approve,reject,suspend,unsuspend',
+            'user_ids' => 'required|string',
+            'rejection_reason' => 'nullable|string|max:1000',
+        ]);
+
+        $userIds = array_filter(explode(',', $validated['user_ids']));
+        $users = User::whereIn('id', $userIds)->get();
+
+        if ($users->isEmpty()) {
+            return back()->with('error', 'No valid users selected.');
+        }
+
+        $action = $validated['action'];
+        $affected = 0;
+
+        DB::transaction(function () use ($users, $action, $validated, &$affected) {
+            foreach ($users as $user) {
+                $currentStatus = $user->account_status;
+                $shouldProcess = false;
+                $newStatus = $currentStatus;
+                $reason = null;
+
+                switch ($action) {
+                    case 'approve':
+                        if ($currentStatus === 'pending') {
+                            $shouldProcess = true;
+                            $newStatus = 'approved';
+                        }
+                        break;
+                    case 'reject':
+                        if ($currentStatus === 'pending') {
+                            $shouldProcess = true;
+                            $newStatus = 'rejected';
+                            $reason = $validated['rejection_reason'] ?? 'No reason provided';
+                        }
+                        break;
+                    case 'suspend':
+                        if (in_array($currentStatus, ['approved', 'pending'])) {
+                            $shouldProcess = true;
+                            $newStatus = 'suspended';
+                        }
+                        break;
+                    case 'unsuspend':
+                        if ($currentStatus === 'suspended') {
+                            $shouldProcess = true;
+                            $newStatus = 'approved';
+                        }
+                        break;
+                }
+
+                if ($shouldProcess) {
+                    $user->update(['account_status' => $newStatus]);
+                    
+                    if ($action === 'reject' && $reason) {
+                        $user->update(['rejection_reason' => $reason]);
+                    }
+
+                    activity()->performedOn($user)->log("Batch {$action} user {$user->name} (status: {$currentStatus} → {$newStatus})");
+                    $affected++;
+                }
+            }
+        });
+
+        $actionLabel = match ($action) {
+            'approve' => 'approved',
+            'reject' => 'rejected',
+            'suspend' => 'suspended',
+            'unsuspend' => 'unsuspended',
+            default => $action,
+        };
+
+        return back()->with('success', "{$affected} user(s) {$actionLabel} successfully.");
+    }
+
     protected function authorizeAdmin(): void
     {
         abort_unless(auth()->user()->isAdmin(), 403);
