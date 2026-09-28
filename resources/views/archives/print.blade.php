@@ -176,16 +176,5 @@
             </table>
         </div>
     @endif
-
-    <div class="footer-section">
-        <div class="meta">
-            <span><strong>Archived By:</strong> {{ $archive->archivedBy?->name ?? 'System' }}</span>
-            <span><strong>Archive Date:</strong> {{ $archive->archived_at->format('M d, Y h:i A') }}</span>
-            @if ($archive->reason)
-                <span><strong>Reason:</strong> {{ $archive->reason }}</span>
-            @endif
-            <span><strong>Archive ID:</strong> {{ $archive->id }}</span>
-        </div>
-    </div>
 </body>
 </html>
