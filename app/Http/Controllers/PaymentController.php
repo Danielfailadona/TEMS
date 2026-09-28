@@ -23,9 +23,38 @@ class PaymentController extends Controller
     {
         $this->authorize('viewAny', Payment::class);
 
-        $query = Payment::with(['citation', 'cashier'])->whereNotNull('paid_at');
+        $query = Payment::with(['citation', 'cashier']);
 
-        $payments = $query->latest('paid_at')->paginate(10);
+        // Search: receipt #, citation #, plate, driver name
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($w) use ($search) {
+                $w->where('receipt_number', 'like', "%{$search}%")
+                  ->orWhereHas('citation', fn ($q) => $q->where('citation_number', 'like', "%{$search}%"))
+                  ->orWhereHas('citation', fn ($q) => $q->where('vehicle_plate', 'like', "%{$search}%"))
+                  ->orWhereHas('citation', fn ($q) => $q->where('driver_name', 'like', "%{$search}%"));
+            });
+        }
+
+        // Payment method filter
+        if ($request->filled('payment_method')) {
+            $query->where('payment_method', $request->payment_method);
+        }
+
+        // Date range filters
+        if ($request->filled('date_from')) {
+            $query->whereDate('paid_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('paid_at', '<=', $request->date_to);
+        }
+
+        // Online payments only filter
+        if ($request->filled('online')) {
+            $query->whereNotNull('paymongo_checkout_id');
+        }
+
+        $payments = $query->latest('paid_at')->paginate(6)->withQueryString();
 
         return view('payments.index', compact('payments'));
     }
