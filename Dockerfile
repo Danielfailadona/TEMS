@@ -34,6 +34,8 @@ RUN apk add --no-cache \
 COPY --from=composer-build /app /var/www/html
 COPY . /var/www/html
 
+RUN php artisan storage:link
+
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 COPY docker/supervisord.conf /etc/supervisord.conf
 
