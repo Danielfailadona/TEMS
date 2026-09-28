@@ -21,11 +21,12 @@ class FrontDeskController extends Controller
 
             if ($citationNumber) {
                 $citation = Citation::with(['violationType', 'payment'])
-                    ->where('citation_number', $citationNumber)
+                    ->where('citation_number', 'like', "%{$citationNumber}%")
+                    ->latest('issued_at')
                     ->first();
             } elseif ($plateNumber) {
                 $citation = Citation::with(['violationType', 'payment'])
-                    ->where('vehicle_plate', $plateNumber)
+                    ->where('vehicle_plate', 'like', "%{$plateNumber}%")
                     ->latest('issued_at')
                     ->first();
             }
