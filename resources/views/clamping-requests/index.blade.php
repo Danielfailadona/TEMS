@@ -6,31 +6,31 @@
 <p class="text-muted mb-4 small">Manage citizen-reported clamping requests</p>
 
 <div class="row g-3 mb-4">
-    <div class="col-md-3 col-6">
+    <div class="col-xl-2 col-lg-2 col-md-3 col-6">
         <div class="card stat-card text-center py-3">
             <div class="fs-4 fw-bold" style="color:var(--itevcms-primary);">{{ $stats['total'] }}</div>
             <div class="small text-muted text-uppercase" style="letter-spacing:0.03em;font-size:0.7rem;">Total Requests</div>
         </div>
     </div>
-    <div class="col-md-3 col-6">
+    <div class="col-xl-2 col-lg-2 col-md-3 col-6">
         <div class="card stat-card text-center py-3 border-warning">
             <div class="fs-4 fw-bold text-warning">{{ $stats['pending'] }}</div>
             <div class="small text-muted text-uppercase" style="letter-spacing:0.03em;font-size:0.7rem;">Pending</div>
         </div>
     </div>
-    <div class="col-md-3 col-6">
+    <div class="col-xl-2 col-lg-2 col-md-3 col-6">
         <div class="card stat-card text-center py-3 border-success">
             <div class="fs-4 fw-bold text-success">{{ $stats['approved'] }}</div>
             <div class="small text-muted text-uppercase" style="letter-spacing:0.03em;font-size:0.7rem;">Approved</div>
         </div>
     </div>
-    <div class="col-md-3 col-6">
+    <div class="col-xl-2 col-lg-2 col-md-3 col-6">
         <div class="card stat-card text-center py-3" style="border-color:var(--bs-info);">
             <div class="fs-4 fw-bold text-info">{{ $stats['resolved'] }}</div>
             <div class="small text-muted text-uppercase" style="letter-spacing:0.03em;font-size:0.7rem;">Resolved</div>
         </div>
     </div>
-    <div class="col-md-3 col-6">
+    <div class="col-xl-2 col-lg-2 col-md-3 col-6">
         <div class="card stat-card text-center py-3 border-danger">
             <div class="fs-4 fw-bold text-danger">{{ $stats['rejected'] }}</div>
             <div class="small text-muted text-uppercase" style="letter-spacing:0.03em;font-size:0.7rem;">Rejected</div>
