@@ -637,59 +637,6 @@ document.addEventListener('DOMContentLoaded', () => {
             updateBatchToolbar();
         });
     }
-
-    function submitFilter() {
-        const url = new URL(form.action.split('?')[0], window.location.origin);
-        new FormData(form).forEach((v, k) => {
-            if (v !== '') url.searchParams.set(k, v);
-        });
-        history.replaceState({}, '', url.toString());
-        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(r => r.text())
-            .then(html => {
-                const doc = new DOMParser().parseFromString(html, 'text/html');
-                const newCard = doc.getElementById('users-card');
-                if (newCard) tableCard.innerHTML = newCard.innerHTML;
-                // Modals are now outside the AJAX container, no need to re-append
-                // Re-initialize any new modals that might have been added
-                doc.querySelectorAll('.user-reject-modal').forEach(modal => {
-                    if (!modal._bsModal) new bootstrap.Modal(modal);
-                });
-            })
-            .catch(() => { window.location.href = url.toString(); });
-    }
-
-    tableCard.addEventListener('change', function (e) {
-        if (e.target.id === 'select-all') {
-            document.querySelectorAll('#users-table .row-checkbox').forEach(cb => cb.checked = e.target.checked);
-            updateBatchToolbar();
-            return;
-        }
-        const cb = e.target.closest('.toggle-active');
-        if (!cb) return;
-        const userId = cb.dataset.userId;
-        const isActive = cb.checked;
-        fetch(`/users/${userId}/toggle-active`, {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ is_active: isActive })
-        }).catch(() => { cb.checked = !isActive; });
-    });
-
-    document.querySelectorAll('#status-tabs .user-mgmt-tab').forEach(tab => {
-        tab.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.querySelectorAll('#status-tabs .user-mgmt-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            statusInput.value = tab.dataset.filter === 'all' ? '' : tab.dataset.filter;
-            submitFilter();
-        });
-    });
-
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        submitFilter();
-    });
 });
 </script>
 @endpush
