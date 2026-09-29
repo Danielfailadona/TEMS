@@ -7,6 +7,7 @@
     <title>@yield('title', config('itevcms.app_name'))</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=dashboard,auto_towing,car_gear">
     @stack('styles')
 </head>
 <body class="app-shell{{ ($isEnforcerMobile ?? false) ? ' enforcer-mobile' : '' }}">
@@ -15,7 +16,7 @@
         <div class="sidebar-brand">
             <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" class="sidebar-logo">
             <div class="sidebar-brand-title">TEMs</div>
-            <div class="sidebar-brand-sub">Transportation Enforcement Management System</div>
+            <div class="sidebar-brand-sub">Traffic Enforcement Management System</div>
         </div>
 
         <nav class="sidebar-nav">
@@ -26,10 +27,16 @@
                         @php
                             $isActive = request()->routeIs($item['route']) ||
                                         request()->routeIs(str_replace('.index', '.*', $item['route']));
+                            $materialIcons = ['dashboard', 'auto_towing', 'car_gear'];
+                            $isMaterial = in_array($item['icon'], $materialIcons);
                         @endphp
                         <a href="{{ route($item['route']) }}"
                            class="nav-link {{ $isActive ? 'active' : '' }}">
-                            <i class="bi bi-{{ $item['icon'] }} sidebar-nav-icon"></i>
+                            @if ($isMaterial)
+                                <span class="material-symbols-outlined sidebar-nav-icon">{{ $item['icon'] }}</span>
+                            @else
+                                <i class="bi bi-{{ $item['icon'] }} sidebar-nav-icon"></i>
+                            @endif
                             <span>{{ $item['label'] }}</span>
                         </a>
                     @endforeach
@@ -373,6 +380,11 @@ document.addEventListener('DOMContentLoaded', () => {
     .zone-map {
         width: 100%;
         height: 500px;
+    }
+
+    .material-symbols-outlined.sidebar-nav-icon {
+        font-size: 1.25rem;
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     }
 </style>
 

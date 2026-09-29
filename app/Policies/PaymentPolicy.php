@@ -25,6 +25,6 @@ class PaymentPolicy
 
     public function update(User $user, Payment $payment): bool
     {
-        return $user->isRole(Role::SuperAdmin, Role::Administrator, Role::Cashier);
+        return $user->isRole(Role::SuperAdmin, Role::Administrator);
     }
 }

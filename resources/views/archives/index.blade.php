@@ -48,6 +48,7 @@
             <a href="{{ route('archives.backup', request()->query()) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-file-earmark-arrow-down me-1"></i> Download Backup</a>
         @endif
         <form method="GET" class="d-flex align-items-center gap-2 mb-0">
+            <input type="search" name="search" class="form-control form-select-sm" style="min-width:200px;" placeholder="Search archives..." value="{{ request('search') }}">
             <select name="type" class="form-select form-select-sm" style="min-width:140px;" onchange="this.form.submit()">
                 <option value="">All Types</option>
                 @foreach ($types as $type)

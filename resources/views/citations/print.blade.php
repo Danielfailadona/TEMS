@@ -90,7 +90,7 @@
     <div class="header">
         <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs">
         <div class="name">{{ config('itevcms.app_name') }}</div>
-        <div class="sub">Transportation Enforcement Management System</div>
+        <div class="sub">Traffic Enforcement Management System</div>
     </div>
 
     <div class="title-row">

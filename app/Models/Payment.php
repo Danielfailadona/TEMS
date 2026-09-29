@@ -48,6 +48,22 @@ class Payment extends Model
         return $this->isOnlinePayment() && is_null($this->paid_at);
     }
 
+    public function getStatusBadgeClass(): string
+    {
+        if ($this->paid_at) {
+            return 'bg-success';
+        }
+        return $this->isOnlinePayment() ? 'bg-warning text-dark' : 'bg-secondary';
+    }
+
+    public function getStatusLabel(): string
+    {
+        if ($this->paid_at) {
+            return 'Paid';
+        }
+        return $this->isOnlinePayment() ? 'Pending' : 'Unpaid';
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

@@ -34,7 +34,7 @@ class NavigationComposer
             $monitoring = [];
             $administration = [];
 
-            $operations[] = ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'speedometer2'];
+            $operations[] = ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'dashboard'];
 
             if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::Enforcer)) {
                 $operations[] = ['label' => 'Citations', 'route' => 'citations.index', 'icon' => 'file-earmark-text'];
@@ -49,11 +49,11 @@ class NavigationComposer
             }
 
             if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::ClampingOfficer)) {
-                $operations[] = ['label' => 'Clamping', 'route' => 'clamping.index', 'icon' => 'lock'];
+                $operations[] = ['label' => 'Clamping', 'route' => 'clamping.index', 'icon' => 'car_gear'];
             }
 
             if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::ClampingOfficer, Role::Cashier, Role::FrontDesk)) {
-                $operations[] = ['label' => 'Impounding', 'route' => 'impounding.index', 'icon' => 'truck'];
+                $operations[] = ['label' => 'Impounding', 'route' => 'impounding.index', 'icon' => 'auto_towing'];
             }
 
             if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::ClampingOfficer, Role::Enforcer)) {

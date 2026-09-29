@@ -93,7 +93,7 @@
             <button type="submit" class="pay-search-submit" aria-label="Search payments">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
             </button>
-            <input type="search" name="search" id="paySearchInput" placeholder="Receipt #, citation # or plate..." value="{{ request('search') }}" autocomplete="off">
+            <input type="search" name="search" id="paySearchInput" placeholder="Receipt #, citation #, plate, or driver..." value="{{ request('search') }}" autocomplete="off">
         </label>
 
         @can('create', App\Models\Payment::class)

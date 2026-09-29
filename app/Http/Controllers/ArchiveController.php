@@ -26,7 +26,22 @@ class ArchiveController extends Controller
             $query->where('archivable_type', $request->type);
         }
 
-        $archives = $query->paginate(12);
+        // Search across title, type, archived_by name, reason, archived_at date range
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('reason', 'like', "%{$search}%")
+                  ->orWhere('archivable_type', 'like', "%{$search}%")
+                  ->orWhereHas('archivedBy', fn ($q) => $q->where('name', 'like', "%{$search}%"));
+                
+                // Only apply date filter if search looks like a valid date (YYYY-MM-DD)
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $search)) {
+                    $q->orWhereDate('archived_at', '=', $search);
+                }
+            });
+        }
+
+        $archives = $query->paginate(20)->withQueryString();
 
         $types = Archive::select('archivable_type')
             ->distinct()

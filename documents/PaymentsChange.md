@@ -226,3 +226,101 @@ Header row of `show.blade.php` (line 7):
 - Manual QA (hard refresh): `/payments/28` shows "Back to Payments" button on the
   left, clicking it returns to `/payments`; Edit/Print still visible on the right;
   print preview omits the button.
+
+---
+
+## Merge Resolution: Search-Only Table Kept + Driver-Name Search
+
+### Date Edited / Applied `(required)`
+
+- Edited and applied: 2026-09-29
+
+### Type of Change `(required)`
+
+- Merge conflict resolution (controller + view)
+
+### Requested By / Source `(optional)`
+
+- During the `origin/master` merge, `PaymentController.php` and
+  `payments/index.blade.php` were left in a conflicted (`UU`) state. User
+  decided: keep our search-only table; do not adopt the master-side card grid /
+  method / date / online filters; port the driver-name search + trimmed input.
+
+### Problem `(required)`
+
+- Two independent copies changed the same code: ours (`whereNotNull('paid_at')` +
+  `search` covering receipt/citation #/plate, `.pay-dash` table) vs master's
+  (no paid_at filter, `search` incl. driver name, payment_method/date/online
+  filters, `paginate(6)`, `.payment-card` grid + `getStatusBadgeClass()` badges).
+  Conflict markers broke the page and `php -l` until resolved.
+
+### Root Cause `(required)`
+
+- Overlapping edits on `PaymentController@index` and `payments/index.blade.php`
+  during the branch merge; git could not auto-merge them.
+
+### Files Changed `(required)`
+
+- `app/Http/Controllers/PaymentController.php` (only `index()`)
+- `resources/views/payments/index.blade.php` (conflict hunk resolved; placeholder updated)
+
+### Changes Made `(required)`
+
+- `PaymentController@index`: kept `Payment::with(['citation','cashier'])->whereNotNull('paid_at')`,
+  `latest('paid_at')`, `paginate(10)->withQueryString()`. Search is now trimmed
+  and also matches the citation's `driver_name`:
+
+  ```php
+  if ($search = trim($request->query('search'))) {
+      $query->where(function ($inner) use ($search) {
+          $inner->where('receipt_number', 'like', "%{$search}%")
+              ->orWhereHas('citation', function ($c) use ($search) {
+                  $c->where('citation_number', 'like', "%{$search}%")
+                      ->orWhere('vehicle_plate', 'like', "%{$search}%")
+                      ->orWhere('driver_name', 'like', "%{$search}%");
+              });
+      });
+  }
+  ```
+
+- `payments/index.blade.php`: kept the HEAD `.pay-dash` table entirely (search
+  only); discarded master's `.payment-card` grid, its filter panel (payment
+  method, date range, online-only, reset) and `paginate(6)`. Search placeholder
+  updated to `Receipt #, citation #, plate, or driver...`.
+
+### Behavior of the New Changes `(required)`
+
+| Scenario | Before | After |
+|---|---|---|
+| Index scope | paid/completed only (`paid_at` not null) | unchanged |
+| Search fields | receipt, citation #, plate | + driver name; trimmed input |
+| Layout | mockup table, search only | unchanged |
+| Master's grid / method / date / online filters | n/a | discarded |
+| Payments per page | 10 | unchanged |
+
+### Impact & Risk `(required)`
+
+- Affects: `/payments` index search behavior only. Low risk. The master-side
+  `Payment::getStatusBadgeClass()` / `getStatusLabel()` remain on the model but
+  are unused by this view.
+
+### Database / Migration Impact `(optional)`
+
+- None
+
+### Untouched `(optional)`
+
+- Payments create/edit/show/print views, policies, enums, pagination + result
+  count footer, Record Payment / eye / edit pills.
+
+### Known Issues / Follow-ups `(optional)`
+
+- None
+
+### Testing / Verification `(required)`
+
+- `php -l app/Http/Controllers/PaymentController.php` - clean.
+- `php artisan view:clear` + `view:cache` - all Blade templates compile.
+- Headless controller smoke test (authenticated): `index(',')` returns 2
+  payments; `index('?search=Dela')` returns 2 without error - search incl.
+  driver name runs cleanly.

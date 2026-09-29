@@ -12,7 +12,7 @@
     <div class="text-center mb-4">
         <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" height="56" class="mb-2">
         <h4 class="mb-0 fw-bold">{{ config('itevcms.app_name') }}</h4>
-        <p class="text-muted small mb-0">Transportation Enforcement Management System</p>
+        <p class="text-muted small mb-0">Traffic Enforcement Management System</p>
     </div>
 
     @if ($payment->paid_at)

@@ -376,7 +376,7 @@
             <div class="form-panel">
                 <div class="brand-section">
                     <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" height="80" class="mb-2">
-                    <div class="system-subtitle">Transportation Enforcement Management System</div>
+                    <div class="system-subtitle">Traffic Enforcement Management System</div>
                     <h2>{{ config('itevcms.app_name') }}</h2>
                     <div class="welcome-heading">Welcome Back</div>
                     <div class="welcome-sub">Sign in to continue to your dashboard.</div>
@@ -442,7 +442,7 @@
             <div class="form-panel">
                 <div class="brand-section">
                     <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" height="80" class="mb-2">
-                    <div class="system-subtitle">Transportation Enforcement Management System</div>
+                    <div class="system-subtitle">Traffic Enforcement Management System</div>
                     <h2>{{ config('itevcms.app_name') }}</h2>
                     <div class="welcome-heading">Create Account</div>
                     <div class="welcome-sub">Register to access the enforcement system.</div>

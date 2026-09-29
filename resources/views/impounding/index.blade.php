@@ -210,7 +210,7 @@ if (! array_key_exists($activeStatus, $options)) {
 
 @foreach ($records as $record)
     @can('markPaid', $record)
-        <div class="modal fade" id="payModal-{{ $record->id }}" tabindex="-1">
+        <div class="modal fade" id="payModal-{{ $record->id }}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
             <div class="modal-dialog">
                 <form method="POST" action="{{ route('impounding.mark-paid', $record) }}">
                     @csrf

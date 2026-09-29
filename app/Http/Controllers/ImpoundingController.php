@@ -33,14 +33,15 @@ class ImpoundingController extends Controller
             ]);
         }
 
-        $query->when($request->search, function ($q, $search) {
-            $q->where(function ($inner) use ($search) {
+        if ($search = trim($request->query('search'))) {
+            $query->where(function ($inner) use ($search) {
                 $inner->where('vehicle_plate', 'like', "%{$search}%")
                     ->orWhere('notice_number', 'like', "%{$search}%")
+                    ->orWhereHas('citation', fn ($c) => $c->where('citation_number', 'like', "%{$search}%"))
                     ->orWhereHas('citation.violationType', fn ($v) => $v->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('officer', fn ($o) => $o->where('name', 'like', "%{$search}%"));
             });
-        });
+        }
 
         $records = $query->latest('clamped_at')->paginate(10)->withQueryString();
 

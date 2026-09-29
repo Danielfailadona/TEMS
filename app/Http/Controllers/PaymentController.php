@@ -24,16 +24,18 @@ class PaymentController extends Controller
         $this->authorize('viewAny', Payment::class);
 
         $query = Payment::with(['citation', 'cashier'])
-            ->whereNotNull('paid_at')
-            ->when($request->search, function ($q, $search) {
-                $q->where(function ($inner) use ($search) {
-                    $inner->where('receipt_number', 'like', "%{$search}%")
-                        ->orWhereHas('citation', function ($c) use ($search) {
-                            $c->where('citation_number', 'like', "%{$search}%")
-                              ->orWhere('vehicle_plate', 'like', "%{$search}%");
-                        });
-                });
+            ->whereNotNull('paid_at');
+
+        if ($search = trim($request->query('search'))) {
+            $query->where(function ($inner) use ($search) {
+                $inner->where('receipt_number', 'like', "%{$search}%")
+                    ->orWhereHas('citation', function ($c) use ($search) {
+                        $c->where('citation_number', 'like', "%{$search}%")
+                            ->orWhere('vehicle_plate', 'like', "%{$search}%")
+                            ->orWhere('driver_name', 'like', "%{$search}%");
+                    });
             });
+        }
 
         $payments = $query->latest('paid_at')->paginate(10)->withQueryString();
 

@@ -121,7 +121,47 @@
   </div>
 </form>
 
-<div class="card border-0 shadow-sm" id="users-card">
+{{-- Batch Actions Toolbar (shown when checkboxes selected) --}}
+<div class="mb-3 d-none" id="batch-actions-toolbar" style="position: sticky; top: 0; z-index: 10; background: white; padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0;">
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <span class="fw-semibold text-muted small" id="batch-selected-count">0 selected</span>
+        <div class="vr d-none d-md-block mx-2" style="height: 1.5rem;"></div>
+        
+        {{-- Approve (for pending users) --}}
+        <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-approve-form">
+            @csrf
+            <input type="hidden" name="action" value="approve">
+            <input type="hidden" name="user_ids" id="batch-approve-ids">
+            <button type="submit" class="btn btn-success btn-sm" disabled id="batch-approve-btn">
+                <i class="bi bi-check-lg me-1"></i> Approve
+            </button>
+        </form>
+
+        {{-- Reject (with shared reason modal) --}}
+        <button type="button" class="btn btn-danger btn-sm" disabled id="batch-reject-btn" data-bs-toggle="modal" data-bs-target="#batchRejectModal">
+            <i class="bi bi-x-lg me-1"></i> Reject
+        </button>
+
+        {{-- Suspend/Unsuspend (smart toggle) --}}
+        <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-suspend-form">
+            @csrf
+            <input type="hidden" name="action" value="suspend">
+            <input type="hidden" name="user_ids" id="batch-suspend-ids">
+            <button type="submit" class="btn btn-warning btn-sm" disabled id="batch-suspend-btn">
+                <i class="bi bi-lock me-1"></i> Suspend
+            </button>
+        </form>
+        
+        <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-unsuspend-form">
+            @csrf
+            <input type="hidden" name="action" value="unsuspend">
+            <input type="hidden" name="user_ids" id="batch-unsuspend-ids">
+            <button type="submit" class="btn btn-success btn-sm" disabled id="batch-unsuspend-btn">
+                <i class="bi bi-unlock me-1"></i> Unsuspend
+            </button>
+        </form>
+    </div>
+</div>
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0" id="users-table">
       <thead class="table-light">
@@ -224,25 +264,7 @@
                     </tr>
 
                     @if ($user->account_status === 'pending')
-                        <div class="modal fade user-reject-modal" id="rejectModal-{{ $user->id }}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <form method="POST" action="{{ route('users.reject', $user) }}" class="modal-content">
-                                    @csrf
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Reject User: {{ $user->name }}</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <label class="form-label">Reason for rejection</label>
-                                        <textarea name="rejection_reason" class="form-control" rows="3" required placeholder="Explain why this registration was rejected..."></textarea>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <button type="submit" class="btn btn-danger">Reject User</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
+                        {{-- Reject modal rendered outside table to prevent stagger on AJAX refresh --}}
                     @endif
                 @empty
                     <tr><td colspan="7" class="text-center text-muted py-4">No users found.</td></tr>
@@ -258,6 +280,58 @@
     @endif
 </div>
 @endsection
+
+{{-- Reject Modals (rendered outside AJAX container to prevent stagger on filter) --}}
+@if ($users->contains('account_status', 'pending'))
+<div style="display: none;">
+    @foreach ($users->where('account_status', 'pending') as $user)
+        <div class="modal fade user-reject-modal" id="rejectModal-{{ $user->id }}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <form method="POST" action="{{ route('users.reject', $user) }}" class="modal-content">
+                    @csrf
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title"><i class="bi bi-x-circle me-2"></i>Reject User: {{ $user->name }}</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label class="form-label fw-semibold">Reason for rejection <span class="text-danger">*</span></label>
+                        <textarea name="rejection_reason" class="form-control" rows="4" required placeholder="Explain why this registration was rejected..."></textarea>
+                        <div class="form-text">This will set the user's account status to <strong>Rejected</strong>.</div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="bi bi-x me-1"></i> Cancel</button>
+                        <button type="submit" class="btn btn-danger"><i class="bi bi-x-lg me-1"></i> Reject User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endforeach
+</div>
+@endif
+
+{{-- Batch Reject Modal --}}
+<div class="modal fade" id="batchRejectModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" action="{{ route('users.batch-action') }}" class="modal-content">
+            @csrf
+            <input type="hidden" name="action" value="reject">
+            <input type="hidden" name="user_ids" id="batch-reject-ids">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-x-circle me-2"></i>Batch Reject Users</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3"><strong>Selected users:</strong> <span id="batch-reject-count" class="text-danger"></span></p>
+                <label class="form-label fw-semibold">Shared rejection reason <span class="text-danger">*</span></label>
+                <textarea name="rejection_reason" class="form-control" rows="4" required placeholder="Enter the shared reason for rejecting all selected users..."></textarea>
+                <div class="form-text">All selected users will be rejected with this same reason.</div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="bi bi-x me-1"></i> Cancel</button>
+                <button type="submit" class="btn btn-danger"><i class="bi bi-x-lg me-1"></i> Reject All Selected</button>
+            </div>
+        </form>
+</div>
 
 @push('styles')
 <style>
@@ -336,6 +410,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const tableCard = document.getElementById('users-card');
     const form = document.getElementById('user-filter-form');
     const statusInput = document.getElementById('filter-status-input');
+    
+    // Batch actions elements
+    const batchToolbar = document.getElementById('batch-actions-toolbar');
+    const selectAllCb = document.getElementById('select-all');
+    const selectedCountEl = document.getElementById('batch-selected-count');
+    const batchRejectBtn = document.getElementById('batch-reject-btn');
+    const batchApproveBtn = document.getElementById('batch-approve-btn');
+    const batchSuspendBtn = document.getElementById('batch-suspend-btn');
+    const batchUnsuspendBtn = document.getElementById('batch-unsuspend-btn');
+    const batchRejectIds = document.getElementById('batch-reject-ids');
+    const batchApproveIds = document.getElementById('batch-approve-ids');
+    const batchSuspendIds = document.getElementById('batch-suspend-ids');
+    const batchUnsuspendIds = document.getElementById('batch-unsuspend-ids');
+    const batchRejectCountEl = document.getElementById('batch-reject-count');
+    const batchRejectCountDisplay = document.getElementById('batch-selected-count');
+
+    // Initialize Bootstrap modals once on page load
+    document.querySelectorAll('.user-reject-modal, #batchRejectModal').forEach(modal => {
+        new bootstrap.Modal(modal);
+    });
 
     function submitFilter() {
         const url = new URL(form.action.split('?')[0], window.location.origin);
@@ -349,8 +443,218 @@ document.addEventListener('DOMContentLoaded', () => {
                 const doc = new DOMParser().parseFromString(html, 'text/html');
                 const newCard = doc.getElementById('users-card');
                 if (newCard) tableCard.innerHTML = newCard.innerHTML;
-                document.querySelectorAll('.user-reject-modal').forEach(m => m.remove());
-                doc.querySelectorAll('.user-reject-modal').forEach(m => document.body.appendChild(m));
+                // Modals are now outside the AJAX container, no need to re-append
+                // Re-initialize any new modals that might have been added
+                doc.querySelectorAll('.user-reject-modal').forEach(modal => {
+                    if (!modal._bsModal) new bootstrap.Modal(modal);
+                });
+            })
+            .catch(() => { window.location.href = url.toString(); });
+    }
+
+    // Batch actions toolbar logic
+    function updateBatchToolbar() {
+        const checkedRows = document.querySelectorAll('#users-table .row-checkbox:checked');
+        const count = checkedRows.length;
+        const selectedIds = Array.from(checkedRows).map(cb => cb.value);
+        
+        if (count > 0) {
+            batchToolbar.classList.remove('d-none');
+            batchSelectedCount.textContent = `${count} selected`;
+        } else {
+            batchToolbar.classList.add('d-none');
+        }
+        
+        // Update hidden inputs with selected IDs
+        const idsString = selectedIds.join(',');
+        [batchRejectIds, batchApproveIds, batchSuspendIds, batchUnsuspendIds].forEach(input => {
+            if (input) input.value = idsString;
+        });
+        
+        if (count === 0) {
+            return;
+        }
+        
+        // Analyze selected users' statuses for context-aware actions
+        const rows = document.querySelectorAll('#users-table tbody tr');
+        let hasPending = false, hasApproved = false, hasSuspended = false, hasRejected = false;
+        
+        rows.forEach(row => {
+            const cb = row.querySelector('.row-checkbox');
+            if (cb && cb.checked) {
+                const statusCell = row.querySelector('td:nth-child(4) .badge');
+                if (statusCell) {
+                    const statusText = statusCell.textContent.trim().toLowerCase();
+                    if (statusText === 'pending') hasPending = true;
+                    else if (statusText === 'approved') hasApproved = true;
+                    else if (statusText === 'suspended') hasSuspended = true;
+                    else if (statusText === 'rejected') hasRejected = true;
+                }
+            }
+        });
+        
+        // Enable/disable buttons based on context
+        batchApproveBtn.disabled = !hasPending;
+        batchRejectBtn.disabled = !hasPending;
+        
+        // Suspend/Unsuspend smart toggle
+        const hasApprovedOrPending = hasApproved || hasPending;
+        const hasSuspendedOnly = hasSuspended && !hasApproved && !hasPending && !hasRejected;
+        
+        if (hasSuspendedOnly) {
+            batchSuspendBtn.disabled = true;
+            batchUnsuspendBtn.disabled = false;
+        } else if (hasApprovedOrPending && !hasSuspended) {
+            batchSuspendBtn.disabled = false;
+            batchUnsuspendBtn.disabled = true;
+        } else {
+            batchSuspendBtn.disabled = true;
+            batchUnsuspendBtn.disabled = true;
+        }
+        
+        // Update reject modal count
+        if (batchRejectCountEl) {
+            const pendingCount = selectedIds.filter((_, i) => {
+                const row = document.querySelector(`#users-table tbody tr .row-checkbox[value="${selectedIds[i]}"]`);
+                if (!row) return false;
+                const statusCell = row.closest('tr').querySelector('td:nth-child(4) .badge');
+                return statusCell && statusCell.textContent.trim().toLowerCase() === 'pending';
+            }).length;
+            batchRejectCountEl.textContent = `${pendingCount} pending user${pendingCount !== 1 ? 's' : ''} will be rejected`;
+        }
+    }
+
+    // Handle checkbox changes
+    tableCard.addEventListener('change', function (e) {
+        if (e.target.id === 'select-all') {
+            document.querySelectorAll('#users-table .row-checkbox').forEach(cb => cb.checked = e.target.checked);
+            updateBatchToolbar();
+            return;
+        }
+        
+        if (e.target.matches('.row-checkbox')) {
+            updateBatchToolbar();
+            return;
+        }
+        
+        const cb = e.target.closest('.toggle-active');
+        if (!cb) return;
+        const userId = cb.dataset.userId;
+        const isActive = cb.checked;
+        fetch(`/users/${userId}/toggle-active`, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ is_active: isActive })
+        }).catch(() => { cb.checked = !isActive; });
+    });
+
+    // Handle batch action form submissions
+    document.getElementById('batch-approve-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const fd = new FormData(form);
+        const btn = document.getElementById('batch-approve-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Approving...';
+        
+        try {
+            const res = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                alert('Failed to approve users');
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Approve';
+        }
+    });
+
+    document.getElementById('batch-suspend-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const btn = document.getElementById('batch-suspend-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Suspending...';
+        
+        try {
+            const res = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (res.ok) window.location.reload();
+            else alert('Failed to suspend users');
+        } catch (err) { alert('Error: ' + err.message); }
+        finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-lock me-1"></i> Suspend'; }
+    });
+
+    document.getElementById('batch-unsuspend-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const btn = document.getElementById('batch-unsuspend-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Unsuspending...';
+        
+        try {
+            const res = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (res.ok) window.location.reload();
+            else alert('Failed to unsuspend users');
+        } catch (err) { alert('Error: ' + err.message); }
+        finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-unlock me-1"></i> Unsuspend'; }
+    });
+
+    // Update batch reject modal with selected count
+    const batchRejectBtn = document.getElementById('batch-reject-btn');
+    if (batchRejectBtn) {
+        batchRejectBtn.addEventListener('click', () => {
+            const checkedRows = document.querySelectorAll('#users-table .row-checkbox:checked');
+            const pendingCount = Array.from(checkedRows).filter(cb => {
+                const statusCell = cb.closest('tr').querySelector('td:nth-child(4) .badge');
+                return statusCell && statusCell.textContent.trim().toLowerCase() === 'pending';
+            }).length;
+            if (batchRejectCountEl) {
+                batchRejectCountEl.textContent = `${pendingCount} pending user${pendingCount !== 1 ? 's' : ''} will be rejected`;
+            }
+        });
+    }
+    
+    // Select all checkbox
+    const selectAllCb = document.getElementById('select-all');
+    if (selectAllCb) {
+        selectAllCb.addEventListener('change', () => {
+            document.querySelectorAll('#users-table .row-checkbox').forEach(cb => cb.checked = selectAllCb.checked);
+            updateBatchToolbar();
+        });
+    }
+
+    function submitFilter() {
+        const url = new URL(form.action.split('?')[0], window.location.origin);
+        new FormData(form).forEach((v, k) => {
+            if (v !== '') url.searchParams.set(k, v);
+        });
+        history.replaceState({}, '', url.toString());
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.text())
+            .then(html => {
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const newCard = doc.getElementById('users-card');
+                if (newCard) tableCard.innerHTML = newCard.innerHTML;
+                // Modals are now outside the AJAX container, no need to re-append
+                // Re-initialize any new modals that might have been added
+                doc.querySelectorAll('.user-reject-modal').forEach(modal => {
+                    if (!modal._bsModal) new bootstrap.Modal(modal);
+                });
             })
             .catch(() => { window.location.href = url.toString(); });
     }
@@ -358,6 +662,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tableCard.addEventListener('change', function (e) {
         if (e.target.id === 'select-all') {
             document.querySelectorAll('#users-table .row-checkbox').forEach(cb => cb.checked = e.target.checked);
+            updateBatchToolbar();
             return;
         }
         const cb = e.target.closest('.toggle-active');
@@ -388,3 +693,5 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 @endpush
+
+@endsection

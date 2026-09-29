@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>TEMs - Transportation Enforcement Management System</title>
+    <title>TEMs - Traffic Enforcement Management System</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
@@ -495,7 +495,7 @@
         <div class="feature-card">
             <div class="feature-card-icon"><i class="bi bi-graph-up-arrow"></i></div>
             <h3>Analytics & Reports</h3>
-            <p>Comprehensive dashboards with violation trends, revenue reports, and officer performance metrics.</p>
+            <p>Comprehensive dashboards with violation trends, payment reports, and officer performance metrics.</p>
         </div>
 
         <div class="feature-card">
@@ -521,7 +521,7 @@
 <section class="faq-section" id="faq">
     <div class="section-header">
         <h2>Frequently Asked Questions</h2>
-        <p>Common questions about the Transportation Enforcement Management System</p>
+        <p>Common questions about the Traffic Enforcement Management System</p>
     </div>
     <div class="faq-container">
         <div class="faq-item">
@@ -608,7 +608,7 @@
 </section>
 
 <footer class="footer-landing">
-    <p>&copy; 2026 Transportation Enforcement Management System (TEMs). All rights reserved.</p>
+    <p>&copy; 2026 Traffic Enforcement Management System (TEMs). All rights reserved.</p>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

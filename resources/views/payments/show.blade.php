@@ -29,7 +29,7 @@
             <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" height="64" class="mb-2">
             <h4 class="mb-0 fw-bold">{{ config('itevcms.app_name') }}</h4>
             <div class="text-muted small mb-1" style="font-size: 0.7rem; letter-spacing: 0.04em;">
-                Transportation Enforcement Management System
+                Traffic Enforcement Management System
             </div>
             <small class="text-muted">Official Payment Receipt</small>
         </div>

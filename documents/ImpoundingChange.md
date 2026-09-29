@@ -359,3 +359,96 @@ scoped; no `app.css` change), modeled on the mockup:
   + next); `th`/`td`/`.imp-status`/`.imp-payment-btn` all show `font-size: 13px`;
   `.imp-eye-btn` shows `width: 28px; height: 28px`; all three pagination support
   rules present. Confirm the live page once record volume exceeds 10 rows.
+
+---
+
+## Merge Resolution: Combined Search (Citation #) + Release Modal Dropped
+
+### Date Edited / Applied `(required)`
+
+- Edited and applied: 2026-09-29
+
+### Type of Change `(required)`
+
+- Merge conflict resolution (controller + view)
+
+### Requested By / Source `(optional)`
+
+- During the `origin/master` merge into the working branch, `impounding/index.blade.php`
+  and `ImpoundingController.php` were left in a conflicted (`UU`) state. User
+  decided: keep our mockup redesign; drop the master-side "Process Release"
+  modal from the list index; port the master-side citation-# search as a bonus.
+
+### Problem `(required)`
+
+- Two independent copies changed the same code: ours (param `search`, search
+  fields plate/notice/violation/officer, our `.imp-dash` view) vs master's
+  (param `q`, fields plate/notice/citation #, bootstrap toolbar + `releaseModal`).
+  Conflict markers broke the page and `php -l` until resolved.
+
+### Root Cause `(required)`
+
+- Overlapping edits on `ImpoundingController@index` and `impounding/index.blade.php`
+  during the branch merge; git could not auto-merge them.
+
+### Files Changed `(required)`
+
+- `app/Http/Controllers/ImpoundingController.php` (only the `search` block in `index()`)
+- `resources/views/impounding/index.blade.php` (hunks 1-2 resolved)
+
+### Changes Made `(required)`
+
+- `ImpoundingController@index`: combined search query using the `search` param,
+  trimmed, matching plate, notice #, citation # (new), violation type, officer:
+
+  ```php
+  if ($search = trim($request->query('search'))) {
+      $query->where(function ($inner) use ($search) {
+          $inner->where('vehicle_plate', 'like', "%{$search}%")
+              ->orWhere('notice_number', 'like', "%{$search}%")
+              ->orWhereHas('citation', fn ($c) => $c->where('citation_number', 'like', "%{$search}%"))
+              ->orWhereHas('citation.violationType', fn ($v) => $v->where('name', 'like', "%{$search}%"))
+              ->orWhereHas('officer', fn ($o) => $o->where('name', 'like', "%{$search}%"));
+      });
+  }
+  $records = $query->latest('clamped_at')->paginate(10)->withQueryString();
+  ```
+
+- `impounding/index.blade.php`: kept HEAD for both hunks - our `.imp-dash`
+  toolbar (dropdown filters + search, `name="search"`) and the empty chunk where
+  master had placed a `releaseModal` (the feature remains on the detail page).
+
+### Behavior of the New Changes `(required)`
+
+| Scenario | Before | After |
+|---|---|---|
+| Search field set | plate, notice, violation, officer | + citation # (trimmed input) |
+| List actions | eye + Record Payment only | unchanged (no Release button) |
+| Master's `q` toolbar / pills | n/a | discarded (superseded by dropdown + search) |
+| Process Release from list | n/a | not offered; still available on `/impounding/{id}` show page |
+
+### Impact & Risk `(required)`
+
+- Affects: `/impounding` index search behavior only. Low risk; active status
+  filter + search compose via query string as before.
+
+### Database / Migration Impact `(optional)`
+
+- None
+
+### Untouched `(optional)`
+
+- Show page (`impounding/show.blade.php`, incl. its `releaseModal`), payModal,
+  policy gates, status tag colors, all other impounding actions.
+
+### Known Issues / Follow-ups `(optional)`
+
+- None
+
+### Testing / Verification `(required)`
+
+- `php -l app/Http/Controllers/ImpoundingController.php` - clean.
+- `php artisan view:clear` + `view:cache` - all Blade templates compile.
+- Headless controller smoke test (authenticated): `index(',')` returns 1 record
+  (matches current active set); `index('?search=X&status=paid')` returns 0
+  without error - search + status filters run cleanly.

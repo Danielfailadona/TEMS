@@ -5,11 +5,11 @@
         <div class="footer-label">ISSUED BY</div>
         @if ($officer)
             <div class="officer-name">{{ $officer->name }}</div>
-            <div class="officer-role">Transportation Enforcement Officer</div>
+            <div class="officer-role">Traffic Enforcement Officer</div>
             <div class="officer-id">Officer ID: {{ $officer->badge_id }}</div>
         @else
             <div class="officer-name">Name of Issuing Officer</div>
-            <div class="officer-role">Transportation Enforcement Officer</div>
+            <div class="officer-role">Traffic Enforcement Officer</div>
             <div class="officer-id">Officer ID: TE-000000</div>
         @endif
     </div>

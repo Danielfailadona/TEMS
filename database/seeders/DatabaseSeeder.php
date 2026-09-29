@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
     {
         $users = [
             ['name' => 'Super Administrator', 'email' => 'admin@example.com', 'role' => Role::SuperAdmin, 'password' => 'Admin@123'],
-            ['name' => 'Transportation Enforcer', 'email' => 'enforcer@example.com', 'role' => Role::Enforcer, 'password' => 'Enforcer@123'],
+            ['name' => 'Traffic Enforcer', 'email' => 'enforcer@example.com', 'role' => Role::Enforcer, 'password' => 'Enforcer@123'],
             ['name' => 'Clamping Officer', 'email' => 'clamp@example.com', 'role' => Role::ClampingOfficer, 'password' => 'Clamp@123'],
             ['name' => 'Cashier', 'email' => 'cashier@example.com', 'role' => Role::Cashier, 'password' => 'Cashier@123'],
             ['name' => 'Vehicle Owner', 'email' => 'owner@example.com', 'role' => Role::VehicleOwner, 'password' => 'Owner@123'],

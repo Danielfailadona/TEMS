@@ -832,3 +832,160 @@ The page only had a single responsive breakpoint `@media (max-width: 768px)` (wh
 - `php -l resources/views/welcome.blade.php` — no syntax errors
 - `php artisan view:cache` — all Blade templates compiled successfully
 - Visual QA on `/` at 320px and 375px widths — no element is cut off (stat boxes full width, heading fits, buttons fit)
+
+---
+
+## Merge Resolution: Dashboard Keeps 3-Tier KPI + SVG Design
+
+### Date Edited / Applied `(required)`
+
+- Edited and applied: 2026-09-29
+
+### Type of Change `(required)`
+
+- Merge conflict resolution (view only)
+
+### Requested By / Source `(optional)`
+
+- During the `origin/master` merge, `dashboard/index.blade.php` was left in a
+  conflicted (`UU`) state (3 hunks). Kept our existing 3-tier KPI + pending-work
+  queue + SVG chart design; master's `$kpis` loop / Chart.js `#revenueChart`
+  / col-xl-4 Pending Work card were discarded.
+
+### Problem `(required)`
+
+- Two independent copies changed the same dashboard hunks. Master's hunk 1
+  (`@foreach ($kpis as $k)`) depends on a `$kpis` variable that the merged
+  `DashboardController@index` does not build — keeping it would throw an
+  undefined-variable error.
+
+### Root Cause `(required)`
+
+- Overlapping edits on `dashboard/index.blade.php` during the branch merge;
+  git could not auto-merge them.
+
+### Files Changed `(required)`
+
+- `resources/views/dashboard/index.blade.php` (3 hunks resolved — HEAD kept)
+
+### Changes Made `(required)`
+
+- Hunk 1 (KPI row): kept our `$stats`/`$trends` 3-tier cards (thresholds 29/17)
+  and the tier-2 Pending Work Queue; removed master's `@foreach ($kpis as $k)` grid.
+- Hunk 2 (charts): kept our inline-SVG Revenue Trend (hidden for
+  Enforcer/ClampingOfficer); removed master's Chart.js Payments Trend canvas and
+  Top Violation Types card.
+- Hunk 3 (bottom row): kept our "Quick Actions + Zone Coverage" `col-xl-6` x2;
+  removed master's `@if(!Cashier)` col-xl-4 Pending Work Queue card (duplicate of
+  the queue already rendered in tier 2).
+
+### Behavior of the New Changes `(required)`
+
+| Scenario | Before | After |
+|---|---|---|
+| KPI cards | 3-tier (Unpaid / Active Clamps / Pending Appeals) | unchanged |
+| Charts | SVG mini-charts | unchanged (no `$kpis`, no Chart.js) |
+| Bottom row | Quick Actions + Zone Coverage | unchanged |
+| Cashier gate on queue | n/a | unchanged (queue still shown to all) |
+
+### Impact & Risk `(required)`
+
+- Affects: `/dashboard`. Low risk — restores the pre-merge design and removes a
+  data dependency (`$kpis`) that the merged controller cannot satisfy.
+
+### Database / Migration Impact `(optional)`
+
+- None
+
+### Untouched `(optional)`
+
+- `DashboardController.php` (provides `$stats`, `$trends`, `$citationsByMonth`,
+  `$revenueByMonth`, `$appealsByMonth`, `$topViolations`, `$recentActivity`,
+  `$pendingQueue`, `$zoneMapData` — all consumed by the kept view).
+
+### Known Issues / Follow-ups `(optional)`
+
+- None
+
+### Testing / Verification `(required)`
+
+- `php -l` n/a (blade) — `php artisan view:clear` + `view:cache` compile clean.
+- Headless controller smoke test (authenticated): `DashboardController@index`
+  returns a view carrying all 9 expected data keys; no error.
+
+---
+
+## Merge Resolution (final): Remove dangling `@endif` in `dashboard/index.blade.php`
+
+### Date Edited / Applied `(required)`
+
+- Edited and applied: 2026-09-29
+
+### Type of Change `(required)`
+
+- Bug fix (post-merge-resolution cleanup)
+
+### Requested By / Source `(optional)`
+
+- Follow-up to the same `origin/master` merge: user reported "errors" in the two
+  controllers; investigation found the controllers were clean but `/dashboard`
+  failed to render with `Illuminate\View\ViewException: syntax error, unexpected
+  token "endif", expecting end of file`.
+
+### Problem `(required)`
+
+- After resolving the 3 dashboard hunks, the page still threw a PHP parse error
+  at render time. Blade does **not** validate `@if`/`@endif` pairing during
+  `view:cache`, so the compile step passed while the actual render crashed.
+
+### Root Cause `(required)`
+
+- In hunk 3, master's block opened with an `@if(!Cashier)` gate whose closing
+  `@endif` sat *outside* the conflicted region (after the Zone Coverage card).
+  Keeping HEAD (which has no such gate) left that trailing `@endif` dangling at
+  `index.blade.php:536`:
+  ```blade
+  534:     @endif          ← closes the Zone Coverage @if (line 518)
+  535: </div>
+  536: @endif              ← DANGLING — master's leftover gate closer
+  537: @endsection
+  ```
+
+### Files Changed `(required)`
+
+- `resources/views/dashboard/index.blade.php` — removed the single dangling
+  `@endif` (line 536).
+- `app/Http/Controllers/ImpoundingController.php` — cosmetic: re-indented the
+  merged search line (it sat at column 0).
+- `app/Http/Controllers/PaymentController.php` — cosmetic: re-indented the merged
+  `$query = Payment::with(...)` line (it sat at column 0).
+
+### Behavior of the New Changes `(required)`
+
+| Scenario | Before | After |
+|---|---|---|
+| `/dashboard` render | PHP parse error (unexpected `endif`) | Renders (49,605 chars in probe) |
+| `/impounding` render | OK | OK (35,116 chars) |
+| `/payments` render | OK | OK (30,691 chars, search filter) |
+
+### Impact & Risk `(required)`
+
+- Affects: `/dashboard` (fixes 500); controllers are cosmetic-only (valid PHP,
+  same behavior). Risk: Low.
+
+### Database / Migration Impact `(optional)`
+
+- None
+
+### Known Issues / Follow-ups `(optional)`
+
+- Both controllers are verified error-free (`php -l` clean, pages render). The
+  files still show `UU` in git because the merge has not been finalized
+  (`git add` + commit pending).
+
+### Testing / Verification `(required)`
+
+- `php -l` on both controllers — no syntax errors.
+- `php artisan view:clear` + `php artisan view:cache` — compile clean.
+- Headless render probe (authenticated) — `/impounding`, `/payments` (search),
+  and `/dashboard` all render without exceptions.
