@@ -415,25 +415,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('user-filter-form');
     const statusInput = document.getElementById('filter-status-input');
     
-    // Batch actions elements
-    const batchToolbar = document.getElementById('batch-actions-toolbar');
-    const selectAllCb = document.getElementById('select-all');
-    const selectedCountEl = document.getElementById('batch-selected-count');
-    const batchRejectBtn = document.getElementById('batch-reject-btn');
-    const batchApproveBtn = document.getElementById('batch-approve-btn');
-    const batchSuspendBtn = document.getElementById('batch-suspend-btn');
-    const batchUnsuspendBtn = document.getElementById('batch-unsuspend-btn');
-    const batchRejectIds = document.getElementById('batch-reject-ids');
-    const batchApproveIds = document.getElementById('batch-approve-ids');
-    const batchSuspendIds = document.getElementById('batch-suspend-ids');
-    const batchUnsuspendIds = document.getElementById('batch-unsuspend-ids');
-    const batchRejectCountEl = document.getElementById('batch-reject-count');
-    const batchRejectCountDisplay = document.getElementById('batch-selected-count');
-
     // Initialize Bootstrap modals once on page load
     document.querySelectorAll('.user-reject-modal, #batchRejectModal').forEach(modal => {
         new bootstrap.Modal(modal);
     });
+
+    // Helper to get fresh batch action elements (they get replaced on AJAX refresh)
+    function getBatchElements() {
+        return {
+            batchToolbar: document.getElementById('batch-actions-toolbar'),
+            selectAllCb: document.getElementById('select-all'),
+            selectedCountEl: document.getElementById('batch-selected-count'),
+            batchRejectBtn: document.getElementById('batch-reject-btn'),
+            batchApproveBtn: document.getElementById('batch-approve-btn'),
+            batchSuspendBtn: document.getElementById('batch-suspend-btn'),
+            batchUnsuspendBtn: document.getElementById('batch-unsuspend-btn'),
+            batchRejectIds: document.getElementById('batch-reject-ids'),
+            batchApproveIds: document.getElementById('batch-approve-ids'),
+            batchSuspendIds: document.getElementById('batch-suspend-ids'),
+            batchUnsuspendIds: document.getElementById('batch-unsuspend-ids'),
+            batchRejectCountEl: document.getElementById('batch-reject-count'),
+            batchRejectCountDisplay: document.getElementById('batch-selected-count'),
+        };
+    }
 
     function submitFilter() {
         const url = new URL(form.action.split('?')[0], window.location.origin);
@@ -460,20 +464,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Batch actions toolbar logic
     function updateBatchToolbar() {
+        const el = getBatchElements();
         const checkedRows = document.querySelectorAll('#users-table .row-checkbox:checked');
         const count = checkedRows.length;
         const selectedIds = Array.from(checkedRows).map(cb => cb.value);
         
         if (count > 0) {
-            batchToolbar.classList.remove('d-none');
-            batchSelectedCount.textContent = `${count} selected`;
+            el.batchToolbar.classList.remove('d-none');
+            el.selectedCountEl.textContent = `${count} selected`;
         } else {
-            batchToolbar.classList.add('d-none');
+            el.batchToolbar.classList.add('d-none');
         }
         
         // Update hidden inputs with selected IDs
         const idsString = selectedIds.join(',');
-        [batchRejectIds, batchApproveIds, batchSuspendIds, batchUnsuspendIds].forEach(input => {
+        [el.batchRejectIds, el.batchApproveIds, el.batchSuspendIds, el.batchUnsuspendIds].forEach(input => {
             if (input) input.value = idsString;
         });
         
@@ -500,33 +505,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         // Enable/disable buttons based on context
-        batchApproveBtn.disabled = !hasPending;
-        batchRejectBtn.disabled = !hasPending;
+        el.batchApproveBtn.disabled = !hasPending;
+        el.batchRejectBtn.disabled = !hasPending;
         
         // Suspend/Unsuspend smart toggle
         const hasApprovedOrPending = hasApproved || hasPending;
         const hasSuspendedOnly = hasSuspended && !hasApproved && !hasPending && !hasRejected;
         
         if (hasSuspendedOnly) {
-            batchSuspendBtn.disabled = true;
-            batchUnsuspendBtn.disabled = false;
+            el.batchSuspendBtn.disabled = true;
+            el.batchUnsuspendBtn.disabled = false;
         } else if (hasApprovedOrPending && !hasSuspended) {
-            batchSuspendBtn.disabled = false;
-            batchUnsuspendBtn.disabled = true;
+            el.batchSuspendBtn.disabled = false;
+            el.batchUnsuspendBtn.disabled = true;
         } else {
-            batchSuspendBtn.disabled = true;
-            batchUnsuspendBtn.disabled = true;
+            el.batchSuspendBtn.disabled = true;
+            el.batchUnsuspendBtn.disabled = true;
         }
         
         // Update reject modal count
-        if (batchRejectCountEl) {
+        if (el.batchRejectCountEl) {
             const pendingCount = selectedIds.filter((_, i) => {
                 const row = document.querySelector(`#users-table tbody tr .row-checkbox[value="${selectedIds[i]}"]`);
                 if (!row) return false;
                 const statusCell = row.closest('tr').querySelector('td:nth-child(4) .badge');
                 return statusCell && statusCell.textContent.trim().toLowerCase() === 'pending';
             }).length;
-            batchRejectCountEl.textContent = `${pendingCount} pending user${pendingCount !== 1 ? 's' : ''} will be rejected`;
+            el.batchRejectCountEl.textContent = `${pendingCount} pending user${pendingCount !== 1 ? 's' : ''} will be rejected`;
         }
     }
 
@@ -629,8 +634,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const statusCell = cb.closest('tr').querySelector('td:nth-child(4) .badge');
                 return statusCell && statusCell.textContent.trim().toLowerCase() === 'pending';
             }).length;
-            if (batchRejectCountEl) {
-                batchRejectCountEl.textContent = `${pendingCount} pending user${pendingCount !== 1 ? 's' : ''} will be rejected`;
+            const el = getBatchElements();
+            if (el.batchRejectCountEl) {
+                el.batchRejectCountEl.textContent = `${pendingCount} pending user${pendingCount !== 1 ? 's' : ''} will be rejected`;
             }
         });
     }
@@ -643,6 +649,22 @@ document.addEventListener('DOMContentLoaded', () => {
             updateBatchToolbar();
         });
     }
+
+    // Status tab clicks
+    document.querySelectorAll('#status-tabs .user-mgmt-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('#status-tabs .user-mgmt-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            statusInput.value = tab.dataset.filter === 'all' ? '' : tab.dataset.filter;
+            submitFilter();
+        });
+    });
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        submitFilter();
+    });
 });
 </script>
 @endpush
