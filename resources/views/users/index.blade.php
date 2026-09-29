@@ -121,8 +121,9 @@
   </div>
 </form>
 
-{{-- Batch Actions Toolbar (shown when checkboxes selected) --}}
-<div class="mb-3 d-none" id="batch-actions-toolbar" style="position: sticky; top: 0; z-index: 10; background: white; padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0;">
+<div id="users-card">
+    {{-- Batch Actions Toolbar (shown when checkboxes selected) --}}
+    <div class="mb-3 d-none" id="batch-actions-toolbar" style="position: sticky; top: 0; z-index: 10; background: white; padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0;">
     <div class="d-flex flex-wrap align-items-center gap-2">
         <span class="fw-semibold text-muted small" id="batch-selected-count">0 selected</span>
         <div class="vr d-none d-md-block mx-2" style="height: 1.5rem;"></div>
@@ -278,6 +279,7 @@
             {{ $users->links() }}
         </div>
     @endif
+</div>
 </div>
 @endsection
 

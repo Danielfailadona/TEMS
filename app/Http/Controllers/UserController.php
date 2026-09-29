@@ -31,6 +31,10 @@ class UserController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        if ($request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return view('users.partials.users-card', ['users' => $users, 'roles' => Role::cases()]);
+        }
+
         return view('users.index', ['users' => $users, 'roles' => Role::cases()]);
     }
 
