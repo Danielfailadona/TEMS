@@ -447,9 +447,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const doc = new DOMParser().parseFromString(html, 'text/html');
                 const newCard = doc.getElementById('users-card');
                 if (newCard) tableCard.innerHTML = newCard.innerHTML;
-                // Modals are now outside the AJAX container, no need to re-append
-                // Re-initialize any new modals that might have been added
-                doc.querySelectorAll('.user-reject-modal').forEach(modal => {
+                // Modals from AJAX response - append to body if not already present
+                doc.querySelectorAll('.user-reject-modal, #batchRejectModal').forEach(modal => {
+                    if (!document.getElementById(modal.id)) {
+                        document.body.appendChild(modal.cloneNode(true));
+                    }
                     if (!modal._bsModal) new bootstrap.Modal(modal);
                 });
             })
