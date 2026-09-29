@@ -67,6 +67,9 @@ class ClampingRequestController extends Controller
             'resolved' => (clone $statsQuery)->where('status', 'resolved')->count(),
         ];
 
+        $pending = $stats['pending'];
+        $stats['pending_state'] = $pending >= 4 ? 'red' : ($pending >= 1 ? 'amber' : 'green');
+
         return view('clamping-requests.index', compact('requests', 'stats'));
     }
 

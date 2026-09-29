@@ -105,10 +105,10 @@
 <form class="row g-2 mb-3" method="GET" id="user-filter-form">
   <input type="hidden" name="account_status" id="filter-status-input" value="{{ request('account_status') }}">
   <div class="col-md-3">
-    <input type="search" name="search" class="form-control" placeholder="Search by name or email..." value="{{ request('search') }}">
+    <input type="search" name="search" class="form-control" aria-label="Search users by name or email" placeholder="Search by name or email..." value="{{ request('search') }}">
   </div>
   <div class="col-md-2">
-    <select name="role" class="form-select">
+    <select name="role" class="form-select" aria-label="Filter by role">
       <option value="">All Roles</option>
       @foreach ($roles as $role)
         <option value="{{ $role->value }}" {{ request('role') === $role->value ? 'selected' : '' }}>{{ $role->label() }}</option>
@@ -162,11 +162,12 @@
         </form>
     </div>
 </div>
+  <div class="card border-0 shadow-sm" id="users-card">
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0" id="users-table">
       <thead class="table-light">
         <tr>
-          <th width="40"><input type="checkbox" id="select-all" class="form-check-input"></th>
+          <th width="40"><input type="checkbox" id="select-all" aria-label="Select all users" class="form-check-input"></th>
           <th>User</th>
           <th>Role</th>
           <th>Status</th>
@@ -281,6 +282,7 @@
 </div>
 @endsection
 
+@section('modals')
 {{-- Reject Modals (rendered outside AJAX container to prevent stagger on filter) --}}
 @if ($users->contains('account_status', 'pending'))
 <div style="display: none;">
@@ -294,8 +296,8 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <label class="form-label fw-semibold">Reason for rejection <span class="text-danger">*</span></label>
-                        <textarea name="rejection_reason" class="form-control" rows="4" required placeholder="Explain why this registration was rejected..."></textarea>
+                        <label class="form-label fw-semibold" for="rejection-reason-{{ $user->id }}">Reason for rejection <span class="text-danger">*</span></label>
+                        <textarea name="rejection_reason" id="rejection-reason-{{ $user->id }}" class="form-control" rows="4" required placeholder="Explain why this registration was rejected..."></textarea>
                         <div class="form-text">This will set the user's account status to <strong>Rejected</strong>.</div>
                     </div>
                     <div class="modal-footer border-0 pt-0">
@@ -322,8 +324,8 @@
             </div>
             <div class="modal-body">
                 <p class="mb-3"><strong>Selected users:</strong> <span id="batch-reject-count" class="text-danger"></span></p>
-                <label class="form-label fw-semibold">Shared rejection reason <span class="text-danger">*</span></label>
-                <textarea name="rejection_reason" class="form-control" rows="4" required placeholder="Enter the shared reason for rejecting all selected users..."></textarea>
+                <label class="form-label fw-semibold" for="batch-rejection-reason">Shared rejection reason <span class="text-danger">*</span></label>
+                <textarea name="rejection_reason" id="batch-rejection-reason" class="form-control" rows="4" required placeholder="Enter the shared reason for rejecting all selected users..."></textarea>
                 <div class="form-text">All selected users will be rejected with this same reason.</div>
             </div>
             <div class="modal-footer border-0 pt-0">
@@ -332,6 +334,7 @@
             </div>
         </form>
 </div>
+@endsection
 
 @push('styles')
 <style>
@@ -460,7 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (count > 0) {
             batchToolbar.classList.remove('d-none');
-            batchSelectedCount.textContent = `${count} selected`;
+            selectedCountEl.textContent = `${count} selected`;
         } else {
             batchToolbar.classList.add('d-none');
         }
@@ -614,68 +617,6 @@ document.addEventListener('DOMContentLoaded', () => {
         finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-unlock me-1"></i> Unsuspend'; }
     });
 
-    // Update batch reject modal with selected count
-    const batchRejectBtn = document.getElementById('batch-reject-btn');
-    if (batchRejectBtn) {
-        batchRejectBtn.addEventListener('click', () => {
-            const checkedRows = document.querySelectorAll('#users-table .row-checkbox:checked');
-            const pendingCount = Array.from(checkedRows).filter(cb => {
-                const statusCell = cb.closest('tr').querySelector('td:nth-child(4) .badge');
-                return statusCell && statusCell.textContent.trim().toLowerCase() === 'pending';
-            }).length;
-            if (batchRejectCountEl) {
-                batchRejectCountEl.textContent = `${pendingCount} pending user${pendingCount !== 1 ? 's' : ''} will be rejected`;
-            }
-        });
-    }
-    
-    // Select all checkbox
-    const selectAllCb = document.getElementById('select-all');
-    if (selectAllCb) {
-        selectAllCb.addEventListener('change', () => {
-            document.querySelectorAll('#users-table .row-checkbox').forEach(cb => cb.checked = selectAllCb.checked);
-            updateBatchToolbar();
-        });
-    }
-
-    function submitFilter() {
-        const url = new URL(form.action.split('?')[0], window.location.origin);
-        new FormData(form).forEach((v, k) => {
-            if (v !== '') url.searchParams.set(k, v);
-        });
-        history.replaceState({}, '', url.toString());
-        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(r => r.text())
-            .then(html => {
-                const doc = new DOMParser().parseFromString(html, 'text/html');
-                const newCard = doc.getElementById('users-card');
-                if (newCard) tableCard.innerHTML = newCard.innerHTML;
-                // Modals are now outside the AJAX container, no need to re-append
-                // Re-initialize any new modals that might have been added
-                doc.querySelectorAll('.user-reject-modal').forEach(modal => {
-                    if (!modal._bsModal) new bootstrap.Modal(modal);
-                });
-            })
-            .catch(() => { window.location.href = url.toString(); });
-    }
-
-    tableCard.addEventListener('change', function (e) {
-        if (e.target.id === 'select-all') {
-            document.querySelectorAll('#users-table .row-checkbox').forEach(cb => cb.checked = e.target.checked);
-            updateBatchToolbar();
-            return;
-        }
-        const cb = e.target.closest('.toggle-active');
-        if (!cb) return;
-        const userId = cb.dataset.userId;
-        const isActive = cb.checked;
-        fetch(`/users/${userId}/toggle-active`, {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ is_active: isActive })
-        }).catch(() => { cb.checked = !isActive; });
-    });
-
     document.querySelectorAll('#status-tabs .user-mgmt-tab').forEach(tab => {
         tab.addEventListener('click', (e) => {
             e.preventDefault();
@@ -693,5 +634,3 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 @endpush
-
-@endsection

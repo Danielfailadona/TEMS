@@ -119,6 +119,8 @@
     </div>
 </div>
 
+@yield('modals')
+
 @stack('scripts')
 
 @if ($isEnforcerMobile ?? false)

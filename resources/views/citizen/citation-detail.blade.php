@@ -190,7 +190,7 @@
                     </div>
                     <div class="col-md-6">
                         <small class="text-muted d-block">Payment Method</small>
-                        <strong>{{ ucfirst($citation->payment->payment_method) }}</strong>
+                        <strong>{{ $citation->payment->payment_method->label() }}</strong>
                     </div>
                     <div class="col-md-6">
                         <small class="text-muted d-block">Processed By</small>
@@ -439,7 +439,7 @@ function openModal(imageSrc) {
                             </div>
                             <div class="col-md-6">
                                 <strong>Payment Method:</strong><br>
-                                {{ ucfirst($citation->payment->payment_method) }}
+                                {{ $citation->payment->payment_method->label() }}
                             </div>
                         </div>
                     </div>
@@ -525,4 +525,3 @@ function openModal(imageSrc) {
         new bootstrap.Modal(document.getElementById('imageModal')).show();
     }
 </script>
-@endsection
