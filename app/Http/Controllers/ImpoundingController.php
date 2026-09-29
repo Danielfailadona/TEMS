@@ -43,7 +43,7 @@ class ImpoundingController extends Controller
             });
         }
 
-        $records = $query->latest('clamped_at')->paginate(10)->withQueryString();
+        $records = $query->latest('clamped_at')->paginate(5)->withQueryString();
 
         return view('impounding.index', compact('records'));
     }

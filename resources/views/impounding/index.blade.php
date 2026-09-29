@@ -55,12 +55,12 @@
     .imp-dash .imp-table-wrap { overflow-x: auto; }
     .imp-dash table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     .imp-dash thead th {
-        height: 53px; text-align: left; border-bottom: 1px solid #edf0f3;
-        font-size: 13px; font-weight: 700; color: #151922; vertical-align: middle; padding: 0;
+        height: 51px; text-align: left; border-bottom: 1px solid #edf0f3;
+        font-size: 14px; font-weight: 700; color: #151922; vertical-align: middle; padding: 0;
     }
-    .imp-dash tbody tr { height: 84px; border-bottom: 1px solid #edf0f3; }
+    .imp-dash tbody tr { height: 78px; border-bottom: 1px solid #edf0f3; }
     .imp-dash tbody tr:last-child { border-bottom: 0; }
-    .imp-dash tbody td { font-size: 13px; color: #283140; padding: 0; vertical-align: middle; }
+    .imp-dash tbody td { font-size: 14px; color: #283140; padding: 0; vertical-align: middle; }
     .imp-dash th:nth-child(1), .imp-dash td:nth-child(1) { width: 13.1%; }
     .imp-dash th:nth-child(2), .imp-dash td:nth-child(2) { width: 16.5%; }
     .imp-dash th:nth-child(3), .imp-dash td:nth-child(3) { width: 15.3%; }
@@ -78,10 +78,10 @@
 
     .imp-dash .imp-actions { display: flex; align-items: center; gap: 10px; justify-content: center; }
     .imp-dash .imp-eye-btn {
-        width: 28px; height: 28px; border: 1px solid #1976ff; border-radius: 16px;
+        width: 48px; height: 34px; border: 1px solid #1976ff; border-radius: 18px;
         background: #fff; color: #1976ff; display: grid; place-items: center; text-decoration: none;
     }
-    .imp-dash .imp-eye-btn svg { width: 22px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+    .imp-dash .imp-eye-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; }
     .imp-dash .imp-payment-btn {
         height: 28px; padding: 0 9px; border: 1px solid #1976ff; border-radius: 16px;
         background: #fff; color: #0f6df0; font-size: 13px; font-weight: 700; white-space: nowrap;
@@ -89,17 +89,17 @@
     .imp-dash .imp-eye-btn:hover, .imp-dash .imp-payment-btn:hover { background: var(--imp-blue-soft); }
 
     .imp-dash .imp-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: 34px; gap: 14px; flex-wrap: wrap; }
-    .imp-dash .imp-result-count { font-size: 10px; color: #6f7d91; }
-    .imp-dash .imp-pagination .pagination { display: flex; height: 30px; margin-bottom: 0; }
+    .imp-dash .imp-result-count { font-size: 11px; color: #6f7d91; }
+    .imp-dash .imp-pagination .pagination { display: flex; align-items: center; height: 30px; gap: 0; margin-bottom: 0; }
     .imp-dash .imp-pagination .page-link {
-        min-width: 35px; padding: 0; border: 1px solid #dce1e8; border-left: 0; background: #fff;
-        color: #1771ec; font-size: 10px; display: grid; place-items: center; text-decoration: none;
-        border-radius: 0; margin: 0;
+        width: 38px; height: 30px; padding: 0; border: 1px solid #dce3eb; margin-left: -1px; background: #fff;
+        color: #176ff2; font-size: 13px; display: grid; place-items: center; text-decoration: none;
+        border-radius: 0;
     }
-    .imp-dash .imp-pagination .page-item:first-child .page-link { border-left: 1px solid #dce1e8; border-radius: 5px 0 0 5px; }
-    .imp-dash .imp-pagination .page-item:last-child .page-link { border-radius: 0 5px 5px 0; }
-    .imp-dash .imp-pagination .page-item.active .page-link { background: #1677ff; color: #fff; border-color: #1677ff; }
-    .imp-dash .imp-pagination .page-item.disabled .page-link { color: #b4bdc9; cursor: default; pointer-events: none; }
+    .imp-dash .imp-pagination .page-item:first-child .page-link { border-radius: 5px 0 0 5px; color: #60728a; }
+    .imp-dash .imp-pagination .page-item:last-child .page-link { border-radius: 0 5px 5px 0; color: #60728a; }
+    .imp-dash .imp-pagination .page-item.active .page-link { background: #176ff2; color: #fff; border-color: #176ff2; }
+    .imp-dash .imp-pagination .page-item.disabled .page-link { background: #fff; color: #c3cdd9; cursor: default; pointer-events: none; }
     .imp-dash .imp-pagination .small.text-muted { display: none !important; }
     .imp-dash .imp-pagination .d-none.flex-sm-fill { display: flex !important; }
     .imp-dash .imp-pagination .d-sm-none { display: none !important; }

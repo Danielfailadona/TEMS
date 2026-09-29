@@ -22,7 +22,16 @@ class ClampingController extends Controller
 
         $query = ClampingRecord::with(['officer', 'citation']);
 
-        $records = $query->latest('clamped_at')->paginate(10);
+        if ($search = trim($request->query('search'))) {
+            $query->where(function ($inner) use ($search) {
+                $inner->where('vehicle_plate', 'like', "%{$search}%")
+                    ->orWhere('notice_number', 'like', "%{$search}%")
+                    ->orWhereHas('officer', fn ($o) => $o->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('citation', fn ($c) => $c->where('citation_number', 'like', "%{$search}%"));
+            });
+        }
+
+        $records = $query->latest('clamped_at')->paginate(5)->withQueryString();
 
         $pendingRequests = CitizenClampingRequest::where('status', 'pending')
             ->latest()

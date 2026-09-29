@@ -37,7 +37,7 @@ class PaymentController extends Controller
             });
         }
 
-        $payments = $query->latest('paid_at')->paginate(10)->withQueryString();
+        $payments = $query->latest('paid_at')->paginate(5)->withQueryString();
 
         return view('payments.index', compact('payments'));
     }

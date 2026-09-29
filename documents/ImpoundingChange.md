@@ -452,3 +452,192 @@ scoped; no `app.css` change), modeled on the mockup:
 - Headless controller smoke test (authenticated): `index(',')` returns 1 record
   (matches current active set); `index('?search=X&status=paid')` returns 0
   without error - search + status filters run cleanly.
+
+---
+
+## Index Aligned with Citations (Row Height, Font Sizes, Pagination Look)
+
+### Date Edited / Applied `(required)`
+
+- Edited and applied: 2026-09-29
+
+### Type of Change `(required)`
+
+- UI alignment + pagination page-size change (behavior)
+
+### Requested By / Source `(optional)`
+
+- Reported by user at `/impounding`: asked to check and align the table with
+  `/citations` (font sizes and `<tr>` height).
+
+### Problem `(required)`
+
+The `/impounding` table did not match `/citations`:
+
+| Aspect | `/citations` | `/impounding` (before) |
+|---|---|---|
+| Row height | `tbody tr` 78px | 84px |
+| Body font | 14px | 13px |
+| Header | 51px / 14px / 700 | 53px / 13px / 700 |
+| Pagination buttons | 38x30px, 13px | min 35px, 10px |
+| Footer result text | 11px | 10px |
+
+### Root Cause `(required)`
+
+- `impounding/index.blade.php` carried slightly smaller values from its original
+  mockup pass (13px table fonts, 84px rows, 53px header, 35px/10px pagination)
+  instead of the shared 14px / 78px / 51px / 38px console look on `/citations`.
+- Pagination also hidden as a data artifact: `paginate(10)` with 3 records is a
+  single page, so `hasPages()` was `false`.
+
+### Files Changed `(required)`
+
+- `resources/views/impounding/index.blade.php`
+- `app/Http/Controllers/ImpoundingController.php`
+- `documents/ImpoundingChange.md` (this log)
+
+### What Parts Changed `(required)`
+
+#### `resources/views/impounding/index.blade.php` (CSS only)
+
+**Header / rows / cells:**
+
+**Before:** `thead th { height: 53px; font-size: 13px; }`, `tbody tr { height: 84px; }`, `tbody td { font-size: 13px; }`
+**After:** `thead th { height: 51px; font-size: 14px; }`, `tbody tr { height: 78px; }`, `tbody td { font-size: 14px; }`
+
+**Pagination:**
+
+**Before:** `.page-link { min-width: 35px; font-size: 10px; border-left: 0; }`
+**After:** `.page-link { width: 38px; height: 30px; font-size: 13px; margin-left: -1px; }` with 5px-radius first/last corners and `#176ff2` active — identical to citations. The three bootstrap-5 companion rules (hide `.small.text-muted`, keep `.d-none.flex-sm-fill`, hide `.d-sm-none`) are retained.
+
+**Footer result count:** `font-size: 10px` → `11px`.
+
+#### `app/Http/Controllers/ImpoundingController.php`
+
+**Before:** `$records = $query->latest('clamped_at')->paginate(10)->withQueryString();`
+**After:** `$records = $query->latest('clamped_at')->paginate(5)->withQueryString();`
+
+No changes to the search fields (plate, notice #, citation #, violation, officer) or the status-filter dropdown.
+
+### Behavior of the New Changes `(required)`
+
+| Scenario | Before | After |
+|---|---|---|
+| Row height | 84px | 78px |
+| Body / header font | 13px | 14px |
+| Header height | 53px | 51px |
+| Pagination buttons | 35px / 10px | 38x30px / 13px (citations look) |
+| Footer result text | 10px | 11px |
+| Page size | 10 | 5 |
+
+### Impact & Risk `(required)`
+
+- Affects: `/impounding` index only — scoped `.imp-dash` CSS + page size.
+- Risk: low. Filters/search/pagination query-string behavior unchanged; with 3
+  records the pagination bar stays hidden until the list exceeds 5 rows.
+
+### Database / Migration Impact `(optional)`
+
+- None
+
+### Untouched `(optional)`
+
+- Impounding show page, payModal, release flow (still on detail page), status
+  badge colors, dropdown filter, search box, eye/Record Payment pills, policies,
+  routes, models, layouts, `app.css`.
+
+### Known Issues / Follow-ups `(optional)`
+
+- Hard refresh (Ctrl+F5) needed to see the new sizes.
+- Pagination won't appear until there are more than 5 records in the current
+  filter (data-volume matter, not a code issue).
+
+### Testing / Verification `(required)`
+
+- `php -l app/Http/Controllers/ImpoundingController.php` — clean.
+- `php -l resources/views/impounding/index.blade.php` — clean.
+- `php artisan view:clear` + `view:cache` — all compile.
+- Headless render probe (authenticated admin): CSS carries `tbody tr { height: 78px }`,
+  `font-size: 14px`, `thead th` 51px, and the 38px pagination buttons;
+  `lastPage` stays 1 at 5/page with 3 records.
+
+---
+
+## Eye Button Sized to Citations View Button (48x34)
+
+### Date Edited / Applied `(required)`
+
+- Edited and applied: 2026-09-29
+
+### Type of Change `(required)`
+
+- UI consistency tweak (action pill + icon size)
+
+### Requested By / Source `(optional)`
+
+- Requested by user: size `/impounding` view buttons like the citations
+  `.cit-view-btn` — `width: 48px; height: 34px;` and its svg `width: 20px; height: 20px;`.
+
+### Problem `(required)`
+
+- The impounding eye pill was 28x28 (a circle) with a 22x14 icon, smaller than
+  the 48x34 / 20x20 citations view button.
+
+### Root Cause `(required)`
+
+- The eye pill size (28x28) came from the earlier "28x28 eye" styling pass and
+  predates the shared console-button look on `/citations`.
+
+### Files Changed `(required)`
+
+- `resources/views/impounding/index.blade.php`
+- `documents/ImpoundingChange.md` (this log)
+
+### What Parts Changed `(required)`
+
+**Before:**
+```css
+.imp-dash .imp-eye-btn { width: 28px; height: 28px; ...; border-radius: 16px; ... }
+.imp-dash .imp-eye-btn svg { width: 22px; height: 14px; ... }
+```
+
+**After:**
+```css
+.imp-dash .imp-eye-btn { width: 48px; height: 34px; ...; border-radius: 18px; ... }
+.imp-dash .imp-eye-btn svg { width: 20px; height: 20px; ... }
+```
+
+Radius aligned to citations' 18px; colors/borders stay impounding's own.
+
+### Behavior of the New Changes `(required)`
+
+| Scenario | Before | After |
+|---|---|---|
+| Eye pill size | 28x28 circle | 48x34 pill (matches citations) |
+| Eye icon | 22x14 (wide) | 20x20 (standard eye, larger) |
+| Pill radius | 16px | 18px |
+
+### Impact & Risk `(required)`
+
+- Affects: `/impounding` index action column only. Low risk — CSS only; the
+  "Record Payment" pill (`.imp-payment-btn`) is untouched.
+
+### Database / Migration Impact `(optional)`
+
+- None
+
+### Untouched `(optional)`
+
+- Record Payment pill, status pill, fonts, rows/cols, toolbar, pagination,
+  controller logic.
+
+### Known Issues / Follow-ups `(optional)`
+
+- Hard refresh (Ctrl+F5) needed to see the change.
+
+### Testing / Verification `(required)`
+
+- `php -l resources/views/impounding/index.blade.php` — clean.
+- `php artisan view:clear` + `view:cache` — all compile.
+- Headless probe: rendered CSS carries `width: 48px; height: 34px` for
+  `.imp-eye-btn` and 20x20 for its svg.

@@ -34,7 +34,7 @@ class CitationController extends Controller
             })
             ->when($request->status, fn ($q, $status) => $q->where('status', $status))
             ->latest('issued_at')
-            ->paginate(10)
+            ->paginate(5)
             ->withQueryString();
 
         return view('citations.index', compact('citations'));

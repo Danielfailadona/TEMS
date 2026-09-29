@@ -63,7 +63,7 @@
         height: 51px; text-align: left; font-size: 14px; font-weight: 700; padding: 0 16px;
         border-bottom: 2px solid #e8edf2; white-space: nowrap; color: var(--cit-ink);
     }
-    .cit-dash .cit-table tbody tr { height: 97px; border-bottom: 2px solid #e8edf2; }
+    .cit-dash .cit-table tbody tr { height: 78px; border-bottom: 2px solid #e8edf2; }
     .cit-dash .cit-table tbody tr:last-child { border-bottom: 0; }
     .cit-dash .cit-table td { padding: 0 16px; white-space: nowrap; font-size: 14px; color: var(--cit-ink); }
     .cit-dash .cit-table th:nth-child(1), .cit-dash .cit-table td:nth-child(1) { width: 21.5%; }

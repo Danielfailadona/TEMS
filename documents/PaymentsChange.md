@@ -324,3 +324,206 @@ Header row of `show.blade.php` (line 7):
 - Headless controller smoke test (authenticated): `index(',')` returns 2
   payments; `index('?search=Dela')` returns 2 without error - search incl.
   driver name runs cleanly.
+
+---
+
+## Index Aligned with Citations (Row Height, Font Sizes, Pagination Look)
+
+### Date Edited / Applied `(required)`
+
+- Edited and applied: 2026-09-29
+
+### Type of Change `(required)`
+
+- UI alignment + pagination page-size change (behavior)
+
+### Requested By / Source `(optional)`
+
+- Reported by user at `/payments`: asked to check whether the page's pagination,
+  `<tr>` height, and table font sizes follow `/citations`, and align them.
+
+### Problem `(required)`
+
+The `/payments` table did not match `/citations`:
+
+| Aspect | `/citations` | `/payments` (before) |
+|---|---|---|
+| Row height | `tbody tr` 78px | `tbody td` 90px |
+| Body font-size | 14px | 11px |
+| Header font-size / weight | 14px / 700 | 11px / 800 |
+| Header height | 51px | 44px |
+| Pagination buttons | 38x30px, 13px, radius 5px, `#176ff2` active | 30x30px, 11px, radius 6px |
+| Pagination visible? | yes (2 pages) | no (3 records @ 10/page -> 1 page) |
+
+### Root Cause `(required)`
+
+- `payments/index.blade.php` carried slightly smaller values (11px fonts, 90px
+  rows, 30px pagination) from its earlier design pass, unlike citations' 14px /
+  78px / 38px look.
+- Pagination hidden as a data artifact: `paginate(10)` with 3 records is a single
+  page, so `hasPages()` was `false` and the footer links never rendered.
+
+### Files Changed `(required)`
+
+- `resources/views/payments/index.blade.php`
+- `app/Http/Controllers/PaymentController.php`
+- `documents/PaymentsChange.md` (this log)
+
+### What Parts Changed `(required)`
+
+#### `resources/views/payments/index.blade.php` (CSS only)
+
+**Header (`thead th`):**
+
+**Before:** `height: 44px; ...; font-size: 11px; font-weight: 800;`
+**After:** `height: 51px; ...; font-size: 14px; font-weight: 700;`
+
+**Rows / cells:**
+
+**Before:**
+```css
+.pay-dash tbody td { height: 90px; padding: 0 15px; ...; font-size: 11px; }
+.pay-dash tbody tr:last-child td { border-bottom: 0; }
+```
+
+**After:**
+```css
+.pay-dash tbody tr { height: 78px; border-bottom: 1px solid #e6ebef; }
+.pay-dash tbody td { padding: 0 15px; color: var(--pay-ink); font-size: 14px; white-space: nowrap; }
+.pay-dash tbody tr:last-child { border-bottom: 0; }
+```
+
+**Pagination — button look now matches citations:**
+
+**Before:** `width: 30px; font-size: 11px; border-right: 0; radius 6px; active var(--pay-blue).`
+**After:** `width: 38px; height: 30px; font-size: 13px; margin-left: -1px; radius 5px; active #176ff2;` first/last colored `var(--pay-muted)`.
+
+Borders, padding, colors otherwise remain payments' own.
+
+#### `app/Http/Controllers/PaymentController.php`
+
+**Before:** `$payments = $query->latest('paid_at')->paginate(10)->withQueryString();`
+**After:** `$payments = $query->latest('paid_at')->paginate(5)->withQueryString();`
+
+### Behavior of the New Changes `(required)`
+
+| Scenario | Before | After |
+|---|---|---|
+| Row height | 90px | 78px |
+| Body / header font | 11px | 14px |
+| Header height / weight | 44px / 800 | 51px / 700 |
+| Pagination buttons | 30px, tiny | 38px, 13px, citations look |
+| Page size | 10 | 5 |
+| Pagination visible at 3 records | no (1 page) | still hidden until > 5 records (design only) |
+
+### Impact & Risk `(required)`
+
+- Affects: `/payments` index only — scoped `.pay-dash` CSS + page size. Search
+  (receipt/citation #/plate/driver) and `withQueryString()` unchanged.
+- Risk: low — the smaller page size matches the citations page; pagination stays
+  styled but hidden until the table exceeds 5 rows.
+
+### Database / Migration Impact `(optional)`
+
+- None
+
+### Untouched `(optional)`
+
+- Payments create/edit/show/print views, policies, enums, `PaymentModel` status
+  helpers (still unused by this view), layouts, `app.css`.
+
+### Known Issues / Follow-ups `(optional)`
+
+- Browsers may cache the page; a hard reload (Ctrl+F5) shows the new styles.
+- With only 3 payments, the pagination bar won't show until the list exceeds 5
+  rows (per the 5/page size, matching `/citations`).
+
+### Testing / Verification `(required)`
+
+- `php -l app/Http/Controllers/PaymentController.php` — clean.
+- `php -l resources/views/payments/index.blade.php` — clean.
+- `php artisan view:clear` + `view:cache` — all compile.
+- Headless render probe (authenticated admin): page renders; CSS now carries
+  `height: 78px` rows, `font-size: 14px` cells, and the 38px pagination buttons;
+  `lastPage` stays 1 at 5/page with 3 records.
+
+---
+
+## Action Pills Sized to Citations View Button (48x34)
+
+### Date Edited / Applied `(required)`
+
+- Edited and applied: 2026-09-29
+
+### Type of Change `(required)`
+
+- UI consistency tweak (action pill + icon size)
+
+### Requested By / Source `(optional)`
+
+- Requested by user: size `/payments` action buttons like the citations
+  `.cit-view-btn` — `width: 48px; height: 34px;` and its svg `width: 20px; height: 20px;`.
+
+### Problem `(required)`
+
+- The payments view (eye) and edit (pencil) pills were 38x27 with 17x17 icons,
+  smaller than the 48x34 / 20x20 citations view button.
+
+### Root Cause `(required)`
+
+- Payments page had its own earlier sizing (38x27 / 17x17) that predates the
+  shared console-button look on `/citations`.
+
+### Files Changed `(required)`
+
+- `resources/views/payments/index.blade.php`
+- `documents/PaymentsChange.md` (this log)
+
+### What Parts Changed `(required)`
+
+**Before:**
+```css
+.pay-dash .pay-action { width: 38px; height: 27px; ...; border-radius: 14px; ... }
+.pay-dash .pay-action svg { width: 17px; height: 17px; ... }
+```
+
+**After:**
+```css
+.pay-dash .pay-action { width: 48px; height: 34px; ...; border-radius: 18px; ... }
+.pay-dash .pay-action svg { width: 20px; height: 20px; ... }
+```
+
+Both the view (eye) and edit (pencil) pills grow to the citations size; border
+radius aligned to citations' 18px. Colors/borders stay payments' own.
+
+### Behavior of the New Changes `(required)`
+
+| Scenario | Before | After |
+|---|---|---|
+| View/edit pill size | 38x27 | 48x34 (matches citations) |
+| Icon size | 17x17 | 20x20 |
+| Pill radius | 14px | 18px |
+
+### Impact & Risk `(required)`
+
+- Affects: `/payments` index action column only. Low risk — CSS only; two pills
+  per row get wider but stay centered in the fixed-width column.
+
+### Database / Migration Impact `(optional)`
+
+- None
+
+### Untouched `(optional)`
+
+- Banner/headers, row/col sizes, fonts, toolbar, pagination, controller logic.
+
+### Known Issues / Follow-ups `(optional)`
+
+- Hard refresh (Ctrl+F5) needed to see the change.
+
+### Testing / Verification `(required)`
+
+- `php -l resources/views/payments/index.blade.php` — clean.
+- `php artisan view:clear` + `view:cache` — all compile.
+- Headless probe: rendered CSS carries `width: 48px; height: 34px` for
+  `.pay-action` and 20x20 for its svg.

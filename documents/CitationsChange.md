@@ -207,3 +207,114 @@ Filter button), Bootstrap `table-hover` card, default `$citations->links()`.
   footer, issue link, and `tag-*` classes present.
 - Manual QA (hard refresh): search via icon/Enter/debounce, each status filter,
   pagination links, "Showing X to Y of Z", empty state, rule-colored pills.
+
+---
+
+## Index: 78px Rows + 5-Per-Page So Pagination Shows
+
+### Date Edited / Applied `(required)`
+
+- Edited and applied: 2026-09-29
+
+### Type of Change `(required)`
+
+- UI/UX adjustment (row height) + pagination page-size change (behavior)
+
+### Requested By / Source `(optional)`
+
+- Reported by user at `/citations`. Two requests:
+  1. Make the `<tr>` rows `height: 78px;` (they were `97px`).
+  2. The pagination design was "not in there" — no pagination controls visible.
+
+### Problem `(required)`
+
+1. Table rows were taller than wanted (97px) — user asked for 78px.
+2. The page already had a styled pagination footer (`$citations->links()` +
+   "Showing X to Y of Z" + `.cit-dash .pagination` CSS), but it only rendered
+   when there were more than 10 citations (the per-page size). With only 7
+   citations in the database, `hasPages()` was `false`, so the pagination
+   design never appeared.
+
+### Root Cause `(required)`
+
+- Row height was a hardcoded CSS value (`97px`) in the `.cit-dash` scoped styles.
+- Pagination hidden as a data artifact: `paginate(10)` with 7 records is a
+  single page → no page buttons render.
+
+### Files Changed `(required)`
+
+- `resources/views/citations/index.blade.php`
+- `app/Http/Controllers/CitationController.php`
+- `documents/CitationsChange.md` (this log)
+
+### What Parts Changed `(required)`
+
+#### `resources/views/citations/index.blade.php` — row height
+
+**Before:**
+```css
+.cit-dash .cit-table tbody tr { height: 97px; border-bottom: 2px solid #e8edf2; }
+```
+
+**After:**
+```css
+.cit-dash .cit-table tbody tr { height: 78px; border-bottom: 2px solid #e8edf2; }
+```
+
+#### `app/Http/Controllers/CitationController.php` — page size
+
+**Before:**
+```php
+->latest('issued_at')
+    ->paginate(10)
+    ->withQueryString();
+```
+
+**After:**
+```php
+->latest('issued_at')
+    ->paginate(5)
+    ->withQueryString();
+```
+
+No other markup/CSS/JS changes — the existing pagination design (square page
+buttons, active/disabled states, "Showing X to Y of Z" footer) was already in
+place and now has enough pages to appear.
+
+### Behavior of the New Changes `(required)`
+
+| Scenario | Before | After |
+|---|---|---|
+| Row height | 97px | 78px |
+| `/citations` with 7 records (10/page) | single page, no pagination shown | 2 pages, styled pagination footer visible |
+| Pagination query-string / filters | preserved | preserved (unchanged) |
+
+### Impact & Risk `(required)`
+
+- Affects: `/citations` index only (CSS scoped under `.cit-dash`) and the page
+  size on that list. `search`/`status` filters and `withQueryString()` behavior
+  unchanged.
+- Risk: low — visual height change plus a smaller page size; the pagination
+  design was already shipped, so nothing else is affected.
+
+### Database / Migration Impact `(optional)`
+
+- None
+
+### Untouched `(optional)`
+
+- Citation model, routes, search/filter logic, status dropdown, badges, eye-view
+  pill, empty state, show/create pages, `app.css`.
+
+### Known Issues / Follow-ups `(optional)`
+
+- Browsers may cache the page; a hard reload (Ctrl+F5) shows the new row height.
+- Pagination will again be hidden if citations ever drop to 5 or fewer.
+
+### Testing / Verification `(required)`
+
+- `php -l app/Http/Controllers/CitationController.php` — no syntax errors.
+- `php artisan view:clear` + `view:cache` — all Blade templates compiled.
+- Headless render probe (authenticated admin): with 7 citations, the footer now
+  renders `page-link` elements (pagination appears, 2 pages) and the stylesheet
+  contains `height: 78px`.

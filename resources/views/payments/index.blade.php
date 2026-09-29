@@ -37,14 +37,14 @@
     .pay-dash .pay-table-wrap { overflow-x: auto; }
     .pay-dash table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 790px; }
     .pay-dash thead th {
-        height: 44px; padding: 0 15px; text-align: left; border-bottom: 1px solid #e5e9ed;
-        color: var(--pay-ink); font-size: 11px; font-weight: 800; white-space: nowrap;
+        height: 51px; padding: 0 15px; text-align: left; border-bottom: 1px solid #e5e9ed;
+        color: var(--pay-ink); font-size: 14px; font-weight: 700; white-space: nowrap;
     }
+    .pay-dash tbody tr { height: 78px; border-bottom: 1px solid #e6ebef; }
     .pay-dash tbody td {
-        height: 90px; padding: 0 15px; border-bottom: 1px solid #e6ebef;
-        color: var(--pay-ink); font-size: 11px; white-space: nowrap;
+        padding: 0 15px; color: var(--pay-ink); font-size: 14px; white-space: nowrap;
     }
-    .pay-dash tbody tr:last-child td { border-bottom: 0; }
+    .pay-dash tbody tr:last-child { border-bottom: 0; }
     .pay-dash th:nth-child(1), .pay-dash td:nth-child(1) { width: 24%; }
     .pay-dash th:nth-child(2), .pay-dash td:nth-child(2) { width: 20%; }
     .pay-dash th:nth-child(3), .pay-dash td:nth-child(3) { width: 10%; }
@@ -54,11 +54,11 @@
     .pay-dash th:nth-child(7), .pay-dash td:nth-child(7) { width: 12%; text-align: center; }
     .pay-dash .pay-action-cell { display: flex; align-items: center; gap: 5px; justify-content: center; }
     .pay-dash .pay-action {
-        width: 38px; height: 27px; border: 1px solid #8bb0df; border-radius: 14px;
+        width: 48px; height: 34px; border: 1px solid #8bb0df; border-radius: 18px;
         background: #fff; color: var(--pay-blue); display: inline-flex; align-items: center;
         justify-content: center; text-decoration: none;
     }
-    .pay-dash .pay-action svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.35; }
+    .pay-dash .pay-action svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.35; }
     .pay-dash .pay-action:hover { background: #f1f7ff; color: var(--pay-blue); }
     .pay-dash .pay-empty { padding: 35px; text-align: center; color: #7b8798; }
     .pay-dash .pay-footer {
@@ -68,16 +68,16 @@
     .pay-dash .pay-results { margin-right: auto; }
     .pay-dash .pagination { display: flex; align-items: center; gap: 0; margin-bottom: 0; }
     .pay-dash .pagination .page-link {
-        width: 30px; height: 30px; border: 1px solid #d9e1e9; border-right: 0; background: #fff;
-        color: var(--pay-blue); display: grid; place-items: center; font-size: 11px; padding: 0;
-        border-radius: 0; text-decoration: none; margin-left: 0;
+        width: 38px; height: 30px; border: 1px solid #dce3eb; margin-left: -1px; background: #fff;
+        color: #176ff2; display: grid; place-items: center; font-size: 13px; padding: 0;
+        border-radius: 0; text-decoration: none;
     }
-    .pay-dash .pagination .page-item:first-child .page-link { border-radius: 6px 0 0 6px; }
-    .pay-dash .pagination .page-item:last-child .page-link { border-right: 1px solid #d9e1e9; border-radius: 0 6px 6px 0; }
-    .pay-dash .pagination .page-item.active .page-link { background: var(--pay-blue); color: #fff; border-color: var(--pay-blue); }
-    .pay-dash .pagination .page-item.disabled .page-link { color: #c3cdd9; }
-    .pay-dash .pagination .page-item .page-link:hover { background: #f2f7ff; }
-    .pay-dash .pagination .page-item.active .page-link:hover { background: var(--pay-blue); }
+    .pay-dash .pagination .page-item:first-child .page-link { border-radius: 5px 0 0 5px; color: var(--pay-muted); }
+    .pay-dash .pagination .page-item:last-child .page-link { border-radius: 0 5px 5px 0; color: var(--pay-muted); }
+    .pay-dash .pagination .page-item.active .page-link { background: #176ff2; border-color: #176ff2; color: #fff; }
+    .pay-dash .pagination .page-item.disabled .page-link { background: #fff; color: #c3cdd9; }
+    .pay-dash .pagination .page-item .page-link:hover { background: #f2f7ff; color: #176ff2; }
+    .pay-dash .pagination .page-item.active .page-link:hover { background: #176ff2; }
     @media (max-width: 600px) {
         .pay-dash .pay-toolbar { flex-wrap: wrap; gap: 10px; }
         .pay-dash .pay-search-box { order: 2; flex-basis: 100%; }
