@@ -283,6 +283,7 @@
 </div>
 @endsection
 
+@push('scripts')
 {{-- Reject Modals (rendered outside AJAX container to prevent stagger on filter) --}}
 @if ($users->contains('account_status', 'pending'))
 <div style="display: none;">
@@ -333,6 +334,7 @@
                 <button type="submit" class="btn btn-danger"><i class="bi bi-x-lg me-1"></i> Reject All Selected</button>
             </div>
         </form>
+    </div>
 </div>
 
 @push('styles')
