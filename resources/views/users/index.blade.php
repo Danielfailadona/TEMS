@@ -284,10 +284,13 @@
 @endsection
 
 @push('scripts')
-{{-- Reject Modals (rendered outside AJAX container to prevent stagger on filter) --}}
-@if ($users->contains('account_status', 'pending'))
+{{-- Reject Modals for ALL pending users (so they exist regardless of filter) --}}
+@php
+    $allPendingUsers = \App\Models\User::where('account_status', 'pending')->get();
+@endphp
+@if ($allPendingUsers->isNotEmpty())
 <div style="display: none;">
-    @foreach ($users->where('account_status', 'pending') as $user)
+    @foreach ($allPendingUsers as $user)
         <div class="modal fade user-reject-modal" id="rejectModal-{{ $user->id }}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <form method="POST" action="{{ route('users.reject', $user) }}" class="modal-content">
@@ -312,7 +315,7 @@
 </div>
 @endif
 
-{{-- Batch Reject Modal --}}
+{{-- Batch Reject Modal (always available) --}}
 <div class="modal fade" id="batchRejectModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <form method="POST" action="{{ route('users.batch-action') }}" class="modal-content">
@@ -451,11 +454,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const doc = new DOMParser().parseFromString(html, 'text/html');
                 const newCard = doc.getElementById('users-card');
                 if (newCard) tableCard.innerHTML = newCard.innerHTML;
-                // Modals from AJAX response - append to body if not already present
+                // Modals are now always in main template - no need to append from AJAX
+                // Just re-initialize any new modals that might have been added
                 doc.querySelectorAll('.user-reject-modal, #batchRejectModal').forEach(modal => {
-                    if (!document.getElementById(modal.id)) {
-                        document.body.appendChild(modal.cloneNode(true));
-                    }
                     if (!modal._bsModal) new bootstrap.Modal(modal);
                 });
             })
