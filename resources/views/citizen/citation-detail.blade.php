@@ -283,7 +283,7 @@ function openModal(imageSrc) {
             </div>
 
             <div class="card shadow-sm mb-4">
-                <div class="card-header bg-{{ $citation->status->badgeClass() }} text-white">
+                <div class="card-header {{ $citation->status->badgeClass() }}">
                     <div class="d-flex justify-content-between align-items-center">
                         <h4 class="mb-0">
                             {{ $citation->citation_number }}
@@ -476,7 +476,7 @@ function openModal(imageSrc) {
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <strong>Status:</strong><br>
-                                <span class="badge bg-{{ $citation->appeal->status->badgeClass() }}">{{ $citation->appeal->status->label() }}</span>
+                                <span class="badge {{ $citation->appeal->status->badgeClass() }}">{{ $citation->appeal->status->label() }}</span>
                             </div>
                             <div class="col-md-6">
                                 <strong>Submitted:</strong><br>

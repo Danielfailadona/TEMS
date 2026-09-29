@@ -4,6 +4,7 @@
 
 @push('styles')
 @if ($citation->latitude && $citation->longitude)
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
 <style>
     #citation-map { width:100%; height:360px; border-radius:0.75rem; position:relative; }
     .map-detail-overlay {

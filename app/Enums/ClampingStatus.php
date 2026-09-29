@@ -22,10 +22,10 @@ enum ClampingStatus: string
     public function badgeClass(): string
     {
         return match ($this) {
-            self::AwaitingPayment => 'bg-danger',
-            self::Paid => 'bg-primary',
-            self::WaitingRelease => 'bg-warning text-dark',
-            self::Released => 'bg-success',
+            self::AwaitingPayment => 'tag-amber',
+            self::Paid => 'tag-green',
+            self::WaitingRelease => 'tag-amber',
+            self::Released => 'tag-green',
         };
     }
 }

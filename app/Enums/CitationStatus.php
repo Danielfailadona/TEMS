@@ -24,11 +24,11 @@ enum CitationStatus: string
     public function badgeClass(): string
     {
         return match ($this) {
-            self::Issued => 'bg-primary',
-            self::Paid => 'bg-success',
-            self::Overdue => 'bg-warning text-dark',
-            self::Clamped => 'bg-danger',
-            self::Released => 'bg-secondary',
+            self::Issued => 'tag-blue',
+            self::Paid => 'tag-green',
+            self::Overdue => 'tag-amber',
+            self::Clamped => 'tag-red',
+            self::Released => 'tag-green',
         };
     }
 }

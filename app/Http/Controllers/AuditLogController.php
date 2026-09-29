@@ -45,7 +45,7 @@ class AuditLogController extends Controller
             });
         }
 
-        $activities = $query->paginate(30);
+        $activities = $query->paginate(10);
 
         $logNames = Activity::distinct('log_name')->pluck('log_name')->filter();
         $events = Activity::distinct('event')->pluck('event')->filter();

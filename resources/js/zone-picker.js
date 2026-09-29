@@ -20,6 +20,18 @@ const MAP_DETAIL_CSS = `
 .map-detail-overlay .mdo-badge.inactive { background:rgba(148,163,184,0.18); color:#94a3b8; }
 .map-detail-overlay .mdo-close { position:absolute; top:6px; right:8px; background:none; border:none; color:rgba(203,213,225,0.6); cursor:pointer; font-size:0.85rem; padding:2px 4px; }
 .map-detail-overlay .mdo-close:hover { color:#fff; }
+.map-detail-overlay .mdo-divider { height:1px; background:rgba(148,163,184,0.2); margin:0.6rem 0 0.5rem; }
+.map-detail-overlay .mdo-actions-label { font-size:0.62rem; color:rgba(148,163,184,0.9); margin-bottom:0.4rem; }
+.map-detail-overlay .mdo-actions { display:flex; gap:0.35rem; }
+.map-detail-overlay .mdo-form { flex:1; min-width:0; display:flex; }
+.map-detail-overlay .mdo-btn {
+    flex:1; min-width:0; height:28px; display:inline-flex; align-items:center; justify-content:center;
+    border:1px solid rgba(148,163,184,0.35); background:rgba(30,41,59,0.85); color:#d8e3eb;
+    border-radius:0.4rem; cursor:pointer; font-size:0.8rem; text-decoration:none; transition:background 0.12s ease;
+}
+.map-detail-overlay .mdo-btn:hover { background:rgba(51,65,85,0.9); color:#fff; }
+.map-detail-overlay .mdo-btn.delete { background:rgba(76,23,25,0.85); border-color:#8b292a; color:#ff7070; }
+.map-detail-overlay .mdo-btn.delete:hover { background:rgba(105,32,34,0.9); }
 `;
 
 let _detailStyleInjected = false;
@@ -31,20 +43,47 @@ function injectDetailStyle() {
     document.head.appendChild(s);
 }
 
-function createDetailOverlay(containerId) {
+function createDetailOverlay(containerId, actions = null) {
     injectDetailStyle();
     const container = document.getElementById(containerId);
     if (!container) return null;
     container.style.position = 'relative';
     const el = document.createElement('div');
     el.className = 'map-detail-overlay is-hidden';
+    const previous = container.querySelector('.map-detail-overlay');
+    if (previous) previous.remove();
     container.appendChild(el);
-    return {
-        el,
-        show(zone) {
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const show = (zone) => {
+        el.classList.remove('is-hidden');
+        el.style.opacity = '';
+        el.style.pointerEvents = '';
+        const render = () => {
             const areaM2 = zone.radius ? Math.round(Math.PI * zone.radius * zone.radius) : '—';
             const teamName = zone.team_name || (zone.team && zone.team.name) || '—';
             const isActive = zone.is_active !== false;
+            let actionsHtml = '';
+            if (actions) {
+                const edit = actions.editUrl ? `<a class="mdo-btn" href="${actions.editUrl(zone.id)}" title="Edit"><i class="bi bi-pencil"></i></a>` : '';
+                const toggle = actions.canToggle && actions.toggleUrl ? `
+                    <form class="mdo-form" method="POST" action="${actions.toggleUrl(zone.id)}" title="${isActive ? 'Deactivate' : 'Activate'}">
+                        <input type="hidden" name="_token" value="${csrf}">
+                        <input type="hidden" name="_method" value="PATCH">
+                        <button type="submit" class="mdo-btn"><i class="bi bi-${isActive ? 'pause-fill' : 'play-fill'}"></i></button>
+                    </form>` : '';
+                const del = actions.deleteUrl ? `
+                    <form class="mdo-form" method="POST" action="${actions.deleteUrl(zone.id)}" onsubmit="return confirm('Delete zone ${zone.name}?');" title="Delete">
+                        <input type="hidden" name="_token" value="${csrf}">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="mdo-btn delete"><i class="bi bi-trash"></i></button>
+                    </form>` : '';
+                if (edit || toggle || del) {
+                    actionsHtml = `
+                        <div class="mdo-divider"></div>
+                        <div class="mdo-actions-label">Actions</div>
+                        <div class="mdo-actions">${edit}${toggle}${del}</div>`;
+                }
+            }
             el.innerHTML = `
                 <button class="mdo-close" data-mdo-close>&times;</button>
                 <div class="mdo-title">
@@ -56,12 +95,29 @@ function createDetailOverlay(containerId) {
                 <div class="mdo-row"><span class="mdo-lbl">Radius</span><span class="mdo-val">${zone.radius ? zone.radius.toLocaleString() + ' m' : '—'}</span></div>
                 <div class="mdo-row"><span class="mdo-lbl">Area</span><span class="mdo-val">${typeof areaM2 === 'number' ? areaM2.toLocaleString() + ' m²' : areaM2}</span></div>
                 <div class="mdo-row"><span class="mdo-lbl">Coordinates</span><span class="mdo-val">${(zone.lat || zone.center_latitude || '—').toString().substring(0,10)}, ${(zone.lng || zone.center_longitude || '—').toString().substring(0,10)}</span></div>
+                ${actionsHtml}
             `;
-            el.classList.remove('is-hidden');
-            el.querySelector('[data-mdo-close]')?.addEventListener('click', (e) => { e.stopPropagation(); this.hide(); });
-        },
-        hide() { el.classList.add('is-hidden'); },
+        };
+        try {
+            render();
+        } catch (err) {
+            console.error('Map detail overlay render failed:', err);
+            el.innerHTML = '<button class="mdo-close" data-mdo-close>&times;</button><div class="mdo-title">Zone detail unavailable</div>';
+        }
+        el.querySelector('[data-mdo-close]')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            hide();
+        });
+        overlay._lastShownAt = Date.now();
     };
+    const hide = () => {
+        el.classList.add('is-hidden');
+        el.style.opacity = '0';
+        el.style.pointerEvents = 'none';
+    };
+    const overlay = { el, show, hide };
+    return overlay;
 }
 
 export function initTeamZonePicker(containerId, options = {}) {
@@ -149,7 +205,9 @@ export function initTeamZonePicker(containerId, options = {}) {
             updateMarkerStyle(marker, zone);
 
             if (clickable) {
-                el.addEventListener('click', () => {
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
                     if (assignEndpoint) {
                         const currentlyAssigned = isAssigned(zone.id);
                         const newAssigned = !currentlyAssigned;
@@ -183,7 +241,7 @@ export function initTeamZonePicker(containerId, options = {}) {
     map.on('load', loadZones);
     map.on('click', (e) => {
         const features = map.queryRenderedFeatures(e.point);
-        if (features.length === 0 && detailOverlay) detailOverlay.hide();
+        if (features.length === 0 && detailOverlay && (detailOverlay._lastShownAt || 0) < Date.now() - 250) detailOverlay.hide();
     });
     return map;
 }
@@ -310,7 +368,9 @@ export function initZoneEditor(containerId, options = {}) {
                     .setLngLat([lng, lat])
                     .addTo(map);
 
-                el.addEventListener('click', () => {
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
                     if (detailOverlay) detailOverlay.show({ ...zone, radius: zone.radius_m || zone.radius, lat: zone.center_latitude, lng: zone.center_longitude, is_active: zone.is_active !== false });
                 });
             });
@@ -345,6 +405,7 @@ export function initZoneViewer(containerId, options = {}) {
         zoom = 11,
         zones = [],
         onZoneClick = null,
+        detailActions = null,
     } = options;
 
     const map = new maplibregl.Map({
@@ -362,7 +423,7 @@ export function initZoneViewer(containerId, options = {}) {
     let activeCircleLayer = null;
     const markers = [];
     const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '280px' });
-    const detailOverlay = createDetailOverlay(containerId);
+    const detailOverlay = createDetailOverlay(containerId, detailActions);
 
     function removeActiveCircle() {
         if (activeCircleLayer) {
@@ -447,7 +508,9 @@ export function initZoneViewer(containerId, options = {}) {
                 dot.style.transform = 'scale(1)';
             });
 
-            el.addEventListener('click', () => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
                 map.flyTo({ center: [lng, lat], zoom: 14, duration: 600 });
                 showCircle(zone);
                 if (detailOverlay) detailOverlay.show(zone);
@@ -460,7 +523,7 @@ export function initZoneViewer(containerId, options = {}) {
 
     map.on('click', (e) => {
         const features = map.queryRenderedFeatures(e.point);
-        if (features.length === 0 && detailOverlay) detailOverlay.hide();
+        if (features.length === 0 && detailOverlay && (detailOverlay._lastShownAt || 0) < Date.now() - 250) detailOverlay.hide();
     });
 
     return { map, markers, removeActiveCircle };

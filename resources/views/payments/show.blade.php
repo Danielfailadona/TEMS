@@ -4,7 +4,9 @@
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4 no-print">
-    <h1 class="h3 mb-0">Payment Receipt</h1>
+    <a href="{{ route('payments.index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Payments
+    </a>
     <div class="d-flex gap-2">
         @can('update', $payment)
             <a href="{{ route('payments.edit', $payment) }}" class="btn btn-outline-secondary">Edit</a>

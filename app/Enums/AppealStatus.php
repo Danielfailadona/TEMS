@@ -22,10 +22,10 @@ enum AppealStatus: string
     public function badgeClass(): string
     {
         return match ($this) {
-            self::Submitted => 'bg-secondary',
-            self::UnderReview => 'bg-info',
-            self::Approved => 'bg-success',
-            self::Rejected => 'bg-danger',
+            self::Submitted => 'tag-gray',
+            self::UnderReview => 'tag-amber',
+            self::Approved => 'tag-green',
+            self::Rejected => 'tag-red',
         };
     }
 }

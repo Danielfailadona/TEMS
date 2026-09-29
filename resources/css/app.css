@@ -1059,3 +1059,11 @@ body::before {
 .enforcer-more-btn:hover {
     background: #fef2f2;
 }
+
+/* Status tag color coding (rule: green/blue/red/amber/gray) */
+.tag-green { background-color: #10B981; color: #fff; }
+.tag-blue { background-color: #1473F9; color: #fff; }
+.tag-red { background-color: #EF4444; color: #fff; }
+.tag-amber { background-color: #f59e0b; color: #1f2937; }
+.tag-gray { background-color: #69757F; color: #fff; }
+.tag-green, .tag-blue, .tag-red, .tag-amber, .tag-gray { border-radius: 0.4rem; padding: 0.35em 0.65em; font-weight: 600; }

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Impounding — TEMS Operations Console</title>
+<style>
+  :root{
+    --navy:#101f43;
+    --navy-2:#13254d;
+    --blue:#1677ff;
+    --blue-soft:#eaf3ff;
+    --bg:#f3f4f6;
+    --text:#171b26;
+    --muted:#667085;
+    --line:#e6e9ee;
+    --danger:#e52323;
+    --white:#fff;
+    --sidebar:160px;
+    --header:57px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif;color:var(--text);background:var(--bg)}
+  body{font-size:13px}
+  button,input{font:inherit}
+  button{cursor:pointer}
+  .app{min-height:100vh;display:flex}
+
+  /* LEFT NAVIGATION */
+  .sidebar{
+    position:fixed;inset:0 auto 0 0;width:var(--sidebar);
+    background:var(--navy);color:#dce5fb;z-index:20;
+    display:flex;flex-direction:column;
+  }
+  .brand{
+    height:130px;border-bottom:1px solid rgba(255,255,255,.09);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;
+  }
+  .seal{
+    width:40px;height:40px;border-radius:50%;
+    border:1px solid #6f7f9f;box-shadow:0 0 0 4px #182951,0 0 0 5px #355078;
+    display:grid;place-items:center;margin-bottom:15px;position:relative;
+    background:radial-gradient(circle at 50% 40%,#fff 0 14%,#dce7f8 15% 23%,#1c345f 24% 55%,#0e1d3e 56%);
+  }
+  .seal:before{content:"TEMS";font-size:6px;font-weight:800;color:#142a50;position:absolute;background:#fff;padding:2px 1px;border-radius:2px}
+  .brand-title{font-size:17px;font-weight:700;color:#fff;line-height:1}
+  .brand-sub{font-size:7px;line-height:9px;color:#8593b2;margin-top:6px;width:105px}
+
+  .nav-scroll{padding-top:8px;overflow:auto}
+  .nav-section{padding:0 0 8px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .nav-section + .nav-section{padding-top:8px}
+  .nav-label{font-size:8px;font-weight:700;color:#7584a3;padding:0 20px 6px;text-transform:uppercase}
+  .nav-item{
+    height:26px;display:flex;align-items:center;gap:10px;padding:0 20px;
+    color:#c8d2e9;text-decoration:none;font-size:10px;position:relative;
+  }
+  .nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+  .nav-item.active{background:rgba(52,116,226,.19);color:#fff;font-weight:700}
+  .nav-item.active:before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:#3d89ff}
+  .ico{width:16px;height:16px;position:relative;display:inline-block;flex:none;opacity:.95}
+  .ico.dashboard:before{content:"";position:absolute;inset:3px;border:1px solid currentColor;border-radius:4px}
+  .ico.dashboard:after{content:"";position:absolute;left:5px;top:6px;width:6px;height:1px;background:currentColor;box-shadow:0 3px 0 currentColor}
+  .ico.doc:before{content:"";position:absolute;inset:2px 3px;border:1px solid currentColor;border-radius:2px}
+  .ico.doc:after{content:"";position:absolute;left:5px;top:6px;width:5px;height:1px;background:currentColor;box-shadow:0 3px 0 currentColor}
+  .ico.card:before{content:"";position:absolute;left:1px;right:1px;top:3px;height:10px;border:1px solid currentColor;border-radius:2px}
+  .ico.card:after{content:"";position:absolute;left:3px;right:3px;top:6px;height:1px;background:currentColor}
+  .ico.lock:before{content:"";position:absolute;left:3px;right:3px;bottom:2px;height:8px;border:1px solid currentColor;border-radius:2px}
+  .ico.lock:after{content:"";position:absolute;left:5px;top:2px;width:6px;height:7px;border:1px solid currentColor;border-bottom:0;border-radius:6px 6px 0 0}
+  .ico.car:before{content:"";position:absolute;left:1px;right:1px;bottom:3px;height:7px;border:1px solid currentColor;border-radius:3px}
+  .ico.car:after{content:"•  •";position:absolute;left:2px;bottom:-1px;font-size:9px;letter-spacing:5px}
+  .ico.pin:before{content:"";position:absolute;left:4px;top:1px;width:7px;height:9px;border:1px solid currentColor;border-radius:8px 8px 8px 0;transform:rotate(-45deg)}
+  .ico.pin:after{content:"";position:absolute;width:3px;height:3px;border:1px solid currentColor;border-radius:50%;left:6px;top:4px}
+  .ico.users:before{content:"";position:absolute;left:1px;top:2px;width:6px;height:6px;border:1px solid currentColor;border-radius:50%;box-shadow:7px 2px 0 -1px var(--navy)}
+  .ico.users:after{content:"";position:absolute;left:1px;bottom:1px;width:10px;height:6px;border:1px solid currentColor;border-radius:8px 8px 2px 2px}
+  .ico.target:before{content:"";position:absolute;inset:2px;border:1px solid currentColor;border-radius:50%;box-shadow:inset 0 0 0 3px transparent}
+  .ico.target:after{content:"";position:absolute;left:7px;top:5px;width:3px;height:3px;background:currentColor;border-radius:50%}
+  .ico.chart:before{content:"";position:absolute;left:2px;right:2px;bottom:2px;height:11px;border-left:1px solid currentColor;border-bottom:1px solid currentColor}
+  .ico.chart:after{content:"";position:absolute;left:4px;top:7px;width:8px;height:6px;border-top:1px solid currentColor;transform:skewY(-35deg)}
+  .ico.audit:before{content:"";position:absolute;left:3px;top:2px;width:10px;height:12px;border:1px solid currentColor;border-radius:2px}
+  .ico.audit:after{content:"";position:absolute;left:5px;top:6px;width:6px;height:1px;background:currentColor;box-shadow:0 3px 0 currentColor}
+
+  /* MAIN */
+  .main{margin-left:var(--sidebar);min-height:100vh;width:calc(100% - var(--sidebar))}
+  .topbar{
+    height:var(--header);background:#fff;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:10;
+  }
+  .crumb{font-size:8px;color:#8a929e;margin-bottom:3px}
+  .page-title{font-size:18px;font-weight:700;line-height:1}
+  .user-area{display:flex;align-items:center;gap:10px;color:#7c8490;font-size:9px}
+  .bell{width:16px;height:16px;position:relative;margin-right:4px}
+  .bell:before{content:"";position:absolute;left:4px;top:2px;width:7px;height:9px;border:1px solid #667085;border-radius:6px 6px 2px 2px}
+  .bell:after{content:"";position:absolute;left:2px;top:11px;width:11px;height:1px;background:#667085;box-shadow:4px 3px 0 -0.5px #667085}
+  .online-dot{width:7px;height:7px;border-radius:50%;background:#19bd61;display:inline-block}
+  .username{font-size:10px;font-weight:700;color:#20242d}
+  .role{color:#8b929e}
+  .chev{border:solid #7d8695;border-width:0 1px 1px 0;padding:3px;transform:rotate(45deg);margin-left:7px;margin-top:-3px}
+
+  .content{padding:61px 20px 40px}
+  .toolbar{display:flex;align-items:center;gap:14px;margin-bottom:23px}
+  .filter-wrap{position:relative}
+  .filter-btn{
+    width:114px;height:36px;background:#fff;border:1px solid #d7dce3;
+    box-shadow:0 1px 2px rgba(16,24,40,.02);font-size:15px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;gap:10px;
+  }
+  .filter-caret{
+    width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;
+    border-bottom:7px solid #080808;transition:transform .15s ease;
+  }
+  .filter-btn[aria-expanded="true"] .filter-caret{transform:rotate(180deg)}
+  .filter-menu{
+    position:absolute;left:0;top:41px;width:229px;background:#fff;border:1px solid #d6dadf;
+    box-shadow:0 8px 24px rgba(16,24,40,.12);z-index:30;padding:0;display:none;
+  }
+  .filter-menu.open{display:block}
+  .filter-option{
+    height:25px;display:flex;align-items:center;padding:0 10px;font-size:15px;color:#171717;
+    background:#fff;border:0;width:100%;text-align:left;
+  }
+  .filter-option:hover,.filter-option.selected{background:#f3f6fa}
+
+  .search{
+    height:36px;flex:0 1 696px;display:flex;background:#fff;border:1px solid #d7dce3;
+  }
+  .search-icon-box{width:35px;border-right:1px solid #d7dce3;display:grid;place-items:center}
+  .search-icon{width:15px;height:15px;border:2px solid var(--blue);border-radius:50%;position:relative}
+  .search-icon:after{content:"";position:absolute;width:7px;height:2px;background:var(--blue);right:-6px;bottom:-3px;transform:rotate(48deg);border-radius:2px}
+  .search input{border:0;outline:0;padding:0 22px;width:100%;font-size:16px;color:#555f70}
+  .search input::placeholder{color:#7b8493}
+
+  .table-card{
+    background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1px rgba(16,24,40,.01);
+    min-height:525px;padding:28px 27px 0;
+  }
+  table{width:100%;border-collapse:collapse;table-layout:fixed}
+  thead th{
+    height:53px;text-align:left;border-bottom:1px solid #edf0f3;
+    font-size:11px;font-weight:700;color:#151922;vertical-align:middle;padding:0 0;
+  }
+  tbody tr{height:84px;border-bottom:1px solid #edf0f3}
+  tbody td{font-size:11px;color:#283140;padding:0;vertical-align:middle}
+  th:nth-child(1),td:nth-child(1){width:13.1%}
+  th:nth-child(2),td:nth-child(2){width:16.5%}
+  th:nth-child(3),td:nth-child(3){width:15.3%}
+  th:nth-child(4),td:nth-child(4){width:14.0%}
+  th:nth-child(5),td:nth-child(5){width:13.2%}
+  th:nth-child(6),td:nth-child(6){width:14.0%}
+  th:nth-child(7),td:nth-child(7){width:14.0%}
+  .plate{font-weight:700;color:#17202d}
+  .violation-link{text-decoration:underline;text-underline-offset:3px}
+  .muted-dash{color:#77808f}
+  .status{
+    display:inline-flex;align-items:center;justify-content:center;height:23px;padding:0 15px;
+    background:var(--danger);color:#fff;border-radius:20px;font-size:9px;font-weight:700;white-space:nowrap;
+  }
+  .actions{display:flex;align-items:center;gap:10px}
+  .eye-btn{
+    width:56px;height:28px;border:1px solid #1976ff;border-radius:16px;background:#fff;display:grid;place-items:center;
+  }
+  .eye{
+    width:22px;height:14px;border:2px solid #1976ff;border-radius:75% 15%;transform:rotate(0deg);position:relative;
+  }
+  .eye:before{content:"";position:absolute;width:7px;height:7px;border:2px solid #1976ff;border-radius:50%;left:5px;top:1px}
+  .payment-btn{
+    height:28px;padding:0 9px;border:1px solid #1976ff;border-radius:16px;background:#fff;color:#0f6df0;
+    font-size:9px;font-weight:700;white-space:nowrap;
+  }
+  .eye-btn:hover,.payment-btn:hover{background:var(--blue-soft)}
+
+  .footer{display:flex;justify-content:flex-end;align-items:center;margin-top:34px;gap:14px}
+  .result-count{font-size:10px;color:#6f7d91;margin-right:1px}
+  .pagination{display:flex;height:30px}
+  .page-btn{
+    min-width:35px;border:1px solid #dce1e8;border-left:0;background:#fff;color:#1771ec;
+    font-size:10px;display:grid;place-items:center;
+  }
+  .page-btn:first-child{border-left:1px solid #dce1e8;border-radius:5px 0 0 5px}
+  .page-btn:last-child{border-radius:0 5px 5px 0}
+  .page-btn.active{background:#1677ff;color:#fff;border-color:#1677ff}
+  .page-btn:disabled{color:#b4bdc9;cursor:default}
+
+  /* DIALOGS */
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(11,20,39,.28);z-index:100;display:none;align-items:center;justify-content:center;
+  }
+  .modal-backdrop.show{display:flex}
+  .modal{
+    width:min(430px,calc(100vw - 32px));background:#fff;border-radius:9px;box-shadow:0 20px 50px rgba(0,0,0,.2);
+    padding:22px;
+  }
+  .modal h2{margin:0 0 8px;font-size:18px}
+  .modal p{margin:0;color:#667085;line-height:1.5;font-size:12px}
+  .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin:18px 0}
+  .modal-field span{display:block;font-size:9px;color:#7b8492;margin-bottom:4px}
+  .modal-field strong{font-size:11px}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px}
+  .modal-actions button{height:30px;padding:0 13px;border-radius:5px}
+  .btn-secondary{border:1px solid #d8dde5;background:#fff}
+  .btn-primary{border:1px solid var(--blue);background:var(--blue);color:#fff}
+
+  .toast{
+    position:fixed;right:24px;bottom:24px;background:#17233e;color:#fff;border-radius:7px;
+    padding:11px 15px;font-size:11px;box-shadow:0 10px 25px rgba(0,0,0,.16);display:none;z-index:200
+  }
+  .toast.show{display:block}
+
+  @media (max-width:900px){
+    :root{--sidebar:72px}
+    .brand-title,.brand-sub,.nav-label,.nav-item span:last-child{display:none}
+    .nav-item{padding:0;justify-content:center}
+    .brand{height:88px}
+    .seal{width:32px;height:32px;margin:0}
+    .content{padding:35px 14px}
+    .toolbar{gap:8px}
+    .search{flex:1}
+    .table-card{overflow-x:auto;padding-left:16px;padding-right:16px}
+    table{min-width:930px}
+    .footer{justify-content:space-between}
+  }
+  @media (max-width:600px){
+    .topbar{padding:0 12px}
+    .role{display:none}
+    .content{padding-top:24px}
+    .toolbar{align-items:stretch;flex-direction:column}
+    .filter-btn{width:100%}
+    .search{width:100%}
+    .filter-menu{width:100%}
+    .footer{flex-direction:column;align-items:flex-end}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="seal" aria-label="TEMS emblem"></div>
+      <div class="brand-title">TEMS</div>
+      <div class="brand-sub">Transportation Enforcement<br>Management System</div>
+    </div>
+    <div class="nav-scroll">
+      <section class="nav-section">
+        <div class="nav-label">Operations</div>
+        <a class="nav-item" href="#" data-nav="Dashboard"><i class="ico dashboard"></i><span>Dashboard</span></a>
+        <a class="nav-item" href="#" data-nav="Citations"><i class="ico doc"></i><span>Citations</span></a>
+        <a class="nav-item" href="#" data-nav="Appeals"><i class="ico doc"></i><span>Appeals</span></a>
+        <a class="nav-item" href="#" data-nav="Payments"><i class="ico card"></i><span>Payments</span></a>
+        <a class="nav-item" href="#" data-nav="Clamping"><i class="ico lock"></i><span>Clamping</span></a>
+        <a class="nav-item active" href="#" data-nav="Impounding"><i class="ico car"></i><span>Impounding</span></a>
+        <a class="nav-item" href="#" data-nav="Clamping Requests"><i class="ico car"></i><span>Clamping Requests</span></a>
+      </section>
+      <section class="nav-section">
+        <div class="nav-label">Monitoring</div>
+        <a class="nav-item" href="#" data-nav="Tracking"><i class="ico target"></i><span>Tracking</span></a>
+        <a class="nav-item" href="#" data-nav="Reports"><i class="ico chart"></i><span>Reports</span></a>
+      </section>
+      <section class="nav-section">
+        <div class="nav-label">Administration</div>
+        <a class="nav-item" href="#" data-nav="Users"><i class="ico users"></i><span>Users</span></a>
+        <a class="nav-item" href="#" data-nav="Teams"><i class="ico users"></i><span>Teams</span></a>
+        <a class="nav-item" href="#" data-nav="Zones"><i class="ico pin"></i><span>Zones</span></a>
+        <a class="nav-item" href="#" data-nav="Archives"><i class="ico card"></i><span>Archives</span></a>
+        <a class="nav-item" href="#" data-nav="Audit Logs"><i class="ico audit"></i><span>Audit Logs</span></a>
+      </section>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <div class="crumb">Operations console</div>
+        <div class="page-title">Impounding</div>
+      </div>
+      <div class="user-area">
+        <div class="bell" title="Notifications"></div>
+        <span class="online-dot"></span>
+        <span class="username">Super Administrator</span>
+        <span class="role">Super Administrator</span>
+        <span class="chev"></span>
+      </div>
+    </header>
+
+    <section class="content">
+      <div class="toolbar">
+        <div class="filter-wrap">
+          <button id="filterButton" class="filter-btn" aria-expanded="false" aria-controls="filterMenu">
+            Filters <span class="filter-caret"></span>
+          </button>
+          <div id="filterMenu" class="filter-menu" role="menu" aria-label="Impounding filters">
+            <button class="filter-option selected" data-status="All" role="menuitem">Active</button>
+            <button class="filter-option" data-status="Awaiting Payment" role="menuitem">Awaiting Payment</button>
+            <button class="filter-option" data-status="Paid" role="menuitem">Paid</button>
+            <button class="filter-option" data-status="Waiting Release" role="menuitem">Waiting Release</button>
+            <button class="filter-option" data-status="Released" role="menuitem">Released</button>
+          </div>
+        </div>
+
+        <label class="search" aria-label="Search impounding records">
+          <span class="search-icon-box"><span class="search-icon"></span></span>
+          <input id="searchInput" type="search" placeholder="Search..." autocomplete="off">
+        </label>
+      </div>
+
+      <div class="table-card">
+        <table aria-label="Impounding records">
+          <thead>
+            <tr>
+              <th>Plate #</th>
+              <th>Notice #</th>
+              <th>Violation</th>
+              <th>Officer</th>
+              <th>Clamped<br>At</th>
+              <th>Status</th>
+              <th aria-label="Actions"></th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="footer">
+        <div class="result-count" id="resultCount">Showing 1 to 5 of 118 results</div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true">
+  <div class="modal" id="modalContent"></div>
+</div>
+<div id="toast" class="toast" role="status"></div>
+
+<script>
+(() => {
+  const firstRows = [
+    {plate:"MEM-321", notice:"CLP-20260921-OYF246", violation:"—", officer:"Super Administrator", clamped:"Sep 21, 2026", status:"Awaiting Payment"},
+    {plate:"TST-1213", notice:"CLP-20260921-TRKZP9", violation:"—", officer:"Super Administrator", clamped:"Sep 21, 2026", status:"Awaiting Payment"},
+    {plate:"HLLO-289", notice:"CLP-20260921-ADCFJD", violation:"Red Light Violation", officer:"Super Administrator", clamped:"Sep 21, 2026", status:"Awaiting Payment"},
+    {plate:"TST-1213", notice:"CLP-20260921-TRKZP9", violation:"—", officer:"Super Administrator", clamped:"Sep 21, 2026", status:"Awaiting Payment"},
+    {plate:"HLLO-289", notice:"CLP-20260921-ADCFJD", violation:"Red Light Violation", officer:"Super Administrator", clamped:"Sep 21, 2026", status:"Awaiting Payment"}
+  ];
+
+  const more = [
+    ["NCR-482","CLP-20260920-KQ2D11","Illegal Parking"],
+    ["CEB-734","CLP-20260920-MA91Q8","No Registration"],
+    ["TST-874","CLP-20260919-BN42LE","—"],
+    ["MEM-912","CLP-20260918-XR8P20","Red Light Violation"],
+    ["DVO-551","CLP-20260917-HG77QP","Overloading"]
+  ];
+  const records = [...firstRows];
+  for(let i=5;i<118;i++){
+    const m=more[(i-5)%more.length];
+    records.push({
+      plate:m[0], notice:m[1], violation:m[2], officer:"Super Administrator",
+      clamped:"Sep " + String(21-(i%12)).padStart(2,"0") + ", 2026",
+      status:["Awaiting Payment","Paid","Waiting Release","Released","Active"][i%5]
+    });
+  }
+
+  const PAGE_SIZE=5;
+  let page=1;
+  let query="";
+  let selectedStatus="Active";
+
+  const tableBody=document.getElementById("tableBody");
+  const resultCount=document.getElementById("resultCount");
+  const pagination=document.getElementById("pagination");
+  const searchInput=document.getElementById("searchInput");
+  const filterButton=document.getElementById("filterButton");
+  const filterMenu=document.getElementById("filterMenu");
+  const modalBackdrop=document.getElementById("modalBackdrop");
+  const modalContent=document.getElementById("modalContent");
+  const toast=document.getElementById("toast");
+
+  function filtered(){
+    const q=query.trim().toLowerCase();
+    return records.filter(r=>{
+      // The supplied design shows the active filter menu, but its rows are Awaiting Payment.
+      // Keep "Active" as the visual default and allow all options to function.
+      const statusOk = selectedStatus==="Active" ? r.status==="Awaiting Payment" : r.status===selectedStatus;
+      const text=(r.plate+" "+r.notice+" "+r.violation+" "+r.officer+" "+r.clamped+" "+r.status).toLowerCase();
+      return statusOk && (!q || text.includes(q));
+    });
+  }
+
+  function render(){
+    const data=filtered();
+    const total=data.length;
+    const pages=Math.max(1,Math.ceil(total/PAGE_SIZE));
+    if(page>pages) page=pages;
+    const start=(page-1)*PAGE_SIZE;
+    const visible=data.slice(start,start+PAGE_SIZE);
+
+    tableBody.innerHTML=visible.map((r,i)=>`
+      <tr>
+        <td class="plate">${escapeHtml(r.plate)}</td>
+        <td>${escapeHtml(r.notice)}</td>
+        <td class="${r.violation!=="—"?"violation-link":"muted-dash"}">${escapeHtml(r.violation)}</td>
+        <td>${escapeHtml(r.officer)}</td>
+        <td>${escapeHtml(r.clamped)}</td>
+        <td><span class="status">${escapeHtml(r.status)}</span></td>
+        <td>
+          <div class="actions">
+            <button class="eye-btn" data-action="view" data-index="${start+i}" aria-label="View ${escapeHtml(r.plate)}" title="View details"><span class="eye"></span></button>
+            <button class="payment-btn" data-action="payment" data-index="${start+i}">Record Payment</button>
+          </div>
+        </td>
+      </tr>`).join("");
+
+    const shownStart=total?start+1:0;
+    const shownEnd=Math.min(start+PAGE_SIZE,total);
+    resultCount.textContent=`Showing ${shownStart} to ${shownEnd} of ${total} results`;
+
+    pagination.innerHTML="";
+    addPage("‹",page===1,()=>{page--;render()});
+    for(let p=1;p<=pages;p++){
+      if(p<=4 || p===pages){
+        addPage(String(p),false,()=>{page=p;render()},p===page);
+      } else if(p===5 && pages>6){
+        const ell=document.createElement("span");
+        ell.className="page-btn";ell.textContent="…";ell.style.cursor="default";pagination.appendChild(ell);
+        break;
+      }
+    }
+    addPage("›",page===pages,()=>{page++;render()});
+  }
+
+  function addPage(label,disabled,fn,active=false){
+    const b=document.createElement("button");
+    b.className="page-btn"+(active?" active":"");
+    b.textContent=label;b.disabled=disabled;b.addEventListener("click",fn);pagination.appendChild(b);
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  function closeFilter(){
+    filterMenu.classList.remove("open");
+    filterButton.setAttribute("aria-expanded","false");
+  }
+  filterButton.addEventListener("click",e=>{
+    e.stopPropagation();
+    const open=filterMenu.classList.toggle("open");
+    filterButton.setAttribute("aria-expanded",String(open));
+  });
+  document.addEventListener("click",e=>{
+    if(!e.target.closest(".filter-wrap")) closeFilter();
+  });
+
+  filterMenu.addEventListener("click",e=>{
+    const option=e.target.closest(".filter-option");
+    if(!option) return;
+    document.querySelectorAll(".filter-option").forEach(x=>x.classList.remove("selected"));
+    option.classList.add("selected");
+    selectedStatus=option.dataset.status;
+    page=1;
+    closeFilter();
+    render();
+  });
+
+  searchInput.addEventListener("input",()=>{
+    query=searchInput.value;
+    page=1;
+    render();
+  });
+
+  tableBody.addEventListener("click",e=>{
+    const btn=e.target.closest("button[data-action]");
+    if(!btn) return;
+    const record=filtered()[Number(btn.dataset.index) - (page-1)*PAGE_SIZE];
+    if(!record) return;
+    if(btn.dataset.action==="view") openView(record);
+    if(btn.dataset.action==="payment") openPayment(record);
+  });
+
+  function openView(r){
+    modalContent.innerHTML=`
+      <h2>Impounding Details</h2>
+      <p>Record information for the selected impounding notice.</p>
+      <div class="modal-grid">
+        <div class="modal-field"><span>Plate #</span><strong>${escapeHtml(r.plate)}</strong></div>
+        <div class="modal-field"><span>Notice #</span><strong>${escapeHtml(r.notice)}</strong></div>
+        <div class="modal-field"><span>Violation</span><strong>${escapeHtml(r.violation)}</strong></div>
+        <div class="modal-field"><span>Officer</span><strong>${escapeHtml(r.officer)}</strong></div>
+        <div class="modal-field"><span>Clamped At</span><strong>${escapeHtml(r.clamped)}</strong></div>
+        <div class="modal-field"><span>Status</span><strong>${escapeHtml(r.status)}</strong></div>
+      </div>
+      <div class="modal-actions"><button class="btn-secondary" data-close>Close</button></div>`;
+    modalBackdrop.classList.add("show");
+  }
+  function openPayment(r){
+    modalContent.innerHTML=`
+      <h2>Record Payment</h2>
+      <p>Record a payment against <strong>${escapeHtml(r.notice)}</strong>.</p>
+      <div class="modal-grid">
+        <div class="modal-field"><span>Plate #</span><strong>${escapeHtml(r.plate)}</strong></div>
+        <div class="modal-field"><span>Current Status</span><strong>${escapeHtml(r.status)}</strong></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" data-close>Cancel</button>
+        <button class="btn-primary" id="confirmPayment">Confirm Payment</button>
+      </div>`;
+    modalBackdrop.classList.add("show");
+    document.getElementById("confirmPayment").addEventListener("click",()=>{
+      r.status="Paid";
+      modalBackdrop.classList.remove("show");
+      selectedStatus="Paid";
+      document.querySelectorAll(".filter-option").forEach(x=>x.classList.toggle("selected",x.dataset.status==="Paid"));
+      page=1;render();
+      showToast("Payment recorded.");
+    });
+  }
+  modalBackdrop.addEventListener("click",e=>{
+    if(e.target===modalBackdrop || e.target.closest("[data-close]")) modalBackdrop.classList.remove("show");
+  });
+  document.addEventListener("keydown",e=>{
+    if(e.key==="Escape"){closeFilter();modalBackdrop.classList.remove("show")}
+  });
+
+  document.querySelectorAll(".nav-item").forEach(item=>{
+    item.addEventListener("click",e=>{
+      e.preventDefault();
+      document.querySelectorAll(".nav-item").forEach(x=>x.classList.remove("active"));
+      item.classList.add("active");
+      showToast(item.dataset.nav+" selected");
+    });
+  });
+
+  function showToast(message){
+    toast.textContent=message;toast.classList.add("show");
+    clearTimeout(showToast.t);showToast.t=setTimeout(()=>toast.classList.remove("show"),1800);
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
