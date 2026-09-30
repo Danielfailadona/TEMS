@@ -121,48 +121,63 @@
   </div>
 </form>
 
-{{-- Batch Actions Toolbar (shown when checkboxes selected) --}}
-<div class="mb-3 d-none" id="batch-actions-toolbar" style="position: sticky; top: 0; z-index: 10; background: white; padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0;">
-    <div class="d-flex flex-wrap align-items-center gap-2">
-        <span class="fw-semibold text-muted small" id="batch-selected-count">0 selected</span>
-        <div class="vr d-none d-md-block mx-2" style="height: 1.5rem;"></div>
-        
-        {{-- Approve (for pending users) --}}
-        <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-approve-form">
-            @csrf
-            <input type="hidden" name="action" value="approve">
-            <input type="hidden" name="user_ids" id="batch-approve-ids">
-            <button type="submit" class="btn btn-success btn-sm" disabled id="batch-approve-btn">
-                <i class="bi bi-check-lg me-1"></i> Approve
-            </button>
-        </form>
-
-        {{-- Reject (with shared reason modal) --}}
-        <button type="button" class="btn btn-danger btn-sm" disabled id="batch-reject-btn" data-bs-toggle="modal" data-bs-target="#batchRejectModal">
-            <i class="bi bi-x-lg me-1"></i> Reject
-        </button>
-
-        {{-- Suspend/Unsuspend (smart toggle) --}}
-        <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-suspend-form">
-            @csrf
-            <input type="hidden" name="action" value="suspend">
-            <input type="hidden" name="user_ids" id="batch-suspend-ids">
-            <button type="submit" class="btn btn-warning btn-sm" disabled id="batch-suspend-btn">
-                <i class="bi bi-lock me-1"></i> Suspend
-            </button>
-        </form>
-        
-        <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-unsuspend-form">
-            @csrf
-            <input type="hidden" name="action" value="unsuspend">
-            <input type="hidden" name="user_ids" id="batch-unsuspend-ids">
-            <button type="submit" class="btn btn-success btn-sm" disabled id="batch-unsuspend-btn">
-                <i class="bi bi-unlock me-1"></i> Unsuspend
-            </button>
-        </form>
+<div id="users-card">
+    {{-- Batch Actions Toolbar (shown when checkboxes selected) --}}
+    <div class="mb-3 d-none" id="batch-actions-toolbar" style="position: sticky; top: 0; z-index: 1020; background: #fff; padding: 0.5rem 0; border-bottom: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="fw-semibold text-muted small" id="batch-selected-count">0 selected</span>
+            <div class="vr d-none d-md-block mx-2" style="height: 1.5rem;"></div>
+            
+            {{-- Group 1: Pending Actions (Approve/Reject) --}}
+            <div class="d-flex align-items-center gap-1" id="batch-pending-group">
+                <span class="text-muted small text-uppercase fw-semibold px-2" style="font-size: 0.65rem;">Pending</span>
+                <div class="vr d-none d-md-block mx-1" style="height: 1.25rem;"></div>
+                
+                {{-- Approve --}}
+                <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-approve-form">
+                    @csrf
+                    <input type="hidden" name="action" value="approve">
+                    <input type="hidden" name="user_ids" id="batch-approve-ids">
+                    <button type="submit" class="btn btn-success btn-sm" disabled id="batch-approve-btn" data-bs-toggle="tooltip" title="Select pending users to enable">
+                        <i class="bi bi-check-lg me-1"></i> Approve
+                    </button>
+                </form>
+    
+                {{-- Reject --}}
+                <button type="button" class="btn btn-danger btn-sm" disabled id="batch-reject-btn" data-bs-toggle="modal" data-bs-target="#batchRejectModal" data-bs-toggle="tooltip" title="Select pending users to enable">
+                    <i class="bi bi-x-lg me-1"></i> Reject
+                </button>
+            </div>
+    
+            <div class="vr d-none d-md-block mx-2" style="height: 1.5rem;"></div>
+    
+            {{-- Group 2: Status Actions (Suspend/Unsuspend) --}}
+            <div class="d-flex align-items-center gap-1" id="batch-status-group">
+                <span class="text-muted small text-uppercase fw-semibold px-2" style="font-size: 0.65rem;">Status</span>
+                <div class="vr d-none d-md-block mx-1" style="height: 1.25rem;"></div>
+                
+                {{-- Suspend --}}
+                <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-suspend-form">
+                    @csrf
+                    <input type="hidden" name="action" value="suspend">
+                    <input type="hidden" name="user_ids" id="batch-suspend-ids">
+                    <button type="submit" class="btn btn-warning btn-sm" disabled id="batch-suspend-btn" data-bs-toggle="tooltip" title="Select approved or pending users to enable">
+                        <i class="bi bi-lock me-1"></i> Suspend
+                    </button>
+                </form>
+                
+                {{-- Unsuspend --}}
+                <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-unsuspend-form">
+                    @csrf
+                    <input type="hidden" name="action" value="unsuspend">
+                    <input type="hidden" name="user_ids" id="batch-unsuspend-ids">
+                    <button type="submit" class="btn btn-success btn-sm" disabled id="batch-unsuspend-btn" data-bs-toggle="tooltip" title="Select suspended users to enable">
+                        <i class="bi bi-unlock me-1"></i> Unsuspend
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
-</div>
-  <div class="card border-0 shadow-sm" id="users-card">
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0" id="users-table">
       <thead class="table-light">
@@ -280,13 +295,17 @@
         </div>
     @endif
 </div>
+</div>
 @endsection
 
-@section('modals')
-{{-- Reject Modals (rendered outside AJAX container to prevent stagger on filter) --}}
-@if ($users->contains('account_status', 'pending'))
+@push('scripts')
+{{-- Reject Modals for ALL pending users (so they exist regardless of filter) --}}
+@php
+    $allPendingUsers = \App\Models\User::where('account_status', 'pending')->get();
+@endphp
+@if ($allPendingUsers->isNotEmpty())
 <div style="display: none;">
-    @foreach ($users->where('account_status', 'pending') as $user)
+    @foreach ($allPendingUsers as $user)
         <div class="modal fade user-reject-modal" id="rejectModal-{{ $user->id }}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <form method="POST" action="{{ route('users.reject', $user) }}" class="modal-content">
@@ -311,7 +330,7 @@
 </div>
 @endif
 
-{{-- Batch Reject Modal --}}
+{{-- Batch Reject Modal (always available) --}}
 <div class="modal fade" id="batchRejectModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <form method="POST" action="{{ route('users.batch-action') }}" class="modal-content">
@@ -333,8 +352,9 @@
                 <button type="submit" class="btn btn-danger"><i class="bi bi-x-lg me-1"></i> Reject All Selected</button>
             </div>
         </form>
+    </div>
 </div>
-@endsection
+@endpush
 
 @push('styles')
 <style>
@@ -404,6 +424,37 @@
     .tab-approved.active { color: #16a34a; border-bottom-color: #22c55e; }
     .tab-rejected.active { color: #dc2626; border-bottom-color: #ef4444; }
     .tab-suspended.active { color: #64748b; border-bottom-color: #94a3b8; }
+
+    .batch-actions-toolbar {
+        transition: opacity 0.15s ease, visibility 0.15s ease;
+    }
+    .batch-actions-toolbar.d-none {
+        display: none !important;
+    }
+    .batch-actions-toolbar .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .batch-actions-toolbar .vr {
+        opacity: 0.3;
+    }
+    .batch-actions-toolbar .text-uppercase {
+        letter-spacing: 0.05em;
+    }
+    @media (max-width: 767.98px) {
+        .batch-actions-toolbar .vr {
+            display: none !important;
+        }
+        .batch-actions-toolbar .text-uppercase {
+            display: none;
+        }
+    }
+    .batch-actions-toolbar [data-bs-toggle="tooltip"] {
+        cursor: not-allowed;
+    }
+    .batch-actions-toolbar .btn:not(:disabled)[data-bs-toggle="tooltip"] {
+        cursor: pointer;
+    }
 </style>
 @endpush
 
@@ -414,25 +465,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('user-filter-form');
     const statusInput = document.getElementById('filter-status-input');
     
-    // Batch actions elements
-    const batchToolbar = document.getElementById('batch-actions-toolbar');
-    const selectAllCb = document.getElementById('select-all');
-    const selectedCountEl = document.getElementById('batch-selected-count');
-    const batchRejectBtn = document.getElementById('batch-reject-btn');
-    const batchApproveBtn = document.getElementById('batch-approve-btn');
-    const batchSuspendBtn = document.getElementById('batch-suspend-btn');
-    const batchUnsuspendBtn = document.getElementById('batch-unsuspend-btn');
-    const batchRejectIds = document.getElementById('batch-reject-ids');
-    const batchApproveIds = document.getElementById('batch-approve-ids');
-    const batchSuspendIds = document.getElementById('batch-suspend-ids');
-    const batchUnsuspendIds = document.getElementById('batch-unsuspend-ids');
-    const batchRejectCountEl = document.getElementById('batch-reject-count');
-    const batchRejectCountDisplay = document.getElementById('batch-selected-count');
-
     // Initialize Bootstrap modals once on page load
     document.querySelectorAll('.user-reject-modal, #batchRejectModal').forEach(modal => {
         new bootstrap.Modal(modal);
     });
+    
+    // Initialize tooltips
+    initTooltips();
+
+    // Helper to get fresh batch action elements (they get replaced on AJAX refresh)
+    function getBatchElements() {
+        return {
+            batchToolbar: document.getElementById('batch-actions-toolbar'),
+            selectAllCb: document.getElementById('select-all'),
+            selectedCountEl: document.getElementById('batch-selected-count'),
+            batchRejectBtn: document.getElementById('batch-reject-btn'),
+            batchApproveBtn: document.getElementById('batch-approve-btn'),
+            batchSuspendBtn: document.getElementById('batch-suspend-btn'),
+            batchUnsuspendBtn: document.getElementById('batch-unsuspend-btn'),
+            batchRejectIds: document.getElementById('batch-reject-ids'),
+            batchApproveIds: document.getElementById('batch-approve-ids'),
+            batchSuspendIds: document.getElementById('batch-suspend-ids'),
+            batchUnsuspendIds: document.getElementById('batch-unsuspend-ids'),
+            batchRejectCountEl: document.getElementById('batch-reject-count'),
+            batchRejectCountDisplay: document.getElementById('batch-selected-count'),
+            batchPendingGroup: document.getElementById('batch-pending-group'),
+            batchStatusGroup: document.getElementById('batch-status-group'),
+        };
+    }
+
+    // Initialize Bootstrap tooltips
+    function initTooltips() {
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        tooltipTriggerList.forEach(tooltipTriggerEl => {
+            if (!tooltipTriggerEl._bsTooltip) {
+                new bootstrap.Tooltip(tooltipTriggerEl);
+            }
+        });
+    }
 
     function submitFilter() {
         const url = new URL(form.action.split('?')[0], window.location.origin);
@@ -446,31 +516,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 const doc = new DOMParser().parseFromString(html, 'text/html');
                 const newCard = doc.getElementById('users-card');
                 if (newCard) tableCard.innerHTML = newCard.innerHTML;
-                // Modals are now outside the AJAX container, no need to re-append
-                // Re-initialize any new modals that might have been added
-                doc.querySelectorAll('.user-reject-modal').forEach(modal => {
+                // Modals are now always in main template - no need to append from AJAX
+                // Just re-initialize any new modals that might have been added
+                doc.querySelectorAll('.user-reject-modal, #batchRejectModal').forEach(modal => {
                     if (!modal._bsModal) new bootstrap.Modal(modal);
                 });
+                // Re-initialize tooltips for new toolbar buttons
+                initTooltips();
             })
             .catch(() => { window.location.href = url.toString(); });
     }
 
     // Batch actions toolbar logic
     function updateBatchToolbar() {
+        const el = getBatchElements();
         const checkedRows = document.querySelectorAll('#users-table .row-checkbox:checked');
         const count = checkedRows.length;
         const selectedIds = Array.from(checkedRows).map(cb => cb.value);
         
         if (count > 0) {
-            batchToolbar.classList.remove('d-none');
-            selectedCountEl.textContent = `${count} selected`;
+            el.batchToolbar.classList.remove('d-none');
+            el.selectedCountEl.textContent = `${count} selected`;
         } else {
-            batchToolbar.classList.add('d-none');
+            el.batchToolbar.classList.add('d-none');
         }
         
         // Update hidden inputs with selected IDs
         const idsString = selectedIds.join(',');
-        [batchRejectIds, batchApproveIds, batchSuspendIds, batchUnsuspendIds].forEach(input => {
+        [el.batchRejectIds, el.batchApproveIds, el.batchSuspendIds, el.batchUnsuspendIds].forEach(input => {
             if (input) input.value = idsString;
         });
         
@@ -497,33 +570,55 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         // Enable/disable buttons based on context
-        batchApproveBtn.disabled = !hasPending;
-        batchRejectBtn.disabled = !hasPending;
+        el.batchApproveBtn.disabled = !hasPending;
+        el.batchRejectBtn.disabled = !hasPending;
         
         // Suspend/Unsuspend smart toggle
         const hasApprovedOrPending = hasApproved || hasPending;
         const hasSuspendedOnly = hasSuspended && !hasApproved && !hasPending && !hasRejected;
         
         if (hasSuspendedOnly) {
-            batchSuspendBtn.disabled = true;
-            batchUnsuspendBtn.disabled = false;
+            el.batchSuspendBtn.disabled = true;
+            el.batchUnsuspendBtn.disabled = false;
         } else if (hasApprovedOrPending && !hasSuspended) {
-            batchSuspendBtn.disabled = false;
-            batchUnsuspendBtn.disabled = true;
+            el.batchSuspendBtn.disabled = false;
+            el.batchUnsuspendBtn.disabled = true;
         } else {
-            batchSuspendBtn.disabled = true;
-            batchUnsuspendBtn.disabled = true;
+            el.batchSuspendBtn.disabled = true;
+            el.batchUnsuspendBtn.disabled = true;
         }
         
+        // Show/hide groups based on whether they have any enabled buttons
+        const pendingGroupHasEnabled = hasPending;
+        const statusGroupHasEnabled = !el.batchSuspendBtn.disabled || !el.batchUnsuspendBtn.disabled;
+        
+        if (el.batchPendingGroup) {
+            el.batchPendingGroup.style.display = pendingGroupHasEnabled ? 'flex' : 'none';
+        }
+        if (el.batchStatusGroup) {
+            el.batchStatusGroup.style.display = statusGroupHasEnabled ? 'flex' : 'none';
+        }
+        
+        // Update tooltips for disabled buttons
+        const disabledButtons = [el.batchApproveBtn, el.batchRejectBtn, el.batchSuspendBtn, el.batchUnsuspendBtn].filter(b => b && b.disabled);
+        disabledButtons.forEach(btn => {
+            if (btn && !btn.hasAttribute('data-bs-original-title')) {
+                btn.setAttribute('data-bs-original-title', btn.getAttribute('title') || '');
+            }
+        });
+        
+        // Re-initialize tooltips
+        initTooltips();
+        
         // Update reject modal count
-        if (batchRejectCountEl) {
+        if (el.batchRejectCountEl) {
             const pendingCount = selectedIds.filter((_, i) => {
                 const row = document.querySelector(`#users-table tbody tr .row-checkbox[value="${selectedIds[i]}"]`);
                 if (!row) return false;
                 const statusCell = row.closest('tr').querySelector('td:nth-child(4) .badge');
                 return statusCell && statusCell.textContent.trim().toLowerCase() === 'pending';
             }).length;
-            batchRejectCountEl.textContent = `${pendingCount} pending user${pendingCount !== 1 ? 's' : ''} will be rejected`;
+            el.batchRejectCountEl.textContent = `${pendingCount} pending user${pendingCount !== 1 ? 's' : ''} will be rejected`;
         }
     }
 
@@ -617,6 +712,32 @@ document.addEventListener('DOMContentLoaded', () => {
         finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-unlock me-1"></i> Unsuspend'; }
     });
 
+    // Update batch reject modal with selected count
+    const batchRejectBtn = document.getElementById('batch-reject-btn');
+    if (batchRejectBtn) {
+        batchRejectBtn.addEventListener('click', () => {
+            const checkedRows = document.querySelectorAll('#users-table .row-checkbox:checked');
+            const pendingCount = Array.from(checkedRows).filter(cb => {
+                const statusCell = cb.closest('tr').querySelector('td:nth-child(4) .badge');
+                return statusCell && statusCell.textContent.trim().toLowerCase() === 'pending';
+            }).length;
+            const el = getBatchElements();
+            if (el.batchRejectCountEl) {
+                el.batchRejectCountEl.textContent = `${pendingCount} pending user${pendingCount !== 1 ? 's' : ''} will be rejected`;
+            }
+        });
+    }
+    
+    // Select all checkbox
+    const selectAllCb = document.getElementById('select-all');
+    if (selectAllCb) {
+        selectAllCb.addEventListener('change', () => {
+            document.querySelectorAll('#users-table .row-checkbox').forEach(cb => cb.checked = selectAllCb.checked);
+            updateBatchToolbar();
+        });
+    }
+
+    // Status tab clicks
     document.querySelectorAll('#status-tabs .user-mgmt-tab').forEach(tab => {
         tab.addEventListener('click', (e) => {
             e.preventDefault();
