@@ -47,8 +47,6 @@ RUN mkdir -p /var/www/html/storage/framework/sessions \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-RUN php artisan storage:link
-
 RUN rm -rf /var/www/html/node_modules /var/www/html/.env /var/www/html/docker/nginx.conf \
     /var/www/html/docker/supervisord.conf
 

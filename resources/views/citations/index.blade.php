@@ -45,6 +45,7 @@ function clearFilters() {
                     <th>Amount</th>
                     <th>Issued</th>
                     <th>Status</th>
+                    <th>Evidence</th>
                     <th></th>
                 </tr>
             </thead>
@@ -57,10 +58,17 @@ function clearFilters() {
                         <td>₱{{ number_format($citation->penalty_amount, 2) }}</td>
                         <td>{{ $citation->issued_at->format('M d, Y') }}</td>
                         <td><span class="badge {{ $citation->status->badgeClass() }}">{{ $citation->status->label() }}</span></td>
+                        <td>
+                            @if ($citation->evidence->isNotEmpty())
+                                <span class="badge bg-success">Yes</span>
+                            @else
+                                <span class="badge bg-secondary">No</span>
+                            @endif
+                        </td>
                         <td class="text-end"><a href="{{ route('citations.show', $citation) }}" class="btn btn-sm btn-outline-primary">View</a></td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="text-center text-muted py-4">No citations found.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted py-4">No citations found.</td></tr>
                 @endforelse
             </tbody>
         </table>
