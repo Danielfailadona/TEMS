@@ -73,12 +73,12 @@ class CitizenPortalController extends Controller
 
     public function clampingLanding(): View
     {
-        return view('citizen.clamping-landing');
+        return view('citizen.clamping-request');
     }
 
     public function clampingForm(): View
     {
-        return view('citizen.clamping-form');
+        return view('citizen.clamping-request');
     }
 
     public function storeClampingRequest(Request $request)

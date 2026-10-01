@@ -45,6 +45,20 @@
         font-size: 1rem;
         flex-shrink: 0;
     }
+    /* Responsive map container */
+    @media (max-width: 991.98px) {
+        #location-map {
+            min-height: 300px;
+            height: 50vh;
+            max-height: 400px;
+        }
+    }
+    @media (min-width: 992px) {
+        #location-map {
+            min-height: 500px;
+            height: 500px;
+        }
+    }
 </style>
 @endpush
 
