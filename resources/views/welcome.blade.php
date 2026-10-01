@@ -362,7 +362,7 @@
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ route('citizen.citation.lookup') }}">Citation Lookup</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('citizen.clamping.show') }}">Report Parking</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ route('citizen.clamping.landing') }}">Report Parking</a></li>
                 <li class="nav-item ms-2">
                     <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">Sign In</a>
                 </li>
