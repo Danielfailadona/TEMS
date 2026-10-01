@@ -114,11 +114,13 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
     });
     Route::prefix('impounding')->name('impounding.')->controller(ImpoundingController::class)->group(function () {
         Route::get('/', 'index')->name('index');
-        Route::get('{clamping}/print-release', 'printRelease')->name('print-release');
-        Route::get('{clamping}', 'show')->name('show');
-        Route::post('{clamping}/mark-paid', 'markPaid')->name('mark-paid');
-        Route::post('{clamping}/mark-waiting-release', 'markWaitingRelease')->name('mark-waiting-release');
-        Route::post('{clamping}/process-release', 'processRelease')->name('process-release');
+        Route::get('create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('{impounding}/print-release', 'printRelease')->name('print-release');
+        Route::get('{impounding}', 'show')->name('show');
+        Route::post('{impounding}/mark-paid', 'markPaid')->name('mark-paid');
+        Route::post('{impounding}/mark-waiting-release', 'markWaitingRelease')->name('mark-waiting-release');
+        Route::post('{impounding}/process-release', 'processRelease')->name('process-release');
     });
 
     Route::resource('appeals', AppealController::class)->except(['destroy']);

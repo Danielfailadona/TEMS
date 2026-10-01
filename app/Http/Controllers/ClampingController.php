@@ -104,7 +104,7 @@ class ClampingController extends Controller
             $citation->update(['status' => CitationStatus::Clamped]);
         }
 
-        return redirect()->route('impounding.show', $record)->with('success', 'Vehicle clamp recorded. It is now in the impounding pipeline.');
+        return redirect()->route('clamping.show', $record)->with('success', 'Vehicle clamp recorded successfully.');
     }
 
     public function show(ClampingRecord $clamping): View
