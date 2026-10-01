@@ -26,7 +26,7 @@
                 </div>
                 @if ($clamping->evidence_path)
                     <hr>
-                    <img src="{{ asset('storage/'.$clamping->evidence_path) }}" alt="Clamp evidence" class="rounded border" style="max-height:200px">
+                    <img src="{{ \App\Services\SupabaseStorage::publicUrl($clamping->evidence_path) }}" alt="Clamp evidence" class="rounded border" style="max-height:200px">
                 @endif
             </div>
         </div>

@@ -11,6 +11,7 @@ fi
 
 php /var/www/html/artisan storage:link --force 2>/dev/null || true
 php /var/www/html/artisan package:discover --ansi 2>/dev/null || true
+php /var/www/html/artisan supabase:init 2>/dev/null || true
 php /var/www/html/artisan migrate --force 2>/dev/null || true
 php /var/www/html/artisan view:clear 2>/dev/null || true
 php /var/www/html/artisan config:clear 2>/dev/null || true

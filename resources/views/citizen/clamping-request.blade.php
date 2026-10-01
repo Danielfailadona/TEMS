@@ -3,7 +3,7 @@
 @section('title', 'Report Illegal Parking')
 
 @push('styles')
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
 <style>
     .login-shell {
         width: min(1100px, 95vw) !important;
@@ -75,6 +75,22 @@
             <p class="text-muted mb-0 small">Help us enforce parking regulations in your area</p>
         </div>
     </div>
+
+    <ul class="nav nav-pills nav-fill bg-white bg-opacity-75 rounded-pill p-1 shadow-sm mb-4" id="clampingTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active rounded-pill" data-bs-toggle="tab" data-bs-target="#clamping-report" type="button" role="tab" aria-controls="clamping-report" aria-selected="true">
+                <i class="bi bi-car-front-fill me-2"></i>Report
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-pill" data-bs-toggle="tab" data-bs-target="#clamping-track" type="button" role="tab" aria-controls="clamping-track" aria-selected="false">
+                <i class="bi bi-search me-2"></i>Track
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="clamping-report" role="tabpanel" aria-labelledby="clamping-report-tab">
 
     <form method="POST" action="{{ route('citizen.clamping.store') }}" enctype="multipart/form-data">
         @csrf
@@ -203,11 +219,18 @@
             By submitting this request, you confirm that the information is accurate and the vehicle is illegally parked on your property.
         </p>
     </form>
+
+        </div>
+
+        <div class="tab-pane fade" id="clamping-track" role="tabpanel" aria-labelledby="clamping-track-tab">
+            @include('citizen.partials.clamping-track-panel', ['requestInfo' => $requestInfo ?? null])
+        </div>
+    </div>
 </div>
 @endsection
 
 @push('scripts')
-<script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
 <script>
 const MAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
 const DEFAULT_CENTER = [121.0402, 14.5432];
@@ -217,6 +240,11 @@ let map = null;
 let locationMarker = null;
 
 function initMap() {
+    const container = document.getElementById('location-map');
+    if (container && container.offsetHeight === 0) {
+        container.style.height = '400px';
+    }
+
     map = new maplibregl.Map({
         container: 'location-map',
         style: MAP_STYLE,
@@ -227,6 +255,10 @@ function initMap() {
 
     map.addControl(new maplibregl.NavigationControl(), 'top-right');
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+
+    map.on('error', function (e) {
+        console.warn('MapLibre error:', e && e.error ? e.error.message : e);
+    });
 
     const lat = parseFloat(document.getElementById('latitude').value);
     const lng = parseFloat(document.getElementById('longitude').value);
@@ -321,6 +353,24 @@ function previewPhoto(event) {
 
 document.addEventListener('DOMContentLoaded', function () {
     initMap();
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'track') {
+        const trackTab = document.querySelector('#clampingTabs .nav-link[data-bs-target="#clamping-track"]');
+        if (trackTab) new bootstrap.Tab(trackTab).show();
+    }
+
+    document.querySelectorAll('#clampingTabs .nav-link').forEach(function (tabEl) {
+        tabEl.addEventListener('shown.bs.tab', function (e) {
+            if (e.target.getAttribute('data-bs-target') === '#clamping-report' && map) {
+                setTimeout(function () { map.resize(); }, 60);
+            }
+        });
+    });
+
+    window.addEventListener('load', function () {
+        if (map) map.resize();
+    });
 });
 </script>
 @endpush

@@ -54,8 +54,8 @@
             </div>
             <div class="d-flex flex-wrap gap-2 justify-content-center">
                 @foreach ($citation->evidence as $evidence)
-                    <img src="{{ asset('storage/'.$evidence->file_path) }}" alt="Evidence"
-                         class="rounded border" style="width:80px;height:80px;object-fit:cover;" onclick="openModal('{{ asset('storage/'.$evidence->file_path) }}')">
+                    <img src="{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}" alt="Evidence"
+                         class="rounded border" style="width:80px;height:80px;object-fit:cover;" onclick="openModal('{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}')">
                 @endforeach
             </div>
         </div>

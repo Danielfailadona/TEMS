@@ -66,8 +66,8 @@
                 <div class="card-header bg-white"><strong>Evidence</strong></div>
                 <div class="card-body d-flex flex-wrap gap-2">
                     @foreach ($citation->evidence as $item)
-                        <a href="#" class="evidence-thumb" data-src="{{ asset('storage/'.$item->file_path) }}" data-title="{{ $item->original_name }}">
-                            <img src="{{ asset('storage/'.$item->file_path) }}" alt="Evidence" class="rounded border" style="height:120px">
+                        <a href="#" class="evidence-thumb" data-src="{{ \App\Services\SupabaseStorage::publicUrl($item->file_path) }}" data-title="{{ $item->original_name }}">
+                            <img src="{{ \App\Services\SupabaseStorage::publicUrl($item->file_path) }}" alt="Evidence" class="rounded border" style="height:120px">
                         </a>
                     @endforeach
                 </div>

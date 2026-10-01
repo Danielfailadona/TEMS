@@ -76,7 +76,12 @@ class ClampingController extends Controller
 
         $evidencePath = null;
         if ($request->hasFile('evidence')) {
-            $evidencePath = $request->file('evidence')->store('clamping', 'public');
+            try {
+                $evidencePath = \App\Services\SupabaseStorage::put('clamping/'.$request->file('evidence')->hashName(), $request->file('evidence'));
+            } catch (\Throwable $e) {
+                report($e);
+                return back()->with('error', 'Failed to upload clamp evidence. Please try again.');
+            }
         }
 
         $record = ClampingRecord::create([

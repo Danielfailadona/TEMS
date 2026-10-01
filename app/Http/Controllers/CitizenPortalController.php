@@ -71,14 +71,18 @@ class CitizenPortalController extends Controller
         return view('citizen.citation-detail', compact('citation'));
     }
 
-    public function clampingLanding(): View
+    public function clampingLanding(Request $request): View
     {
-        return view('citizen.clamping-request');
+        $requestInfo = $this->findClampingRequest($request->query('reference'));
+
+        return view('citizen.clamping-request', compact('requestInfo'));
     }
 
-    public function clampingForm(): View
+    public function clampingForm(Request $request): View
     {
-        return view('citizen.clamping-request');
+        $requestInfo = $this->findClampingRequest($request->query('reference'));
+
+        return view('citizen.clamping-request', compact('requestInfo'));
     }
 
     public function storeClampingRequest(Request $request)
@@ -96,7 +100,12 @@ class CitizenPortalController extends Controller
             'additional_notes' => 'nullable|string|max:1000',
         ]);
 
-        $photoPath = $request->file('evidence_photo')->store('clamping-requests', 'public');
+        try {
+            $photoPath = \App\Services\SupabaseStorage::put('clamping-requests/'.$request->file('evidence_photo')->hashName(), $request->file('evidence_photo'));
+        } catch (\Throwable $e) {
+            report($e);
+            return back()->with('error', 'We could not upload your evidence photo. Please try again.');
+        }
         $data['evidence_photo'] = $photoPath;
         $data['status'] = 'pending';
 
@@ -142,7 +151,19 @@ class CitizenPortalController extends Controller
         $clampingRequest = ClampingRequest::where('reference_number', $reference)
             ->with(['processedBy'])
             ->first();
+        $requestInfo = $clampingRequest;
 
         return view('citizen.clamping-track', compact('requestInfo', 'reference'));
+    }
+
+    private function findClampingRequest(?string $reference): ?ClampingRequest
+    {
+        if (blank($reference)) {
+            return null;
+        }
+
+        return ClampingRequest::where('reference_number', $reference)
+            ->with(['processedBy'])
+            ->first();
     }
 }

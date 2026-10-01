@@ -80,7 +80,7 @@ class CitationController extends Controller
 
             if ($request->hasFile('evidence')) {
                 foreach ($request->file('evidence') as $file) {
-                    $path = $file->store('citations/'.$citation->id, 'public');
+                    $path = \App\Services\SupabaseStorage::put('citations/'.$citation->id.'/'.$file->hashName(), $file);
                     CitationEvidence::create([
                         'citation_id' => $citation->id,
                         'file_path' => $path,

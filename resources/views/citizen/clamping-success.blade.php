@@ -69,7 +69,7 @@
             </div>
 
             <div class="text-center mt-4 animate-on-load">
-                <a href="{{ route('citizen.clamping.track') }}" class="btn btn-outline-primary px-4 py-2">
+                <a href="{{ route('citizen.clamping.landing', ['tab' => 'track']) }}" class="btn btn-outline-primary px-4 py-2">
                     <i class="bi bi-search me-1"></i> Track Your Request
                 </a>
                 <a href="{{ route('citizen.clamping.landing') }}" class="btn btn-outline-secondary ms-2 px-4 py-2">
@@ -111,6 +111,18 @@ function copyReference() {
             btn.classList.remove('btn-success');
             btn.classList.add('btn-outline-primary');
         }, 2000);
-    }
+    }).catch(() => {
+        const btn = document.getElementById('copyBtn');
+        const original = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i> Copy failed';
+        btn.classList.remove('btn-outline-primary');
+        btn.classList.add('btn-danger');
+        setTimeout(() => {
+            btn.innerHTML = original;
+            btn.classList.remove('btn-danger');
+            btn.classList.add('btn-outline-primary');
+        }, 2000);
+    });
+}
 </script>
 @endpush

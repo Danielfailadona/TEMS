@@ -55,7 +55,7 @@
                 </div>
                 @if ($impounding->evidence_path)
                     <hr>
-                    <img src="{{ asset('storage/'.$impounding->evidence_path) }}" alt="Evidence" class="rounded border" style="max-height:200px">
+                    <img src="{{ \App\Services\SupabaseStorage::publicUrl($impounding->evidence_path) }}" alt="Evidence" class="rounded border" style="max-height:200px">
                 @endif
             </div>
         </div>

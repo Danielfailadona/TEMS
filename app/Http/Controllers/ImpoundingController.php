@@ -97,7 +97,12 @@ class ImpoundingController extends Controller
 
         $evidencePath = null;
         if ($request->hasFile('evidence')) {
-            $evidencePath = $request->file('evidence')->store('impounding', 'public');
+            try {
+                $evidencePath = \App\Services\SupabaseStorage::put('impounding/'.$request->file('evidence')->hashName(), $request->file('evidence'));
+            } catch (\Throwable $e) {
+                report($e);
+                return back()->with('error', 'Failed to upload impounding evidence. Please try again.');
+            }
         }
 
         $record = ImpoundingRecord::create([

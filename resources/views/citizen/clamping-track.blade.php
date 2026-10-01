@@ -132,7 +132,7 @@
                         <div class="card stat-card mb-4 animate-on-load">
                             <div class="card-header bg-white"><strong>Submitted Evidence</strong></div>
                             <div class="card-body text-center">
-                                <img src="{{ asset('storage/'.$requestInfo->evidence_photo) }}" alt="Evidence" class="rounded border" style="max-height:300px;">
+                                <img src="{{ \App\Services\SupabaseStorage::publicUrl($requestInfo->evidence_photo) }}" alt="Evidence" class="rounded border" style="max-height:300px;">
                                 <small class="text-muted d-block mt-2">Submitted photo evidence</small>
                             </div>
                         </div>

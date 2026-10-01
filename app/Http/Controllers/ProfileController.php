@@ -41,7 +41,12 @@ class ProfileController extends Controller
         $user->phone = $validated['phone'] ?? null;
 
         if ($request->hasFile('profile_photo')) {
-            $path = $request->file('profile_photo')->store('avatars', 'public');
+            try {
+                $path = \App\Services\SupabaseStorage::put('avatars/'.$request->file('profile_photo')->hashName(), $request->file('profile_photo'));
+            } catch (\Throwable $e) {
+                report($e);
+                return back()->withErrors(['profile_photo' => 'Failed to upload profile photo. Please try again.'])->withInput();
+            }
             $user->profile_photo_path = $path;
         }
 
