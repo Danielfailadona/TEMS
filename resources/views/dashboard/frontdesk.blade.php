@@ -22,7 +22,7 @@
     .chart-box { height:200px; }
     .chart-box-sm { height:150px; }
     .dash-map { width:100%; height:220px; border-radius:0.5rem; overflow:hidden; }
-
+    
     .violation-item {
         display:flex; justify-content:space-between; align-items:center;
         padding:0.35rem 0; border-bottom:1px solid #f1f5f9;
@@ -34,6 +34,10 @@
         transition:width 0.3s ease;
     }
 </style>
+@endpush
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 @endpush
 
 @section('content')
