@@ -27,10 +27,10 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}" placeholder="From">
+                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}" placeholder="From" onchange="this.form.submit()">
             </div>
             <div class="col-md-2">
-                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}" placeholder="To">
+                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}" placeholder="To" onchange="this.form.submit()">
             </div>
             <div class="col-md-3">
                 <div class="input-group">
