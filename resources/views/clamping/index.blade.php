@@ -9,28 +9,6 @@
     @endcan
 </div>
 
-@if (isset($pendingRequests) && $pendingRequests->isNotEmpty())
-    <div class="card stat-card mb-4">
-        <div class="card-header bg-white"><strong>Citizen Clamping Requests</strong></div>
-        <div class="table-responsive">
-            <table class="table mb-0">
-                <thead><tr><th>Requester</th><th>Vehicle Plate</th><th>Location</th><th>Date</th><th>Status</th></tr></thead>
-                <tbody>
-                    @foreach ($pendingRequests as $request)
-                        <tr>
-                            <td>{{ $request->requester_name ?? '—' }}</td>
-                            <td>{{ $request->vehicle_plate }}</td>
-                            <td>{{ $request->location ?? '—' }}</td>
-                            <td>{{ $request->created_at->format('M d, Y') }}</td>
-                            <td><span class="badge bg-warning">{{ ucfirst($request->status ?? 'pending') }}</span></td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    </div>
-@endif
-
 @if (isset($overdueCitations) && $overdueCitations->isNotEmpty())
     <div class="card stat-card mb-4">
         <div class="card-header bg-white"><strong>Eligible Vehicles</strong></div>

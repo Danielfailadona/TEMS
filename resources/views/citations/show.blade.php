@@ -140,7 +140,6 @@
         @endif
     </div>
 </div>
-@endsection
 
 @push('scripts')
 @if ($citation->latitude && $citation->longitude)
@@ -206,9 +205,7 @@
     })();
 </script>
 @endif
-@endsection
 
-@push('scripts')
 @if ($citation->evidence->isNotEmpty())
 <div class="modal fade" id="evidenceModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -238,3 +235,4 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 @endif
 @endpush
+@endsection
