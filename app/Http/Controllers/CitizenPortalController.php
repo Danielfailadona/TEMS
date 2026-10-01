@@ -7,6 +7,7 @@ use App\Models\Citation;
 use App\Models\ClampingRequest;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Str;
 
 class CitizenPortalController extends Controller
 {
@@ -70,9 +71,14 @@ class CitizenPortalController extends Controller
         return view('citizen.citation-detail', compact('citation'));
     }
 
-    public function clampingRequest(): View
+    public function clampingLanding(): View
     {
-        return view('citizen.clamping-request');
+        return view('citizen.clamping-landing');
+    }
+
+    public function clampingForm(): View
+    {
+        return view('citizen.clamping-form');
     }
 
     public function storeClampingRequest(Request $request)
@@ -94,6 +100,11 @@ class CitizenPortalController extends Controller
         $data['evidence_photo'] = $photoPath;
         $data['status'] = 'pending';
 
+        // Generate reference number: CLP-YYYYMMDD-XXXX
+        $datePrefix = now()->format('Ymd');
+        $randomSuffix = Str::upper(Str::random(4));
+        $data['reference_number'] = "CLP-{$datePrefix}-{$randomSuffix}";
+
         $clampingRequest = ClampingRequest::create($data);
 
         if (auth()->check()) {
@@ -107,11 +118,31 @@ class CitizenPortalController extends Controller
             ]);
         }
 
-        return view('citizen.clamping-success');
+        return redirect()->route('citizen.clamping.success', ['reference' => $clampingRequest->reference_number]);
     }
 
-    public function clampingSuccess(): View
+    public function clampingSuccess(Request $request): View
     {
-        return view('citizen.clamping-success');
+        $reference = $request->query('reference');
+        return view('citizen.clamping-success', compact('reference'));
+    }
+
+    public function clampingTrack(): View
+    {
+        return view('citizen.clamping-track');
+    }
+
+    public function clampingTrackSearch(Request $request)
+    {
+        $request->validate([
+            'reference' => 'required|string|max:50',
+        ]);
+
+        $reference = $request->input('reference');
+        $clampingRequest = ClampingRequest::where('reference_number', $reference)
+            ->with(['processedBy'])
+            ->first();
+
+        return view('citizen.clamping-track', compact('requestInfo', 'reference'));
     }
 }

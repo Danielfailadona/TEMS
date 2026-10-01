@@ -56,9 +56,14 @@ Route::middleware('guest')->group(function () {
         Route::get('citation/lookup', [CitizenPortalController::class, 'citationLookup'])->name('citation.lookup');
         Route::get('citation/search', [CitizenPortalController::class, 'citationSearch'])->name('citation.search');
         Route::get('citation/{citation}', [CitizenPortalController::class, 'citationDetail'])->name('citation.detail');
-        Route::get('request-clamping', [CitizenPortalController::class, 'clampingRequest'])->name('clamping.show');
+        
+        // Clamping Request - Citizen Portal
+        Route::get('request-clamping', [CitizenPortalController::class, 'clampingLanding'])->name('clamping.landing');
+        Route::get('request-clamping/form', [CitizenPortalController::class, 'clampingForm'])->name('clamping.form');
         Route::post('request-clamping', [CitizenPortalController::class, 'storeClampingRequest'])->middleware('throttle:5,5')->name('clamping.store');
-        Route::get('clamping/success', [CitizenPortalController::class, 'clampingSuccess'])->name('clamping.success');
+        Route::get('request-clamping/success', [CitizenPortalController::class, 'clampingSuccess'])->name('clamping.success');
+        Route::get('request-clamping/track', [CitizenPortalController::class, 'clampingTrack'])->name('clamping.track');
+        Route::post('request-clamping/track', [CitizenPortalController::class, 'clampingTrackSearch'])->name('clamping.track.search');
     });
 
     // PayMongo Webhook (public, verified by signature)

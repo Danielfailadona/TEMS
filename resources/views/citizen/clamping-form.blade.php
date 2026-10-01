@@ -1,0 +1,388 @@
+@extends('layouts.guest')
+
+@section('title', 'Request Clamping')
+
+@push('styles')
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
+<style>
+    .form-shell {
+        width: 100%;
+        max-width: 1200px;
+    }
+    .map-container {
+        width: 100%;
+        height: 100%;
+        min-height: 500px;
+        border-radius: 0.75rem;
+        position: relative;
+    }
+    .map-overlay {
+        position: absolute;
+        bottom: 12px;
+        left: 12px;
+        z-index: 10;
+        background: rgba(15, 23, 42, 0.92);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 0.75rem;
+        padding: 0.85rem 1rem;
+        color: #e2e8f0;
+        font-family: system-ui, sans-serif;
+        max-width: 300px;
+        pointer-events: auto;
+    }
+    .map-overlay .mdo-title {
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-bottom: 0.4rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .map-overlay .mdo-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.15rem 0;
+        font-size: 0.75rem;
+    }
+    .map-overlay .mdo-row .mdo-lbl {
+        color: rgba(148, 163, 184, 0.9);
+    }
+    .map-overlay .mdo-row .mdo-val {
+        font-weight: 600;
+        text-align: right;
+    }
+    .map-overlay .mdo-badge {
+        display: inline-block;
+        font-size: 0.62rem;
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 0.1rem 0.45rem;
+        background: rgba(34, 197, 94, 0.18);
+        color: #4ade80;
+    }
+    .map-overlay .mdo-close {
+        position: absolute;
+        top: 6px;
+        right: 8px;
+        background: none;
+        border: none;
+        color: rgba(203, 213, 225, 0.6);
+        cursor: pointer;
+        font-size: 0.85rem;
+        padding: 2px 4px;
+    }
+    .map-overlay .mdo-close:hover {
+        color: #fff;
+    }
+    .gps-btn.loading {
+        pointer-events: none;
+    }
+    .photo-preview img {
+        max-height: 200px;
+        width: auto;
+    }
+    @media (max-width: 991.98px) {
+        .map-container {
+            min-height: 300px;
+        }
+    }
+</style>
+@endpush
+
+@section('content')
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-xl-11">
+            <div class="d-flex align-items-center gap-3 mb-4 flex-wrap animate-on-load">
+                <a href="{{ route('citizen.clamping.landing') }}" class="d-inline-flex align-items-center justify-content-center text-decoration-none"
+                   style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.9);box-shadow:0 2px 8px rgba(0,0,0,0.12);color:#1e293b;transition:all 0.2s;"
+                   onmouseover="this.style.background='#2563eb';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,0.9)';this.style.color='#1e293b'">
+                    <i class="bi bi-arrow-left" style="font-size:1.1rem;"></i>
+                </a>
+                <div>
+                    <h2 class="mb-0 h4">Request Clamping</h2>
+                    <p class="text-muted mb-0 small">Report an illegally parked vehicle with location and photo evidence.</p>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ route('citizen.clamping.store') }}" enctype="multipart/form-data" id="clamping-form">
+                @csrf
+
+                <p class="text-muted small mb-4">
+                    <i class="bi bi-info-circle me-1"></i>Fields marked with <span class="text-danger">*</span> are required.
+                </p>
+
+                <div class="row g-4">
+                    <!-- Left Column: Form -->
+                    <div class="col-lg-6">
+                        <div class="card stat-card mb-4 animate-on-load">
+                            <div class="card-body p-3 p-md-4">
+                                <div class="d-flex align-items-center gap-2 mb-3">
+                                    <span class="section-icon"><i class="bi bi-person-fill"></i></span>
+                                    <h5 class="mb-0 fw-bold text-primary">Your Information</h5>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold small">Full Name <span class="text-danger">*</span></label>
+                                        <input type="text" name="requester_name" class="form-control @error('requester_name') is-invalid @enderror" value="{{ old('requester_name') }}" placeholder="Juan Dela Cruz" required>
+                                        @error('requester_name')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold small">Phone Number <span class="text-danger">*</span></label>
+                                        <input type="tel" name="requester_phone" class="form-control @error('requester_phone') is-invalid @enderror" value="{{ old('requester_phone') }}" placeholder="+639123456789" required>
+                                        @error('requester_phone')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold small">Email Address <span class="text-danger">*</span></label>
+                                        <input type="email" name="requester_email" class="form-control @error('requester_email') is-invalid @enderror" value="{{ old('requester_email') }}" placeholder="you@example.com" required>
+                                        @error('requester_email')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card stat-card mb-4 animate-on-load">
+                        <div class="card-body p-3 p-md-4">
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <span class="section-icon"><i class="bi bi-geo-alt-fill"></i></span>
+                                <h5 class="mb-0 fw-bold text-primary">Location</h5>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">Address / Place Name <span class="text-danger">*</span></label>
+                                <input type="text" name="location_address" class="form-control @error('location_address') is-invalid @enderror" placeholder="e.g., 123 Main St, Barangay Marikina" value="{{ old('location_address') }}" required>
+                                @error('location_address')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label fw-semibold small">Latitude</label>
+                                    <input type="number" step="0.000001" name="latitude" id="latitude" class="form-control form-control-sm @error('latitude') is-invalid @enderror" value="{{ old('latitude') }}" placeholder="Auto-filled" readonly>
+                                    @error('latitude')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label fw-semibold small">Longitude</label>
+                                    <input type="number" step="0.000001" name="longitude" id="longitude" class="form-control form-control-sm @error('longitude') is-invalid @enderror" value="{{ old('longitude') }}" placeholder="Auto-filled" readonly>
+                                    @error('longitude')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn btn-primary w-100 fw-semibold mb-3" id="gpsButton" onclick="getGPSCoordinates()">
+                                <i class="bi bi-crosshair me-2"></i>Get Current Location
+                            </button>
+
+                            <div id="location-map" class="map-container"></div>
+                            <div class="map-overlay is-hidden" id="citizen-map-detail"></div>
+                            <small class="text-muted d-block mt-2">
+                                <i class="bi bi-info-circle me-1"></i>Click the map to fine-tune location, or use GPS above. Pin is draggable for precise placement.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Map & Vehicle Info -->
+                <div class="col-lg-6">
+                    <div class="card stat-card mb-4 animate-on-load">
+                        <div class="card-body p-3 p-md-4">
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <span class="section-icon"><i class="bi bi-car-front-fill"></i></span>
+                                <h5 class="mb-0 fw-bold text-primary">Vehicle Information</h5>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">License Plate <span class="text-danger">*</span></label>
+                                    <input type="text" name="vehicle_plate" class="form-control text-uppercase @error('vehicle_plate') is-invalid @enderror" placeholder="e.g., ABC 1234" value="{{ old('vehicle_plate') }}" required>
+                                    @error('vehicle_plate')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Vehicle Description</label>
+                                    <input type="text" name="vehicle_description" class="form-control" placeholder="e.g., White Toyota Corolla" value="{{ old('vehicle_description') }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card stat-card mb-4 animate-on-load">
+                        <div class="card-body p-3 p-md-4">
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <span class="section-icon"><i class="bi bi-camera-fill"></i></span>
+                                <h5 class="mb-0 fw-bold text-primary">Evidence</h5>
+                            </div>
+                            <label class="form-label fw-semibold small">Photo of Vehicle <span class="text-danger">*</span></label>
+                            <input type="file" name="evidence_photo" class="form-control @error('evidence_photo') is-invalid @enderror" accept="image/*" required id="photoInput" onchange="previewPhoto(event)">
+                            <small class="text-muted d-block mt-2"><i class="bi bi-info-circle me-1"></i>Max 5MB. Clear photo showing license plate and parking violation.</small>
+                            @error('evidence_photo')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                            <div id="photoPreview" class="mt-3"></div>
+                        </div>
+                    </div>
+
+                    <div class="card stat-card mb-4 animate-on-load">
+                        <div class="card-body p-3 p-md-4">
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <span class="section-icon"><i class="bi bi-chat-left-text-fill"></i></span>
+                                <h5 class="mb-0 fw-bold text-primary">Additional Notes</h5>
+                            </div>
+                            <textarea name="additional_notes" class="form-control" rows="3" placeholder="Any additional details...">{{ old('additional_notes') }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex flex-column flex-md-row gap-2">
+                <button type="submit" class="btn btn-primary flex-grow-1 fw-semibold py-3">
+                    <i class="bi bi-send me-2"></i>Submit Request
+                </button>
+                <a href="{{ route('citizen.clamping.landing') }}" class="btn btn-outline-secondary py-2 px-4">Cancel</a>
+            </div>
+
+            <p class="text-muted small mt-3 mb-0 text-center">
+                <i class="bi bi-info-circle me-1"></i>
+                By submitting this request, you confirm that the information is accurate and the vehicle is illegally parked on your property.
+            </p>
+        </form>
+    </div>
+</div>
+@endsection
+
+@push('scripts')
+<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<script>
+const MAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
+const DEFAULT_CENTER = [121.0402, 14.5432];
+const DEFAULT_ZOOM = 13;
+
+let map = null;
+let locationMarker = null;
+let lastAccuracy = null;
+
+function initMap() {
+    map = new maplibregl.Map({
+        container: 'location-map',
+        style: MAP_STYLE,
+        center: DEFAULT_CENTER,
+        zoom: DEFAULT_ZOOM,
+        attributionControl: false,
+    });
+
+    map.addControl(new maplibregl.NavigationControl(), 'top-right');
+    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+
+    const lat = parseFloat(document.getElementById('latitude').value);
+    const lng = parseFloat(document.getElementById('longitude').value);
+
+    if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+        placePin(lat, lng);
+        map.flyTo({ center: [lng, lat], zoom: 17, duration: 500 });
+    }
+
+    map.on('click', function (e) {
+        placePin(e.lngLat.lat, e.lngLat.lng);
+    });
+}
+
+function placePin(lat, lng) {
+    document.getElementById('latitude').value = lat.toFixed(7);
+    document.getElementById('longitude').value = lng.toFixed(7);
+
+    if (locationMarker) locationMarker.remove();
+
+    const el = document.createElement('div');
+    el.innerHTML = '<svg width="36" height="36" viewBox="0 0 24 24" fill="#dc2626" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" fill="white" font-size="10" font-weight="bold">P</text></svg>';
+    el.style.width = '36px';
+    el.style.height = '36px';
+
+    locationMarker = new maplibregl.Marker({ element: el, draggable: true })
+        .setLngLat([lng, lat])
+        .addTo(map);
+
+    locationMarker.on('dragend', function() {
+        const lngLat = locationMarker.getLngLat();
+        placePin(lngLat.lat, lngLat.lng);
+    });
+
+    const detailEl = document.getElementById('citizen-map-detail');
+    if (detailEl) {
+        detailEl.innerHTML = `
+            <button class="mdo-close" onclick="document.getElementById('citizen-map-detail').classList.add('is-hidden')">&times;</button>
+            <div class="mdo-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#38bdf8" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>
+                Selected Location
+            </div>
+            <div class="mdo-row"><span class="mdo-lbl">Status</span><span class="mdo-badge">Pin placed</span></div>
+            <div class="mdo-row"><span class="mdo-lbl">Latitude</span><span class="mdo-val">${lat.toFixed(7)}</span></div>
+            <div class="mdo-row"><span class="mdo-lbl">Longitude</span><span class="mdo-val">${lng.toFixed(7)}</span></div>
+            <div class="mdo-row"><span class="mdo-lbl">Accuracy</span><span class="mdo-val">${lastAccuracy ? '±' + Math.round(lastAccuracy) + 'm' : '—'}</span></div>
+        `;
+        detailEl.classList.remove('is-hidden');
+    }
+
+    const gpsBtn = document.getElementById('gpsButton');
+    gpsBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Location Set';
+    gpsBtn.classList.remove('btn-primary');
+    gpsBtn.classList.add('btn-success');
+}
+
+let lastAccuracy = null;
+
+function getGPSCoordinates() {
+    const button = document.getElementById('gpsButton');
+    button.disabled = true;
+    button.classList.add('loading');
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Getting location...';
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                lastAccuracy = position.coords.accuracy;
+                placePin(lat, lng);
+                map.flyTo({ center: [lng, lat], zoom: 17, duration: 600 });
+                button.disabled = false;
+                button.classList.remove('loading');
+            },
+            function (error) {
+                alert('Unable to get GPS coordinates: ' + error.message);
+                button.disabled = false;
+                button.classList.remove('loading');
+                button.innerHTML = '<i class="bi bi-crosshair me-2"></i>Get Current Location';
+                button.classList.remove('btn-success');
+                button.classList.add('btn-primary');
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    } else {
+        alert('Geolocation is not supported by your browser.');
+        button.disabled = false;
+        button.classList.remove('loading');
+    }
+}
+
+function previewPhoto(event) {
+    const preview = document.getElementById('photoPreview');
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            preview.innerHTML = `
+                <div class="position-relative d-inline-block w-100">
+                    <img src="${e.target.result}" class="img-fluid rounded" style="max-height: 250px; width: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <small class="text-muted d-block mt-2"><i class="bi bi-check-circle text-success me-1"></i>Photo selected</small>
+                </div>
+            `;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    initMap();
+});
+</script>
+@endpush
