@@ -149,7 +149,7 @@
         </div>
     </div>
     {{-- Payments Trend --}}
-    @if (!auth()->user()->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::ClampingOfficer))
+    @if (!auth()->user()->isRole(\App\Enums\Role::Enforcer))
     <div class="col-md-6">
         <div class="card stat-card h-100">
             <div class="card-header bg-white"><strong>Payments Trend</strong></div>

@@ -190,7 +190,7 @@
                     </div>
                     <div class="col-md-6">
                         <small class="text-muted d-block">Payment Method</small>
-                        <strong>{{ ucfirst($citation->payment->payment_method) }}</strong>
+                        <strong>{{ $citation->payment->payment_method->label() }}</strong>
                     </div>
                     <div class="col-md-6">
                         <small class="text-muted d-block">Processed By</small>

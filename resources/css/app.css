@@ -685,3 +685,10 @@ body::before {
 }
 .enforcer-more-btn i { font-size: 1.25rem; color: #dc2626; }
 .enforcer-more-btn:hover { background: #fef2f2; }
+
+/* Container max-width for ultra-wide screens */
+@media (min-width: 1600px) {
+    .container, .container-fluid, .form-shell { max-width: 100%; padding-left: 2rem; padding-right: 2rem; }
+}
+
+.form-shell { max-width: 1440px; margin-left: auto; margin-right: auto; }

@@ -82,7 +82,7 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top" style="z-index: 100;">
+<nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top" style="z-index: 100;">
         <div class="container-fluid px-4 px-lg-5">
             <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ route('welcome') }}">
                 <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" height="32" class="me-2">
@@ -94,7 +94,13 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="{{ route('welcome') }}#features">Features</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('citizen.citation.lookup') }}">Citation Lookup</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ route('citizen.clamping.landing') }}">Report Parking</a></li>
+                    <li class="nav-item ms-2">
+                        <a href="{{ route('welcome') }}" class="nav-link" title="Home" data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <i class="bi bi-house-door-fill" style="font-size:1.2rem;"></i>
+                        </a>
+                    </li>
                     <li class="nav-item ms-2">
                         <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">Sign In</a>
                     </li>
