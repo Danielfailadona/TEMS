@@ -301,12 +301,52 @@
             .form-panel {
                 width: 100%;
                 padding: 1.5rem;
-            }
-            .overlay-panel {
                 display: none;
             }
+            .form-panel.active {
+                display: block;
+            }
+            .overlay-panel {
+                display: none !important;
+            }
             .mobile-toggle {
-                display: block !important;
+                display: none !important;
+            }
+
+            /* Mobile tab switcher */
+            .mobile-tabs {
+                display: flex;
+                background: #f1f5f9;
+                border-radius: 0.75rem;
+                padding: 4px;
+                margin-bottom: 1.5rem;
+                position: sticky;
+                top: 0;
+                z-index: 10;
+            }
+            .mobile-tab {
+                flex: 1;
+                padding: 0.75rem 1rem;
+                text-align: center;
+                font-weight: 600;
+                font-size: 0.875rem;
+                color: #64748b;
+                background: transparent;
+                border: none;
+                border-radius: 0.5rem;
+                transition: all 0.2s ease;
+            }
+            .mobile-tab.active {
+                background: #fff;
+                color: #2563eb;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            }
+            .mobile-tab:focus-visible {
+                outline: 2px solid #2563eb;
+                outline-offset: 2px;
+            }
+            .mobile-toggle {
+                display: none !important;
             }
         }
 
@@ -371,9 +411,15 @@
         <i class="bi bi-house-door-fill" style="font-size:1.2rem;"></i>
     </a>
     <div class="account-wrapper">
-        <div class="account-container @if($showRegister) show-register @endif" id="accountContainer">
+        <div class="account-container" id="accountContainer">
+            <!-- Mobile Tab Switcher -->
+            <div class="mobile-tabs d-lg-none" role="tablist" aria-label="Authentication mode">
+                <button type="button" class="mobile-tab active" role="tab" aria-selected="true" aria-controls="login-panel" onclick="showMobileTab('login')">Sign In</button>
+                <button type="button" class="mobile-tab" role="tab" aria-selected="false" aria-controls="register-panel" onclick="showMobileTab('register')">Create Account</button>
+            </div>
+
             <!-- Login Panel -->
-            <div class="form-panel">
+            <div class="form-panel active" id="login-panel" role="tabpanel" aria-labelledby="login-tab">
                 <div class="brand-section">
                     <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" height="80" class="mb-2">
                     <div class="system-subtitle">Traffic Enforcement Management System</div>
@@ -433,13 +479,13 @@
                         </div>
                     </div>
                 </form>
-                <div class="text-center mt-3 mobile-toggle">
-                    <small class="text-muted">Don't have an account? <a href="#" onclick="toggleForm('register')" class="fw-semibold">Create one</a></small>
+                <div class="text-center mt-3 d-lg-none">
+                    <small class="text-muted">Don't have an account? <button type="button" class="fw-semibold text-decoration-none p-0 border-0 bg-transparent" onclick="showMobileTab('register')">Create Account</button></small>
                 </div>
             </div>
 
             <!-- Register Panel -->
-            <div class="form-panel">
+            <div class="form-panel" id="register-panel" role="tabpanel" aria-labelledby="register-tab">
                 <div class="brand-section">
                     <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" height="80" class="mb-2">
                     <div class="system-subtitle">Traffic Enforcement Management System</div>
@@ -523,8 +569,8 @@
                         </div>
                     </div>
                 </form>
-                <div class="text-center mt-3 mobile-toggle">
-                    <small class="text-muted">Already have an account? <a href="#" onclick="toggleForm('login')" class="fw-semibold">Sign In</a></small>
+                <div class="text-center mt-3 d-lg-none">
+                    <small class="text-muted">Already have an account? <button type="button" class="fw-semibold text-decoration-none p-0 border-0 bg-transparent" onclick="showMobileTab('login')">Sign In</button></small>
                 </div>
             </div>
 
@@ -591,14 +637,28 @@
     </div>
 
     <script>
-        function toggleForm(form) {
+        function showMobileTab(tab) {
             const container = document.getElementById('accountContainer');
-            if (form === 'register') {
-                container.classList.add('show-register');
-            } else {
-                container.classList.remove('show-register');
-            }
+            
+            // Update form panels
+            document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(tab + '-panel').classList.add('active');
+            
+            // Update mobile tabs
+            document.querySelectorAll('.mobile-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('.mobile-tab[onclick*="' + tab + '"]').classList.add('active');
+            
+            // Update URL hash for browser history
+            history.replaceState(null, '', '#' + tab);
         }
+
+        // Initialize from URL hash on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const hash = window.location.hash.slice(1);
+            if (hash === 'register' || hash === 'login') {
+                showMobileTab(hash);
+            }
+        });
 
         function togglePassword(id) {
             const input = document.getElementById(id);
