@@ -53,7 +53,7 @@ class SettingsController extends Controller
         $user->preferences = $preferences;
         $user->save();
 
-        if ($user->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::ClampingOfficer)) {
+        if ($user->isRole(\App\Enums\Role::Enforcer)) {
             $gpsLocation = EnforcerLocation::firstOrNew(['user_id' => $user->id]);
             $gpsLocation->status = ($validated['gps_enabled'] ?? false) ? 'active' : 'inactive';
             if (!($validated['gps_enabled'] ?? false)) {

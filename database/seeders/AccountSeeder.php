@@ -27,13 +27,6 @@ class AccountSeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'name' => 'Clamping Officer',
-                'email' => 'clamp@example.com',
-                'password' => Hash::make('Clamp@123'),
-                'role' => Role::ClampingOfficer->value,
-                'is_active' => true,
-            ],
-            [
                 'name' => 'Cashier',
                 'email' => 'cashier@example.com',
                 'password' => Hash::make('Cashier@123'),

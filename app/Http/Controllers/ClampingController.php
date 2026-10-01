@@ -29,7 +29,7 @@ class ClampingController extends Controller
             ->get();
 
         $overdueCitations = collect();
-        if (auth()->user()->isRole(\App\Enums\Role::SuperAdmin, \App\Enums\Role::Administrator, \App\Enums\Role::ClampingOfficer)) {
+        if (auth()->user()->isRole(\App\Enums\Role::SuperAdmin, \App\Enums\Role::Administrator, \App\Enums\Role::Enforcer)) {
             $eligibleDays = config('itevcms.clamping_eligible_days');
             $overdueCitations = Citation::whereIn('status', [CitationStatus::Overdue, CitationStatus::Issued])
                 ->whereDate('due_date', '<=', now()->subDays($eligibleDays))

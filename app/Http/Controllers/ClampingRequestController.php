@@ -24,7 +24,7 @@ class ClampingRequestController extends Controller
         $this->authorize('viewAny', ClampingRequest::class);
 
         $user = auth()->user();
-        $isRestricted = $user->isRole(Role::Enforcer, Role::ClampingOfficer);
+        $isRestricted = $user->isRole(Role::Enforcer);
 
         $query = ClampingRequest::with(['processedBy', 'assignedTo', 'clampingRecord']);
 
@@ -76,7 +76,7 @@ class ClampingRequestController extends Controller
 
         $clampingRequest->load(['processedBy', 'assignedTo', 'clampingRecord.citation', 'clampingRecord.officer']);
 
-        $enforcers = User::whereIn('role', [Role::Enforcer, Role::ClampingOfficer])
+        $enforcers = User::where('role', Role::Enforcer->value)
             ->orderBy('name')
             ->get();
 

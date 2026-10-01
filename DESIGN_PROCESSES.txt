@@ -292,12 +292,12 @@
      chosen per actual usage pattern, and baseline seeders establish default
      roles, violation types, and zones.
 
-  B. Authentication & Authorization Process
-     Laravel Sanctum provides token-based API session management. The role
-     enum (SuperAdmin, Administrator, Enforcer, ClampingOfficer, Cashier,
-     FrontDesk, VehicleOwner) is enforced at both the Eloquent model scope
-     and the Gate layer. Passwords are hashed with bcrypt; Supabase OAuth
-     (supabase_id column) supports an optional external identity provider.
+B. Authentication & Authorization Process
+      Laravel Sanctum provides token-based API session management. The role
+      enum (SuperAdmin, Administrator, Enforcer, Cashier,
+      FrontDesk, VehicleOwner) is enforced at both the Eloquent model scope
+      and the Gate layer. Passwords are hashed with bcrypt; Supabase OAuth
+      (supabase_id column) supports an optional external identity provider.
 
   C. Notification Process
      Notifications are event-driven: domain events dispatch queued jobs that

@@ -24,7 +24,7 @@ class ClampingPolicy
         return $user->isRole(
             Role::SuperAdmin,
             Role::Administrator,
-            Role::ClampingOfficer
+            Role::Enforcer
         );
     }
 

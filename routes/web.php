@@ -199,7 +199,7 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
     Route::post('location', function (Request $request) {
         $request->validate(['latitude' => 'required|numeric', 'longitude' => 'required|numeric', 'accuracy_m' => 'nullable|numeric']);
         $user = auth()->user();
-        if ($user->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::ClampingOfficer)) {
+        if ($user->isRole(\App\Enums\Role::Enforcer)) {
             return \App\Models\EnforcerLocation::updateOrCreate(
                 ['user_id' => $user->id],
                 [

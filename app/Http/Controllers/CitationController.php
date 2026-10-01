@@ -101,7 +101,7 @@ class CitationController extends Controller
             return $citation;
         });
 
-        if (auth()->user()->isRole(Role::Enforcer, Role::ClampingOfficer)) {
+        if (auth()->user()->isRole(Role::Enforcer)) {
             return redirect()->route('citations.handoff', $citation)
                 ->with('success', 'Citation issued successfully. Show the QR code to the violator.');
         }

@@ -67,8 +67,8 @@ class LoginController extends Controller
             'is_online' => true,
         ]);
 
-        // Auto-create EnforcerLocation for enforcers/clamping officers so they appear in tracking
-        if ($user->isRole(Role::Enforcer, Role::ClampingOfficer)) {
+        // Auto-create EnforcerLocation for enforcers so they appear in tracking
+        if ($user->isRole(Role::Enforcer)) {
             EnforcerLocation::firstOrCreate(
                 ['user_id' => $user->id],
                 [

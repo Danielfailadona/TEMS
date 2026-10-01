@@ -93,7 +93,7 @@
 </div>
 
 {{-- Enforcer GPS Location --}}
-@if (auth()->user()->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::ClampingOfficer))
+@if (auth()->user()->isRole(\App\Enums\Role::Enforcer))
 <div class="row g-3 mb-4 animate-on-load">
     <div class="col-12 col-md-6">
         <div class="card stat-card h-100">
@@ -195,7 +195,7 @@
 </div>
 
 {{-- Recent Activity (full width) — admin only --}}
-@if (!auth()->user()->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::ClampingOfficer, \App\Enums\Role::Cashier))
+@if (!auth()->user()->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::Cashier))
 <div class="card stat-card mb-4 animate-on-load">
     <div class="card-header bg-white">
         <strong>Recent Activity</strong>
@@ -255,7 +255,7 @@
                     <a href="{{ route('clamping-requests.index') }}" class="btn btn-sm btn-outline-primary" style="font-size:0.7rem;">View</a>
                 </div>
 
-                @if (!auth()->user()->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::ClampingOfficer))
+@if (!auth()->user()->isRole(\App\Enums\Role::Enforcer))
                 <div class="pending-card">
                     <div class="pending-count" style="color:#d97706;background:#d9770615;">
                         {{ $pendingQueue['account_approvals'] }}
@@ -293,7 +293,7 @@
         </div>
     </div>
 
-    @if (!auth()->user()->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::ClampingOfficer))
+    @if (!auth()->user()->isRole(\App\Enums\Role::Enforcer))
     <div class="col-xl-4">
         <div class="card stat-card h-100">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
