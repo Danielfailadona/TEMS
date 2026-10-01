@@ -71,11 +71,11 @@
         display: inline-block; font-size: 11px; font-weight: 700; line-height: 24px; padding: 0 10px;
         border-radius: 7px; min-width: 40px; text-align: center;
     }
-    .cr-dash .cr-badge.bg-warning { background: #ffc107; color: #6b3b00; }
+    .cr-dash .cr-badge.bg-warning { background: #f59e0b; color: #6b3b00; }
     .cr-dash .cr-badge.bg-success { background: #10b981; color: #fff; }
     .cr-dash .cr-badge.bg-danger { background: #ef4444; color: #fff; }
     .cr-dash .cr-badge.bg-info { background: #17a2b8; color: #fff; }
-    .cr-dash .cr-badge.bg-secondary { background: #738197; color: #fff; }
+    .cr-dash .cr-badge.bg-secondary { background: #69757f; color: #fff; }
     .cr-dash .cr-view-btn {
         width: 48px; height: 34px; border: 1px solid var(--cr-blue); color: var(--cr-blue);
         background: #fff; border-radius: 18px; display: inline-grid; place-items: center; text-decoration: none;

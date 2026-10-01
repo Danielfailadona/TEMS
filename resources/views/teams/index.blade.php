@@ -59,7 +59,7 @@
         padding: 20px 22px;
         box-shadow: 0 1px 2px rgba(20, 35, 60, 0.02);
     }
-    .tm-stat-number { font-size: 1.95rem; line-height: 1.15; font-weight: 800; color: #2f5fe7; }
+    .tm-stat-number { font-size: 1.95rem; line-height: 1.15; font-weight: 800; color: #18243a; }
     .tm-stat-number.green { color: #299b3d; }
     .tm-stat-label {
         font-size: 0.66rem;

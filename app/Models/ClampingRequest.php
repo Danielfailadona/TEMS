@@ -58,7 +58,7 @@ class ClampingRequest extends Model
             'pending' => 'warning',
             'approved' => 'success',
             'rejected' => 'danger',
-            'resolved' => 'info',
+            'resolved' => 'success',
             default => 'secondary',
         };
     }
