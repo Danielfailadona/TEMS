@@ -65,7 +65,7 @@
                 <div class="card-header bg-white"><strong>Evidence</strong></div>
                 <div class="card-body d-flex flex-wrap gap-2">
                     @foreach ($citation->evidence as $item)
-                        <a href="{{ asset('storage/'.$item->file_path) }}" target="_blank">
+                        <a href="#" class="evidence-thumb" data-src="{{ asset('storage/'.$item->file_path) }}" data-title="{{ $item->original_name }}">
                             <img src="{{ asset('storage/'.$item->file_path) }}" alt="Evidence" class="rounded border" style="height:120px">
                         </a>
                     @endforeach
@@ -160,9 +160,10 @@
             zoom: 15,
         });
 
-        map.addControl(new maplibregl.NavigationControl(), 'top-right');
-
         map.on('load', function () {
+            map.addControl(new maplibregl.NavigationControl(), 'top-right');
+            map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+
             map.addSource('pin', {
                 type: 'geojson',
                 data: {
@@ -203,6 +204,37 @@
             }
         });
     })();
+</script>
+@endif
+@endsection
+
+@push('scripts')
+@if ($citation->evidence->isNotEmpty())
+<div class="modal fade" id="evidenceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Evidence</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center" id="evidenceModalBody"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.evidence-thumb').forEach(el => {
+        el.addEventListener('click', function(e) {
+            e.preventDefault();
+            const src = this.dataset.src;
+            const title = this.dataset.title;
+            document.getElementById('evidenceModalBody').innerHTML = 
+                '<img src="' + src + '" class="img-fluid" alt="' + title + '" style="max-height: 80vh;">';
+            new bootstrap.Modal(document.getElementById('evidenceModal')).show();
+        });
+    });
+});
 </script>
 @endif
 @endpush

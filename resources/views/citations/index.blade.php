@@ -19,8 +19,20 @@
             @endforeach
         </select>
     </div>
-    <div class="col-auto"><button class="btn btn-outline-secondary">Filter</button></div>
+    <div class="col-auto"><button class="btn btn-outline-secondary" type="submit"><i class="bi bi-funnel"></i> Filter</button></div>
+    <div class="col-auto"><button type="button" class="btn btn-outline-secondary" onclick="clearFilters()"><i class="bi bi-x-lg"></i> Clear</button></div>
 </form>
+
+<script>
+function clearFilters() {
+    const form = document.querySelector('form[method="GET"]');
+    form.querySelectorAll('input, select').forEach(el => {
+        if (el.type === 'select-one') el.value = '';
+        else el.value = '';
+    });
+    form.submit();
+}
+</script>
 
 <div class="card stat-card">
     <div class="table-responsive">

@@ -70,11 +70,16 @@
             {{-- Date Range --}}
             <div class="col-12 col-md-3">
                 <label class="form-label visually-hidden">Date From</label>
-                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}" placeholder="From">
+                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}" placeholder="From" onchange="this.form.submit()">
             </div>
             <div class="col-12 col-md-3">
                 <label class="form-label visually-hidden">Date To</label>
-                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}" placeholder="To">
+                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}" placeholder="To" onchange="this.form.submit()">
+            </div>
+            <div class="col-12 col-md-auto d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel me-1"></i> Apply
+                </button>
             </div>
 
             {{-- Online Only Checkbox --}}

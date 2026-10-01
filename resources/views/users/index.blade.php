@@ -102,13 +102,13 @@
     </a>
 </nav>
 
-<form class="row g-2 mb-3" method="GET" id="user-filter-form">
+<form class="row g-2 mb-3" method="GET" id="user-filter-form" action="{{ route('users.index') }}">
   <input type="hidden" name="account_status" id="filter-status-input" value="{{ request('account_status') }}">
   <div class="col-md-3">
     <input type="search" name="search" class="form-control" placeholder="Search by name or email..." value="{{ request('search') }}">
   </div>
   <div class="col-md-2">
-    <select name="role" class="form-select">
+    <select name="role" class="form-select" onchange="this.form.submit()">
       <option value="">All Roles</option>
       @foreach ($roles as $role)
         <option value="{{ $role->value }}" {{ request('role') === $role->value ? 'selected' : '' }}>{{ $role->label() }}</option>

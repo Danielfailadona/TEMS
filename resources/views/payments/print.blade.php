@@ -80,7 +80,6 @@
     <button onclick="window.print()" style="border:1px solid #2563eb; background:#2563eb; color:#fff;">
         <b>🖨 Print / Save as PDF</b>
     </button>
-    <a href="javascript:history.back()" style="border:1px solid #999; color:#333;">Back</a>
 </div>
 
 <div class="ticket">
