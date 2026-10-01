@@ -12,6 +12,7 @@ use App\Models\NumberSeries;
 use App\Models\SystemNotification;
 use App\Models\User;
 use App\Services\CitationNumberService;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -41,12 +42,27 @@ class PaymentController extends Controller
             $query->where('payment_method', $request->payment_method);
         }
 
-        // Date range filters
+        // Date range filters - use COALESCE(paid_at, created_at) to include pending payments
+        // Convert user input (PHT) to UTC for comparison
         if ($request->filled('date_from')) {
-            $query->whereDate('paid_at', '>=', $request->date_from);
+            $dateFrom = Carbon::parse($request->date_from)->startOfDay()->setTimezone('UTC');
+            $query->where(function ($q) use ($dateFrom) {
+                $q->where('paid_at', '>=', $dateFrom)
+                  ->orWhere(function ($sub) use ($dateFrom) {
+                      $sub->whereNull('paid_at')
+                          ->where('created_at', '>=', $dateFrom);
+                  });
+            });
         }
         if ($request->filled('date_to')) {
-            $query->whereDate('paid_at', '<=', $request->date_to);
+            $dateTo = Carbon::parse($request->date_to)->endOfDay()->setTimezone('UTC');
+            $query->where(function ($q) use ($dateTo) {
+                $q->where('paid_at', '<=', $dateTo)
+                  ->orWhere(function ($sub) use ($dateTo) {
+                      $sub->whereNull('paid_at')
+                          ->where('created_at', '<=', $dateTo);
+                  });
+            });
         }
 
         // Online payments only filter
