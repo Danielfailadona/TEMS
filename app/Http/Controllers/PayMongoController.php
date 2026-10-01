@@ -71,9 +71,24 @@ class PayMongoController extends Controller
                 ))),
             ]);
 
+            \Illuminate\Support\Facades\Log::info('PayMongo checkout session created', [
+                'citation_id' => $citation->id,
+                'payment_id' => $payment->id,
+                'checkout_id' => $session['id'],
+                'checkout_url' => $session['checkout_url'],
+            ]);
+
             return redirect()->away($session['checkout_url']);
         } catch (\Throwable $e) {
-            $payment->delete();
+            \Illuminate\Support\Facades\Log::error('PayMongo checkout failed', [
+                'citation_id' => $citation->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            if ($payment->exists) {
+                $payment->delete();
+            }
 
             return back()->withErrors(['paymongo' => 'Payment gateway error: '.$e->getMessage()]);
         }
@@ -158,9 +173,24 @@ class PayMongoController extends Controller
                 ))),
             ]);
 
+            \Illuminate\Support\Facades\Log::info('PayMongo public checkout session created', [
+                'citation_id' => $citation->id,
+                'payment_id' => $payment->id,
+                'checkout_id' => $session['id'],
+                'checkout_url' => $session['checkout_url'],
+            ]);
+
             return redirect()->away($session['checkout_url']);
         } catch (\Throwable $e) {
-            $payment->delete();
+            \Illuminate\Support\Facades\Log::error('PayMongo public checkout failed', [
+                'citation_id' => $citation->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            if ($payment->exists) {
+                $payment->delete();
+            }
 
             return back()->withErrors(['paymongo' => 'Payment gateway error: '.$e->getMessage()]);
         }
@@ -357,7 +387,11 @@ class PayMongoController extends Controller
             'paid_at' => $payment->paid_at ?? now(),
         ]);
 
-        $payment->citation->update(['status' => CitationStatus::Paid]);
+        // Use relationship update to ensure database is hit directly
+        $payment->citation()->update(['status' => CitationStatus::Paid]);
+
+        // Refresh the citation relation to ensure we have fresh data
+        $payment->load('citation');
 
         $alreadyArchived = Archive::where('archivable_type', Citation::class)
             ->where('archivable_id', $payment->citation->id)
@@ -370,7 +404,7 @@ class PayMongoController extends Controller
                 'archived_by' => $archivedBy,
                 'archived_at' => now(),
                 'reason' => 'Citation paid online via PayMongo',
-                'snapshot' => $payment->citation->refresh()->toArray(),
+                'snapshot' => $payment->citation->toArray(),
             ]);
         }
 
