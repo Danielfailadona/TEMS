@@ -1,0 +1,20 @@
+```mermaid
+graph LR
+    User[User] -->|HTTPS| Frontend[Frontend<br/>Web / Mobile App]
+    Frontend -->|REST / GraphQL| API[API<br/>Backend Services]
+    API -->|SQL / ORM| Database[(Database)]
+    
+    subgraph "Frontend Layer"
+        Frontend
+    end
+    
+    subgraph "Backend Layer"
+        API
+        Database
+    end
+    
+    style User fill:#a5d8ff,stroke:#1971c2,stroke-width:2px
+    style Frontend fill:#a5d8ff,stroke:#1971c2,stroke-width:2px
+    style API fill:#eebefa,stroke:#9c36b5,stroke-width:2px
+    style Database fill:#99e9f2,stroke:#0c8599,stroke-width:2px
+```

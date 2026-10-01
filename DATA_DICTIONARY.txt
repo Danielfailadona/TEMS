@@ -1,0 +1,313 @@
+﻿════════════════════════════════════════════════════════════════════════════════════════
+
+
+USER
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │bigint     │PK AI  │20   │Unique identifier         │12345         │
+│name              │varchar    │NN     │225  │Fullname of user          │Mark Doe      │
+│email             │varchar    │NN UK  │225  │Email of user             │user@mail.com │
+│supabase_id       │varchar    │NULL   │225  │Supabase ref num OAuth    │acct_1NOx...  │
+│role              │varchar    │NN     │50   │User role in system       │enforcer      │
+│phone             │varchar    │NULL   │50   │Contact phone number      │+639171234567 │
+│is_active         │boolean    │NN     │     │Whether account active    │true          │
+│account_status    │varchar    │NN     │50   │State: pend/appr/rej/susp │approved      │
+│rejection_reason  │text       │NULL   │     │Reason text rejected      │Incompl. docs │
+│profile_photo_path│varchar    │NULL   │255  │Avatar image path         │avatars/u1.jpg│
+│last_login_at     │timestamp  │NULL   │     │Last login datetime       │2025-01-15 13:│
+│last_login_ip     │varchar    │NULL   │45   │IP of last login          │192.168.1.10  │
+│is_online         │boolean    │NN     │     │Current online status     │true          │
+│preferences       │json       │NULL   │     │User prefs as JSON        │{theme:dark}  │
+│password          │varchar    │NN     │255  │Bcrypt-hashed password    │$2y$10$...    │
+│remember_token    │varchar    │NULL   │100  │Laravel remember token    │abc123xyz     │
+│email_verified_at │timestamp  │NULL   │     │Email verified datetime   │2024-12-13 15:│
+│created_at        │timestamp  │NULL   │     │Record creation ts        │2025-01-01 00:│
+│updated_at        │timestamp  │NULL   │     │Record update ts          │2025-01-15 13:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+DEVICE MANAGERS
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │bigint     │PK AI  │20   │Unique device/session rec │1             │
+│user_id           │bigint     │FK     │20   │Owner user (FK->users)    │1             │
+│device_name       │varchar    │NULL   │255  │Device or browser name    │Chrome-Win11  │
+│device_type       │varchar    │NULL   │50   │Device cat: mob/tab/desk  │desktop       │
+│ip_address        │varchar    │NULL   │45   │IP of logged-in device    │192.168.1.10  │
+│user_agent        │text       │NULL   │     │Browser UA string         │Mozilla/5.0...│
+│created_at        │timestamp  │NULL   │     │Record creation ts        │2025-01-01 00:│
+│updated_at        │timestamp  │NULL   │     │Record update ts          │2025-01-01 00:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+TEAMS
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │bigint     │PK AI  │20   │Unique team ID            │1             │
+│name              │varchar    │NN     │255  │Team name                 │Alpha Squad   │
+│description       │text       │NULL   │     │Purpose/notes             │Enforcement   │
+│leader_id         │bigint     │FK     │20   │Team leader (FK users)    │1             │
+│created_at        │timestamp  │NULL   │     │Record creation ts        │2025-01-01 00:│
+│updated_at        │timestamp  │NULL   │     │Record update ts          │2025-01-01 00:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+TEAM_USER
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │bigint     │PK AI  │20   │Unique assignment ID      │1             │
+│team_id           │bigint     │FK     │20   │Team ref (FK teams)       │1             │
+│user_id           │bigint     │FK     │20   │Member ref (FK users)     │2             │
+│created_at        │timestamp  │NULL   │     │Record creation ts        │2025-01-01 00:│
+│updated_at        │timestamp  │NULL   │     │Record update ts          │2025-01-01 00:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+ZONES
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │bigint     │PK AI  │20   │Unique zone ID            │1             │
+│name              │varchar    │NN     │255  │Zone name/description     │Downtown      │
+│code              │varchar    │NN UK  │50   │Short zone code           │DT1           │
+│latitude          │decimal    │NULL   │8,2  │Center latitude deg       │10.24         │
+│longitude         │decimal    │NULL   │8,2  │Center longitude deg      │123.85        │
+│radius_m          │integer    │NULL   │     │Coverage radius meters    │500           │
+│city              │varchar    │NULL   │100  │Associated city           │Cebu City     │
+│created_at        │timestamp  │NULL   │     │Record creation ts        │2025-01-01 00:│
+│updated_at        │timestamp  │NULL   │     │Record update ts          │2025-01-01 00:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+VIOLATION TYPES
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │bigint     │PK AI  │20   │Unique violation-type ID  │1             │
+│code              │varchar    │NN UK  │50   │Short violation code      │OVS-PARK      │
+│name              │varchar    │NN     │255  │Violation name            │Overparking   │
+│category          │varchar    │NULL   │50   │Major/minor group         │PARK          │
+│description       │text       │NULL   │     │Legal definition text     │Parked >2hr   │
+│fine_amount       │decimal    │NULL   │8,2  │Standard fine amount      │500.00        │
+│is_active         │boolean    │NN     │     │Currently enforceable     │true          │
+│created_at        │timestamp  │NULL   │     │Record creation ts        │2025-01-01 00:│
+│updated_at        │timestamp  │NULL   │     │Record update ts          │2025-01-01 00:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+CITATIONS
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │bigint     │PK AI  │20   │Unique citation ID        │1             │
+│citation_number   │varchar    │NN UK  │50   │Human-readable ref        │CIT-2025-001  │
+│violation_type_id │bigint     │FK     │20   │Referenced violation      │1             │
+│issued_by         │bigint     │FK     │20   │Issuing enforcer user ID  │5             │
+│plate_number      │varchar    │NN     │20   │License plate at issue    │ABC 1234      │
+│vehicle_make      │varchar    │NULL   │50   │Vehicle make              │Toyota        │
+│vehicle_model     │varchar    │NULL   │50   │Vehicle model             │Camry         │
+│vehicle_color     │varchar    │NULL   │30   │Vehicle color             │White         │
+│vehicle_type      │varchar    │NULL   │50   │4w/2w PU/V/nPU etc        │4w            │
+│location_street   │varchar    │NULL   │255  │Street/vicinity name      │Osmena Blvd   │
+│location_city     │varchar    │NULL   │100  │City/municipality         │Cebu City     │
+│latitude          │decimal    │NULL   │8,7  │GPS lat at time of issue  │10.2432000    │
+│longitude         │decimal    │NULL   │8,7  │GPS lng at time of issue  │123.8492000   │
+│photo_path        │varchar    │NULL   │255  │Evidence photo filepath   │cit/001.jpg   │
+│notes             │text       │NULL   │     │Enforcer annotations      │Heavy traffic │
+│status            │varchar    │NN     │20   │issued/paid/appeal/pend   │issued        │
+│issued_at         │timestamp  │NULL   │     │Datetime citation issued  │2025-01-15 14:│
+│paid_at           │timestamp  │NULL   │     │Datetime payment recvd    │2025-01-17 09:│
+│created_at        │timestamp  │NULL   │     │Record creation ts        │2025-01-15 14:│
+│updated_at        │timestamp  │NULL   │     │Record update ts          │2025-01-17 09:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+CITATION EVIDENCE
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │bigint     │PK AI  │20   │Unique evidence rec ID    │1             │
+│citation_id       │bigint     │FK CS  │20   │Linked citation (UNIQUE)  │1             │
+│file_path         │varchar    │NULL   │255  │Stored file path          │evid/001.jpg  │
+│file_type         │varchar    │NULL   │50   │mime type / category      │image         │
+│description       │text       │NULL   │     │Evidence caption/text     │front plate   │
+│captured_at       │timestamp  │NULL   │     │Asset capture datetime    │2025-01-15 14:│
+│created_at        │timestamp  │NULL   │     │Record creation ts        │2025-01-15 14:│
+│updated_at        │timestamp  │NULL   │     │Record update ts          │2025-01-15 14:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+APPEALS
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │bigint     │PK AI  │20   │Unique appeal ID          │1             │
+│citation_id       │bigint     │FK CS  │20   │Citation being appealed   │1             │
+│submitted_by      │bigint     │FK CS  │20   │Appellant user ID         │3             │
+│reason            │text       │NULL   │     │Grounds for appeal        │Wrong plate   │
+│status            │varchar    │NN     │20   │pend/appr/rej status      │pending       │
+│reviewed_by       │bigint     │FK NULL│20   │Admin who resolved        │1             │
+│resolution_notes  │text       │NULL   │     │Decision remarks          │Plate matched │
+│resolved_at       │timestamp  │NULL   │     │Decision datetime         │2025-01-20 10:│
+│created_at        │timestamp  │NULL   │     │Record creation ts        │2025-01-17 09:│
+│updated_at        │timestamp  │NULL   │     │Record update ts          │2025-01-20 10:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+PAYMENTS
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │bigint     │PK AI  │20   │Unique payment ID         │1             │
+│citation_id       │bigint     │FK UK  │20   │Paid citation (UNIQUE)    │1             │
+│cashier_id        │bigint     │FK     │20   │Processing cashier        │4             │
+│method            │varchar    │NULL   │50   │cash/gcash/card           │cash          │
+│reference_number  │varchar    │NULL   │100  │Txn / OR number           │OR-2025-001   │
+│amount            │decimal    │NN     │8,2  │Actual cash paid          │500.00        │
+│status            │varchar    │NN     │20   │pending/complete/fail     │complete      │
+│paid_at           │timestamp  │NULL   │     │Datetime payment recvd    │2025-01-17 09:│
+│created_at        │timestamp  │NULL   │     │Record creation ts        │2025-01-17 09:│
+│updated_at        │timestamp  │NULL   │     │Record update ts          │2025-01-17 09:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+CLAMPING REQUESTS
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │bigint     │PK AI  │20   │Unique clamping request   │1             │
+│citation_id       │bigint     │FK     │20   │Linked violation cit.     │1             │
+│plate_number      │varchar    │NN     │20   │Vehicle plate to clamp    │ABC 1234      │
+│owner_name        │varchar    │NULL   │100  │Registered owner name     │Juan Dela Cruz│
+│owner_contact     │varchar    │NULL   │50   │Contact number            │+639171234567 │
+│status            │varchar    │NN     │20   │pend/pickup/done/released │pending       │
+│reason            │text       │NULL   │     │Justification for clamp   │Repeat viol   │
+│priority          │varchar    │NULL   │20   │low/med/high              │high          │
+│processed_by      │bigint     │FK     │20   │Admin/officer who proc.   │1             │
+│processed_at      │timestamp  │NULL   │     │Action datetime           │2025-01-17 10:│
+│created_at        │timestamp  │NULL   │     │Record creation ts        │2025-01-16 08:│
+│updated_at        │timestamp  │NULL   │     │Record update ts          │2025-01-17 10:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+CLAMPING RECORDS
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │bigint     │PK AI  │20   │Unique clamping rec ID    │1             │
+│clamping_request_i│bigint     │FK NULL│20   │Linked request record     │1             │
+│citation_id       │bigint     │FK UK  │20   │Linked citation (UNIQUE)  │1             │
+│clamped_by        │bigint     │FK     │20   │Clamping Officer user ID  │6             │
+│clamped_at        │timestamp  │NULL   │     │Datetime wheel clamped    │2025-01-17 10:│
+│boot_number       │varchar    │NULL   │50   │Device / boot tag num     │CLMP-001      │
+│location_lat      │decimal    │NULL   │8,7  │GPS lat at clamp scene    │10.2432000    │
+│location_lng      │decimal    │NULL   │8,7  │GPS lng at clamp scene    │123.8492000   │
+│photo_path        │varchar    │NULL   │255  │Clamp evidence photo      │clamp/001.jpg │
+│notes             │text       │NULL   │     │Officer remarks           │Front wheel   │
+│created_at        │timestamp  │NULL   │     │Record creation ts        │2025-01-17 10:│
+│updated_at        │timestamp  │NULL   │     │Record update ts          │2025-01-17 10:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+VEHICLE RELEASES
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │bigint     │PK AI  │20   │Unique release record ID  │1             │
+│clamping_record_id│bigint     │FK NULL│20   │Linked clamping rec       │1             │
+│citation_id       │bigint     │NULL   │20   │Linked citation if any    │1             │
+│released_by       │bigint     │FK     │20   │Releasing officer/admin   │1             │
+│release_method    │varchar    │NULL   │50   │cash/card/gcash/govt      │cash          │
+│amount_paid       │decimal    │NULL   │8,2  │Final payment amount      │500.00        │
+│or_number         │varchar    │NULL   │100  │Official receipt number   │OR-RE-001     │
+│photo_path        │varchar    │NULL   │255  │Release evidence photo    │rel/001.jpg   │
+│released_at       │timestamp  │NULL   │     │Vehicle release datetime  │2025-01-17 16:│
+│notes             │text       │NULL   │     │Release remarks           │Paid in full  │
+│created_at        │timestamp  │NULL   │     │Record creation ts        │2025-01-17 00:│
+│updated_at        │timestamp  │NULL   │     │Record update ts          │2025-01-17 16:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+NOTIFICATIONS
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │bigint     │PK AI  │20   │Unique notification ID    │1             │
+│user_id           │bigint     │FK CS  │20   │Receiving user            │3             │
+│type              │varchar    │NN     │255  │Notification type key     │citation_issue│
+│title             │varchar    │NN     │255  │Short notification title  │New Citation I│
+│message           │text       │NN     │     │Full notification body    │Your payment h│
+│data              │json       │NULL   │     │Extra payload data        │{"url":"..."} │
+│is_read           │boolean    │NN     │     │Whether user read it      │false         │
+│read_at           │timestamp  │NULL   │     │Date/time it was read     │2025-01-15 14:│
+│created_at        │timestamp  │NULL   │     │Sent datetime             │2025-01-15 14:│
+│updated_at        │timestamp  │NULL   │     │Record update ts          │2025-01-15 14:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+ENFORCER LOCATIONS
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │bigint     │PK AI  │20   │Unique location rec ID    │1             │
+│user_id           │bigint     │FK UK  │20   │Enforcer/Officer user     │5             │
+│latitude          │decimal    │NULL   │10,7 │GPS latitude deg          │10.2432000    │
+│longitude         │decimal    │NULL   │10,7 │GPS longitude deg         │123.8492000   │
+│accuracy_m        │integer    │NULL   │     │GPS accuracy meters       │5             │
+│status            │varchar    │NN     │50   │active/inactive           │active        │
+│last_seen_at      │timestamp  │NULL   │     │Last GPS update ts        │2025-01-15 14:│
+│notes             │text       │NULL   │     │Additional notes          │On patrol     │
+│created_at        │timestamp  │NULL   │     │Record creation ts        │2025-01-01 00:│
+│updated_at        │timestamp  │NULL   │     │Record update ts          │2025-01-15 14:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+ARCHIVES
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │bigint     │PK AI  │20   │Unique archive ID         │1             │
+│archivable_id     │bigint     │FK     │20   │Original record ID        │1             │
+│archivable_type   │varchar    │NN     │255  │Model class polymorph     │Citation      │
+│archived_by       │bigint     │FK NULL│20   │Admin who archived        │1             │
+│archived_at       │timestamp  │NULL   │     │Archive datetime          │2025-01-20 00:│
+│reason            │varchar    │NULL   │255  │Reason for archiving      │Record outdate│
+│snapshot          │json       │NULL   │     │Full data snapshot        │{"id":1,...}  │
+│created_at        │timestamp  │NULL   │     │Record creation ts        │2025-01-20 00:│
+│updated_at        │timestamp  │NULL   │     │Record update ts          │2025-01-20 00:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+SAVED SEARCHES
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │bigint     │PK AI  │20   │Unique saved search ID    │1             │
+│user_id           │bigint     │FK CS  │20   │Owner user                │3             │
+│name              │varchar    │NN     │255  │User search label         │My Citation Se│
+│type              │varchar    │NN     │50   │citation/payment/appeal   │citation      │
+│criteria          │json       │NULL   │     │Serialized filter JSON    │{"status":1}  │
+│created_at        │timestamp  │NULL   │     │Record creation ts        │2025-01-10 00:│
+│updated_at        │timestamp  │NULL   │     │Record update ts          │2025-01-10 00:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+ACTIVITY LOG
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │bigint     │PK AI  │20   │Unique log entry ID       │1             │
+│log_name          │varchar    │NULL   │255  │Activity group/category   │default       │
+│description       │varchar    │NN     │255  │Human-readable action     │Citation creat│
+│subject_type      │varchar    │NULL   │255  │Model of affected rec     │Citation      │
+│subject_id        │bigint     │NULL   │20   │ID of affected rec        │1             │
+│causer_type       │varchar    │NULL   │255  │Model of acting user      │User          │
+│causer_id         │bigint     │FK     │20   │Acting user ID            │5             │
+│properties        │json       │NULL   │     │Serialized old/new vals   │{"old":"","new│
+│batch_uuid        │varchar    │NULL   │255  │UUID linking entries      │uuid-abc-123  │
+│created_at        │timestamp  │NULL   │     │Event timestamp           │2025-01-15 14:│
+│updated_at        │timestamp  │NULL   │     │Record update ts          │2025-01-15 14:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+SESSIONS
+┌──────────────────┬───────────┬───────┬─────┬──────────────────────────┬──────────────┐
+│Field Name        │Data Type  │Data Format│Field Size│Description               │Example       │
+├──────────────────┼───────────┼───────┼─────┼──────────────────────────┼──────────────┤
+│id                │varchar    │PK     │100  │Session token identif.    │abc123xyz     │
+│user_id           │bigint     │FK NULL│20   │Authenticated user        │3             │
+│ip_address        │varchar    │NULL   │45   │Client IP address         │192.168.1.10  │
+│user_agent        │text       │NULL   │     │Browser user-agent        │Mozilla/5.0...│
+│payload           │longtext   │NN     │     │Serialized session data   │(serialized ar│
+│last_activity     │integer    │NN     │     │Unix timestamp (IDX)      │1736953200    │
+│created_at        │timestamp  │NULL   │     │Record creation ts        │2025-01-15 14:│
+└──────────────────┴───────────┴───────┴─────┴──────────────────────────┴──────────────┘
+
+════════════════════════════════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════════════════════════════════

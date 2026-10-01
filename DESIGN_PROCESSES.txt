@@ -1,0 +1,388 @@
+═══════════════════════════════════════════════════════════════════════════════════
+ USE CASE DIAGRAM — OVERVIEW
+═══════════════════════════════════════════════════════════════════════════════════
+
+ The Use Case Diagram for TEMS identifies five actors — Admin, Enforcer, Front
+ Desk, Cashier, and Citizen — and maps 25 use cases (UC-TEMS-001 to
+ UC-TEMS-025) that define the system's behavioral boundaries. Three base cases
+ (Manage Operations, Manage Monitoring, and Manage Administration) act as
+ primary containers, each «including» specialized View* use cases. The diagram
+ captures the complete interaction surface of the system, making it clear how
+ each user group accesses system capabilities and how internal operations
+ depend on shared viewing functions.
+
+
+═══════════════════════════════════════════════════════════════════════════════════
+ DESIGN OF SOFTWARE — SYSTEM PRODUCT PROCESSES
+═══════════════════════════════════════════════════════════════════════════════════
+
+ This section describes how the TEMS will be planned and designed prior to
+ development. It depicts how various components of the system will interact,
+ including how users will interact with the system, how data will be organized,
+ and how each process will be designed. To better understand how various system
+ behaviors will interact, tools such as Use-Case Diagram, Use-Case Description,
+ Entity Relationship Diagram (ERD), and Data Dictionary were used. The above tools
+ are employed to ensure that the system will function properly, meet user
+ requirements, and manage data at various processes of the system.
+
+
+ 2. ENTITY RELATIONSHIP DIAGRAM (ERD) — OVERVIEW
+ ────────────────────────────────────────────────────────────────────────────────
+ The Entity Relationship Diagram for TEMS defines 20 database tables and their
+ interconnections, forming the structural backbone of the system's data layer.
+ Each entity maps to a table documented in the Data Dictionary using the
+ reference format: Field Name | Data Type | Data Format | Field Size |
+ Description | Example. Primary keys enforce entity identity; foreign keys
+ enforce referential integrity across actor-driven workflows.
+
+ Core entities include the central users table (referenced by 13 child tables
+ via user_id FKs), the violations-and-citations cluster (violation_types ->
+ citations -> evidence/appeals/payments/clamping), and supporting tables for
+ teams, zones, notifications, enforcer-location tracking, audit logging, and
+ session management. A polymorphic archives table snapshots major records, and
+ a team_user pivot supports many-to-many assignments.
+
+
+ ────────────────────────────────────────────────────────────────────────────────
+  NOTATION GUIDE
+   (PK)  = Primary Key      (FK)  = Foreign Key
+   1     = exactly one       0,1   = zero or one
+   1,M   = one to many       M     = many (crow's foot)
+ ────────────────────────────────────────────────────────────────────────────────
+
+  3. ENTITY RELATIONSHIP DIAGRAM (ERD) — DETAILED VIEW
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Notation: (PK) = Primary Key  |  (FK) = Foreign Key
+  Cardinality: 1 = exactly one  |  0,1 = zero or one  |  1,M = one to many
+  Crow's foot (>|) = many side
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │                        TIER 1 / ROOT ENTITIES                        │
+  └──────────────────────────────────────────────────────────────────────┘
+
+                     ┌────────────────────┐
+                     │      USERS         │
+                     │────────────────────│
+                     │  (PK) id           │
+                     └──────────┬─────────┘
+                      ┌─────────┼───────────────────────────────────────────┐
+                      │         │                                           │
+      ┌───────────────┘         │         ┌───────────────────────────────┘  ┌───────────────┐
+      │                         │         │                                  │  team_user     │
+ ┌────────────┐           ┌───────────┐  ┌──────────┐               ┌────────┴────────┐
+ │device_man  │           │   teams   │  │  zones   │               │─────────────────│
+ │agers       │           │───────────│  │──────────│               │  (PK) id        │
+ │────────────│           │(PK) id    │  │ (PK) id  │               │  (FK) team_id ─────┼────┐
+ │(PK) id     │           │           │  │          │               │  (FK) user_id ─────┼────┘
+ │(FK)user_id │           │(FK)leader │  │          │               └──────────────────┘
+ └────────────┘           │  _id (0,1)│  │          │
+                          └─────┬─────┘  └──────────┘
+                                │ 1,M         │
+                          ┌─────┴─────────┐  │
+                          │   team_user   │◄─┘
+                          │───────────────│
+                          │ (PK) id       │
+                          │ (FK) team_id ─────┐
+                          │ (FK) user_id ─────┘
+                          └─────────────────┘
+
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │                 TIER 2 / INDEPENDENT LOOKUP                         │
+  └──────────────────────────────────────────────────────────────────────┘
+
+                            ┌───────────────────┐
+                            │  VIOLATION_TYPES  │
+                            │───────────────────│
+                            │  (PK) id          │
+                            └───────────────────┘
+
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │           TIER 3 / VIOLATIONS AND CITATIONS CLUSTER                 │
+  └──────────────────────────────────────────────────────────────────────┘
+
+   ┌────────────────────┐         ┌──────────────────────────────────┐
+   │VIOLATION_TYPES(1)─┼─────1,M─►│         CITATIONS                │
+   │                   │          │──────────────────────────────────│
+   │(PK) id            │          │(PK) id                           │
+   └───────────────────┘          │(FK) violation_type_id ─────────┐ │
+                                    │(FK) issued_by (1,M) ─────────┐ │ │
+                                    └───────────────┬──────────────┘ │ │
+                                                    │ 1            │ │ │
+                               ┌────────────────────┘              │ │ │
+                          ┌────┴─────┐         ┌───────────────────────┘ │
+                          │appeals   │         │payments                 │
+                          │──────────│         │─────────────────────────│
+                          │(PK) id   │         │(PK) id                  │
+                          │(FK)      │         │(FK) citation_id (UQ, 1) │  ┌──────────────┐
+                          │ citation_│         │(FK) cashier_id (1,M)─────┼──►│  users       │
+                          │ id (1,M) │         └──────────────────────────┘  └──────────────┘
+                          │(FK)      │    ┌──────────────────┐
+                          │ submitted│    │clamping_requests │
+                          │ _by (1,M)│    │──────────────────│
+                          │(FK)      │◄───│(FK) citation_id  │
+                          │ reviewed_│    │ (0,1)            │
+                          │ by (0,1) │    │(PK) id           │
+                          └──────────┘    └────────┬──────────┘
+                                            ┌────┴──────────────┐
+                                            │clamping_records   │
+                                            │───────────────────│
+                                            │(PK) id            │
+                                            │(FK) clamping_     │
+                                            │ request_id (0,1)  │
+                                            │(FK) citation_id   │
+                                            │  (0,1)            │
+                                            │(FK) clamped_by    │
+                                            │(1,M) ──────────┐  │
+                                            └────────────────┘  │
+                                                               │ 1
+                                                         ┌──────┴────────┐
+                                                         │vehicle_releases│
+                                                         │───────────────│
+                                                         │(PK) id        │
+                                                         │(FK) clamping_ │
+                                                         │ record_id (1,M)│
+                                                         │(FK) released_  │
+                                                         │ by (1,M)────┐ │
+                                                         └────────────┘ │
+                                                                       │
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │              TIER 4 / CLAMPING OPERATIONS CLUSTER                   │
+  └──────────────────────────────────────────────────────────────────────┘
+
+   SAME AS ABOVE (See Tier 3 clamping branch):
+     clamping_requests(1) ——clamping_request_id(0,1)——► clamping_records(0,1)
+     clamping_records(1) ——(1,M)——► vehicle_releases
+     clamping_records(1) ——clamped_by(1,M)——► USERS
+
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │             TIER 5 / GENERAL USER FEATURES CLUSTER                  │
+  └──────────────────────────────────────────────────────────────────────┘
+
+  USERS (1) ——(1,M)——► notifications
+  USERS (1) ——(1,M)——► enforcer_locations
+  USERS (1) ——(0,1)——► archives (as archived_by, nullable)
+  USERS (1) ——(1,M)——► saved_searches
+  USERS (1) ——(0,1)——► sessions
+
+                  ┌──────────────────┐    ┌──────────────────┐
+                  │  notifications   │    │enforcer_locations│
+                  │──────────────────│    │──────────────────│
+                  │(PK) id           │    │(PK) id           │
+                  │(FK) user_id (1,M)│    │(FK) user_id (1,M)│
+                  └──────────────────┘    └──────────────────┘
+
+                  ┌──────────────────┐    ┌──────────────────┐
+                  │   archives       │    │  saved_searches  │
+                  │──────────────────│    │──────────────────│
+                  │(PK) id           │    │(PK) id           │
+                  │morph archivable  │    │(FK) user_id(1,M) │
+                  │(FK) archived_by  │    └──────────────────┘
+                  │   (0,1)          │
+                  └──────────────────┘
+
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  activity_log              sessions                            │
+  │────────────────────────────│───────────────────────────────────│
+  │(PK) id                     │(PK) id                           │
+  │morph causer (0,1)──────►(usr)│(FK) user_id (0,1)             │
+  │morph subject (0,1)         │session payload                  │
+  └────────────────────────────└───────────────────────────────────┘
+
+
+  ─────────────────────────────────────────────────────────────────────────
+   SUMMARY OF ALL RELATIONSHIPS
+  ─────────────────────────────────────────────────────────────────────────
+
+  users (1) ────────── (0,1) device_managers
+  users (1) ────────── (0,1) teams (as leader_id)
+  users (1) ────────── (1,M) team_user
+  users (1) ────────── (1,M) citations
+  users (1) ────────── (1,M) appeals (as submitted_by)
+  users (1) ────────── (0,1) appeals (as reviewed_by, nullable)
+  users (1) ────────── (1,M) payments (as cashier_id)
+  users (1) ────────── (0,1) clamping_requests
+  users (1) ────────── (1,M) clamping_records
+  users (1) ────────── (1,M) vehicle_releases
+  users (1) ────────── (1,M) notifications
+  users (1) ────────── (0,1) enforcer_locations
+  users (1) ────────── (0,1) archives (as archived_by)
+  users (1) ────────── (1,M) saved_searches
+  users (1) ────────── (0,1) sessions
+  users (1) ────────── (1,M) activity_log (polymorphic causer)
+  teams (1) ────────── (1,M) team_user
+  teams (1) ────────── (0,1) zones (team_id FK)
+  violation_types(1) ─ (1,M) citations
+  citations (1) ────── (1,M) citation_evidence
+  citations (1) ────── (1,M) appeals
+  citations (1) ────── (1,1) payments  [UNIQUE citation_id]
+  citations (1) ────── (0,1) clamping_requests
+  citations (1) ────── (0,1) clamping_records
+  clamping_requests(1) ─ (0,1) clamping_records
+  clamping_records(1) ── (1,M) vehicle_releases
+
+  Polymorphic:
+    archives.archivable_id + archivable_type  → any table
+    activity_log.causer_type + causer_id      → users
+    activity_log.subject_type + subject_id    → any table
+
+
+  4. SOFTWARE DESIGN APPROACH
+  ────────────────────────────────────────────────────────────────────────────────
+  The design of TEMS follows a structured, iterative software engineering approach
+  grounded in the Model-View-Controller (MVC) architecture. Each phase below maps
+  inputs from prior documentation requirements (USE_CASE_NARRATIVES.txt,
+  REQUIREMENTS_ANALYSIS.txt, DATA_DICTIONARY.txt) to concrete outputs, ensuring
+  that every system behavior is traceable to a documented requirement.
+
+
+  5. DESIGN PROCESS MODEL
+  ────────────────────────────────────────────────────────────────────────────────
+
+  Phase 1: Requirements Understanding
+    Requirements are drawn from the use case narratives (UC-TEMS-001 to
+    UC-TEMS-025), the requirements analysis, and non-functional constraints
+    (performance, security, scalability). Each actor interaction is validated
+    before design proceeds.
+
+  Phase 2: Architectural Design
+    TEMS adopts a 3-tier MVC architecture: Presentation (Blade views + Tailwind
+    CSS), Application (controllers and service layers), and Data (Eloquent
+    models and database migrations). RESTful API boundaries and role-based
+    authorization (Laravel Sanctum + Gates) are defined at this phase.
+
+  Phase 3: Component Design
+    Responsibilities are assigned per actor:
+      • Admin      — user management, archive operations, system dashboards
+      • Enforcer   — citation issuance, location tracking, evidence capture
+      • Front Desk — vehicle release coordination, citizen encounter logging
+      • Cashier    — payment validation and recording
+      • Citizen    — public portal (citation lookup, appeals, clamping requests)
+    «include» relationships identified in the UML diagram are codified as
+    reusable service classes (citation creation includes evidence capture,
+    location tracking, and notification in a single transaction).
+
+  Phase 4: Interface & Data Design
+    Wireframes are translated to Blade templates. The database schema (20
+    database tables) is created through Laravel migrations; all fields,
+    types, sizes, and constraints are documented in the Data Dictionary.
+    API responses are standardized using Laravel API Resources.
+
+  Phase 5: Quality Design
+    Unit and feature tests are written with PHPUnit per actor workflow.
+    Authorization tests verify Gate and Policy coverage. Seeder and factory
+    strategies ensure reproducible test data.
+
+  Phase 6: Iteration & Enhancement
+    Feedback is gathered from stakeholders and incorporated in iterative
+    cycles. Version control (Git) and release branching support both
+    hotfix and feature development.
+
+
+  6. SYSTEM PRODUCT PROCESSES
+  ────────────────────────────────────────────────────────────────────────────────
+
+  A. Database Engineering Process
+     The schema is derived from entity-relationship reasoning applied to the
+     use cases. Every table is versioned via migrations, with rollback
+     support. Foreign-key delete behaviors (CASCADE, SET NULL, RESTRICT) are
+     chosen per actual usage pattern, and baseline seeders establish default
+     roles, violation types, and zones.
+
+  B. Authentication & Authorization Process
+     Laravel Sanctum provides token-based API session management. The role
+     enum (SuperAdmin, Administrator, Enforcer, ClampingOfficer, Cashier,
+     FrontDesk, VehicleOwner) is enforced at both the Eloquent model scope
+     and the Gate layer. Passwords are hashed with bcrypt; Supabase OAuth
+     (supabase_id column) supports an optional external identity provider.
+
+  C. Notification Process
+     Notifications are event-driven: domain events dispatch queued jobs that
+     create database records, broadcast real-time updates, and send e-mail
+     alerts. Templates define type, title, message, and payload structure;
+     read-state is tracked per user, with automated archiving after 90 days.
+
+  D. Spatial / Location Tracking Process
+     Enforcer latitude, longitude, and GPS accuracy are logged per shift.
+     This data supports evidence-of-correctness audits and supervisor
+     monitoring dashboards.
+
+  E. Audit & Archiving Process
+     The activity_log table captures who acted on what (causer, subject,
+     properties batch) for every significant action. A polymorphic archives
+     table stores snapshots of important records (citations, appeals,
+     payments) with reason and archiver identity, enabling full history
+     replay even after soft-deletion or modification.
+
+  F. Reporting & Analytics Process
+     Saved Searches model stores user-defined filter criteria. Aggregations
+     over citation, payment, and appeal data are scoped by zone and date
+     range, with server-side PDF and Excel exports for regulatory reporting.
+
+
+  7. DESIGN PRINCIPLES APPLIED
+  ────────────────────────────────────────────────────────────────────────────────
+  Separation of Concerns — Controllers remain thin; business logic lives in
+    service classes.  Convention over Configuration — Laravel defaults
+    minimize bespoke framework plumbing.  Fail-fast on Integrity — Database-
+    level constraints and Eloquent casts enforce correctness early.
+    Reusable Components — Blade components and modular Livewire widgets reduce
+    duplication.  API-first for Integrations — Front Desk and Citizen portals
+    consume the same API layer consumed by internal tools.  Security by
+    Default — HTTPS, CSRF tokens, validated FormRequest classes, and mass-
+    assignment guards are standard.
+
+
+  8. DEPLOYMENT & OPERATIONS PROCESS
+  ────────────────────────────────────────────────────────────────────────────────
+  Development   → Windows / XAMPP on localhost for prototyping
+  Staging       → Same-stack mirror seeded with production-scale sample data
+  Production    → Linux (Ubuntu + Nginx + PHP-FPM + MariaDB)
+  CI/CD         → GitHub Actions pipeline: lint → test → build → deploy
+  Monitoring    → Laravel Horizon for queue visibility; log aggregation
+                   via Papertrail or equivalent.  Backup → Nightly mysqldump
+                   for transactions; weekly filesystem copy for citation
+                   evidence images.
+
+
+  9. DESIGN DECISIONS & TRADE-OFFS
+  ────────────────────────────────────────────────────────────────────────────────
+  Decision: Laravel MVC → Pros: rapid iteration, mature ecosystem,
+    developer familiarity.  Cons: opinionated structure, PHP dependency.
+  Decision: JSON columns for notification payloads → Pros: flexible schema,
+    fast reads.  Cons: limited ad-hoc querying; mitigated by using
+    JSON_CONTAINS / JSON_EXTRACT where needed.  Decision: Polymorphic
+    archive table → Pros: single table captures all entity types, uniform
+    API.  Cons: looser type safety; mitigated by cascading validation in
+    model event observers.  Decision: Client device tracking →
+    Pros: per-login audit trail.  Cons: PII stored (device name, IP);
+    mitigated by encrypting IP addresses at rest.
+
+
+  10. VERIFICATION OUTCOMES
+  ────────────────────────────────────────────────────────────────────────────────
+  The design outputs are traceable back to the documented artifacts:
+    Use-Case Diagram     → Defines actor boundaries and «include» relationships
+                            (reflected in reusable service flows).
+    Use-Case Narratives  → Detailed step-by-step actor interactions driving
+                            controller method design.
+    ERD / Migrations     → Primary/foreign key structure enforced at the
+                            database level; matches entities in Data Dictionary.
+    Data Dictionary      → Complete field catalog ensuring consistent naming,
+                            typing, and sizing across the system, serving as
+                            the single source of truth for data-related design
+                            decisions.
+  Together, these artifacts confirm that TEMS is designed to function
+  correctly, fulfill every user requirement, and manage data consistently
+  across all processes.
+
+
+═══════════════════════════════════════════════════════════════════════════════════
+ COMPANION ARTIFACTS
+   USE_CASE_NARRATIVES.txt   — Per-actor interaction narratives (25 use cases)
+   REQUIREMENTS_ANALYSIS.txt — Functional & non-functional requirements
+   DATA_DICTIONARY.txt       — Complete database schema reference
+═══════════════════════════════════════════════════════════════════════════════════

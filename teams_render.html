@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="Y3Blus5iJ2lXAkRhkyGRkOJtvKwtgNznYAerzycl">
+    <title>Team Management</title>
+    <link rel="preload" as="style" href="http://127.0.0.1:8001/build/assets/app-CDjhb5ry.css" /><link rel="preload" as="style" href="http://127.0.0.1:8001/build/assets/app-BCH2tHkZ.css" /><link rel="modulepreload" as="script" href="http://127.0.0.1:8001/build/assets/app-DB95U_dD.js" /><link rel="modulepreload" as="script" href="http://127.0.0.1:8001/build/assets/chunk-QTnfLwEv.js" /><link rel="stylesheet" href="http://127.0.0.1:8001/build/assets/app-CDjhb5ry.css" /><link rel="stylesheet" href="http://127.0.0.1:8001/build/assets/app-BCH2tHkZ.css" /><script type="module" src="http://127.0.0.1:8001/build/assets/app-DB95U_dD.js"></script>    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+    .stat-card-sm {
+        flex: 1;
+        min-width: 140px;
+        padding: 1rem 1.25rem;
+        border-radius: 0.75rem;
+        background: var(--itevcms-card);
+        border: 1px solid var(--itevcms-border);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .stat-card-sm:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); }
+    .stat-card-sm .stat-value { font-size: 1.5rem; font-weight: 800; line-height: 1.2; }
+    .stat-card-sm .stat-label {
+        font-size: 0.7rem;
+        color: var(--itevcms-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-weight: 600;
+    }
+    .filter-bar { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+    .filter-bar .form-select,
+    .filter-bar .form-control {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.7rem;
+        border-radius: 0.5rem;
+        min-width: 130px;
+    }
+    .filter-bar .form-control { min-width: 200px; }
+    .team-card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .team-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06); }
+    .avatar-stack { display: inline-flex; align-items: center; }
+    .avatar-stack > .avatar-stack-item { margin-left: -8px; border: 2px solid var(--itevcms-card); }
+    .avatar-stack > .avatar-stack-item:first-child { margin-left: 0; }
+    .dashed-create-card {
+        border: 2px dashed var(--itevcms-border);
+        border-radius: 0.75rem;
+        background: transparent;
+        transition: all 0.15s ease;
+        cursor: pointer;
+        min-height: 100%;
+    }
+    .dashed-create-card:hover {
+        border-color: var(--bs-primary);
+        background: rgba(37, 99, 235, 0.04);
+        transform: translateY(-2px);
+    }
+    .empty-state { padding: 3.5rem 1rem; text-align: center; }
+    .empty-state i {
+        font-size: 3.5rem;
+        color: var(--itevcms-text-muted);
+        opacity: 0.4;
+        display: block;
+        margin-bottom: 1rem;
+    }
+    .min-w-0 { min-width: 0; }
+</style>
+</head>
+<body class="app-shell">
+<div class="d-flex" style="overflow-x:hidden;">
+    <aside class="sidebar animate-on-load">
+        <div class="sidebar-brand">
+            <img src="http://127.0.0.1:8001/images/transpo_enfo_orig.png" alt="TEMs" class="sidebar-logo">
+            <div class="sidebar-brand-title">TEMs</div>
+            <div class="sidebar-brand-sub">Transportation Enforcement Management System</div>
+        </div>
+
+        <nav class="sidebar-nav">
+                            <div class="sidebar-group">
+                    <div class="sidebar-group-label">OPERATIONS</div>
+                                                                    <a href="http://127.0.0.1:8001/dashboard"
+                           class="nav-link ">
+                            <i class="bi bi-speedometer2 sidebar-nav-icon"></i>
+                            <span>Dashboard</span>
+                        </a>
+                                                                    <a href="http://127.0.0.1:8001/citations"
+                           class="nav-link ">
+                            <i class="bi bi-file-earmark-text sidebar-nav-icon"></i>
+                            <span>Citations</span>
+                        </a>
+                                                                    <a href="http://127.0.0.1:8001/appeals"
+                           class="nav-link ">
+                            <i class="bi bi-exclamation-circle sidebar-nav-icon"></i>
+                            <span>Appeals</span>
+                        </a>
+                                                                    <a href="http://127.0.0.1:8001/payments"
+                           class="nav-link ">
+                            <i class="bi bi-cash-coin sidebar-nav-icon"></i>
+                            <span>Payments</span>
+                        </a>
+                                                                    <a href="http://127.0.0.1:8001/clamping"
+                           class="nav-link ">
+                            <i class="bi bi-lock sidebar-nav-icon"></i>
+                            <span>Clamping</span>
+                        </a>
+                                                                    <a href="http://127.0.0.1:8001/impounding"
+                           class="nav-link ">
+                            <i class="bi bi-truck sidebar-nav-icon"></i>
+                            <span>Impounding</span>
+                        </a>
+                                                                    <a href="http://127.0.0.1:8001/clamping-requests"
+                           class="nav-link ">
+                            <i class="bi bi-inbox sidebar-nav-icon"></i>
+                            <span>Clamping Requests</span>
+                        </a>
+                                    </div>
+                            <div class="sidebar-group">
+                    <div class="sidebar-group-label">MONITORING</div>
+                                                                    <a href="http://127.0.0.1:8001/tracking"
+                           class="nav-link ">
+                            <i class="bi bi-broadcast sidebar-nav-icon"></i>
+                            <span>Tracking</span>
+                        </a>
+                                                                    <a href="http://127.0.0.1:8001/reports"
+                           class="nav-link ">
+                            <i class="bi bi-graph-up sidebar-nav-icon"></i>
+                            <span>Reports</span>
+                        </a>
+                                    </div>
+                            <div class="sidebar-group">
+                    <div class="sidebar-group-label">ADMINISTRATION</div>
+                                                                    <a href="http://127.0.0.1:8001/users"
+                           class="nav-link ">
+                            <i class="bi bi-person-gear sidebar-nav-icon"></i>
+                            <span>Users</span>
+                        </a>
+                                                                    <a href="http://127.0.0.1:8001/teams"
+                           class="nav-link ">
+                            <i class="bi bi-people sidebar-nav-icon"></i>
+                            <span>Teams</span>
+                        </a>
+                                                                    <a href="http://127.0.0.1:8001/zones"
+                           class="nav-link ">
+                            <i class="bi bi-geo-alt sidebar-nav-icon"></i>
+                            <span>Zones</span>
+                        </a>
+                                                                    <a href="http://127.0.0.1:8001/archives"
+                           class="nav-link ">
+                            <i class="bi bi-archive sidebar-nav-icon"></i>
+                            <span>Archives</span>
+                        </a>
+                                                                    <a href="http://127.0.0.1:8001/audit-logs"
+                           class="nav-link ">
+                            <i class="bi bi-journal-text sidebar-nav-icon"></i>
+                            <span>Audit Logs</span>
+                        </a>
+                                    </div>
+                    </nav>
+    </aside>
+
+    <div class="main-content flex-grow-1 d-flex flex-column">
+        <nav class="navbar navbar-expand-lg bg-white border-bottom px-3 d-lg-none">
+            <span class="navbar-brand mb-0 h6">ITEVCMS</span>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="mobileNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                                            <li class="nav-item dropdown-header text-muted small text-uppercase fw-semibold px-3 py-1 mt-2">OPERATIONS</li>
+                                                    <li class="nav-item">
+                                <a class="nav-link" href="http://127.0.0.1:8001/dashboard">
+                                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                                </a>
+                            </li>
+                                                    <li class="nav-item">
+                                <a class="nav-link" href="http://127.0.0.1:8001/citations">
+                                    <i class="bi bi-file-earmark-text me-2"></i>Citations
+                                </a>
+                            </li>
+                                                    <li class="nav-item">
+                                <a class="nav-link" href="http://127.0.0.1:8001/appeals">
+                                    <i class="bi bi-exclamation-circle me-2"></i>Appeals
+                                </a>
+                            </li>
+                                                    <li class="nav-item">
+                                <a class="nav-link" href="http://127.0.0.1:8001/payments">
+                                    <i class="bi bi-cash-coin me-2"></i>Payments
+                                </a>
+                            </li>
+                                                    <li class="nav-item">
+                                <a class="nav-link" href="http://127.0.0.1:8001/clamping">
+                                    <i class="bi bi-lock me-2"></i>Clamping
+                                </a>
+                            </li>
+                                                    <li class="nav-item">
+                                <a class="nav-link" href="http://127.0.0.1:8001/impounding">
+                                    <i class="bi bi-truck me-2"></i>Impounding
+                                </a>
+                            </li>
+                                                    <li class="nav-item">
+                                <a class="nav-link" href="http://127.0.0.1:8001/clamping-requests">
+                                    <i class="bi bi-inbox me-2"></i>Clamping Requests
+                                </a>
+                            </li>
+                                                                    <li class="nav-item dropdown-header text-muted small text-uppercase fw-semibold px-3 py-1 mt-2">MONITORING</li>
+                                                    <li class="nav-item">
+                                <a class="nav-link" href="http://127.0.0.1:8001/tracking">
+                                    <i class="bi bi-broadcast me-2"></i>Tracking
+                                </a>
+                            </li>
+                                                    <li class="nav-item">
+                                <a class="nav-link" href="http://127.0.0.1:8001/reports">
+                                    <i class="bi bi-graph-up me-2"></i>Reports
+                                </a>
+                            </li>
+                                                                    <li class="nav-item dropdown-header text-muted small text-uppercase fw-semibold px-3 py-1 mt-2">ADMINISTRATION</li>
+                                                    <li class="nav-item">
+                                <a class="nav-link" href="http://127.0.0.1:8001/users">
+                                    <i class="bi bi-person-gear me-2"></i>Users
+                                </a>
+                            </li>
+                                                    <li class="nav-item">
+                                <a class="nav-link" href="http://127.0.0.1:8001/teams">
+                                    <i class="bi bi-people me-2"></i>Teams
+                                </a>
+                            </li>
+                                                    <li class="nav-item">
+                                <a class="nav-link" href="http://127.0.0.1:8001/zones">
+                                    <i class="bi bi-geo-alt me-2"></i>Zones
+                                </a>
+                            </li>
+                                                    <li class="nav-item">
+                                <a class="nav-link" href="http://127.0.0.1:8001/archives">
+                                    <i class="bi bi-archive me-2"></i>Archives
+                                </a>
+                            </li>
+                                                    <li class="nav-item">
+                                <a class="nav-link" href="http://127.0.0.1:8001/audit-logs">
+                                    <i class="bi bi-journal-text me-2"></i>Audit Logs
+                                </a>
+                            </li>
+                                                            </ul>
+                <form action="http://127.0.0.1:8001/logout" method="POST">
+                    <input type="hidden" name="_token" value="Y3Blus5iJ2lXAkRhkyGRkOJtvKwtgNznYAerzycl" autocomplete="off">                    <button type="submit" class="btn btn-outline-secondary btn-sm w-100 mt-2">Logout</button>
+                </form>
+            </div>
+        </nav>
+
+        <header class="topbar px-4 px-lg-5 py-3 border-bottom animate-on-load">
+            <div>
+                <div class="text-muted small">Operations console</div>
+                <h2 class="h5 mb-0">Team Management</h2>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <a href="http://127.0.0.1:8001/notifications" class="position-relative text-decoration-none text-dark topbar-icon-btn">
+                    <i class="bi bi-bell fs-5"></i>
+                    <span class="notification-badge position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount" style="font-size:0.6rem; display:none;">0</span>
+                </a>
+
+                <div class="dropdown">
+                    <button class="btn btn-link text-dark text-decoration-none dropdown-toggle d-flex align-items-center gap-2 p-0 border-0" data-bs-toggle="dropdown" aria-expanded="false" id="userDropdown">
+                        <span class="status-dot text-success"><i class="bi bi-circle-fill" style="font-size:0.6rem;"></i></span>
+                        <span class="fw-semibold small d-none d-md-inline">Super Administrator</span>
+                        <span class="text-muted small d-none d-lg-inline">Super Administrator</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdown" style="min-width: 230px;">
+                        <li>
+                            <div class="dropdown-header text-wrap">
+                                <div class="fw-semibold">Super Administrator</div>
+                                <small class="text-muted">admin@example.com</small>
+                            </div>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="http://127.0.0.1:8001/profile"><i class="bi bi-person-circle me-2"></i>My Profile</a></li>
+                        <li><a class="dropdown-item" href="http://127.0.0.1:8001/settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form action="http://127.0.0.1:8001/logout" method="POST">
+                                <input type="hidden" name="_token" value="Y3Blus5iJ2lXAkRhkyGRkOJtvKwtgNznYAerzycl" autocomplete="off">                                <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <main class="p-4 p-lg-5 flex-grow-1 page-bg">
+                        <div class="d-flex justify-content-between align-items-center mb-4 animate-on-load">
+    <div>
+        <h1 class="h3 mb-1">Team Management</h1>
+        <p class="text-muted mb-0">Group enforcers by patrol unit and assign coverage leaders</p>
+  </div>
+    <a href="http://127.0.0.1:8001/teams/create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1</i>Create Team
+  </a>
+</div>
+
+
+<div class="d-flex gap-3 mb-4 flex-wrap animate-on-load">
+    <div class="stat-card-sm">
+        <div class="stat-value">2</div>
+        <div class="stat-label">Total Teams</div>
+  </div>
+    <div class="stat-card-sm">
+        <div class="stat-value" style="color:#059669;">2</div>
+        <div class="stat-label">Active</div>
+  </div>
+    <div class="stat-card-sm">
+        <div class="stat-value" style="color:#2563eb;">1</div>
+        <div class="stat-label">Enforcers in Teams</div>
+  </div>
+    <div class="stat-card-sm">
+        <div class="stat-value" style="color:#d97706;">0</div>
+        <div class="stat-label">Citations This Month</div>
+  </div>
+</div>
+
+
+<form method="GET" action="http://127.0.0.1:8001/teams" class="mb-4 animate-on-load">
+    <div class="filter-bar">
+        <input type="text" name="search" class="form-control" placeholder="Search by name or description..." value="">
+        <select name="status" class="form-select">
+            <option value="">All Statuses</option>
+            <option value="active" >Active</option>
+            <option value="inactive" >Inactive</option>
+  </select>
+        <div class="form-check d-flex align-items-center gap-2 ms-1" style="font-size:0.8rem;padding-left:1.5em;">
+            <input type="checkbox" name="has_zones" value="1" id="has-zones" class="form-check-input" >
+            <label for="has-zones" class="form-check-label mb-0">Has zones</label>
+  </div>
+        <button type="submit" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-funnel me-1</i>Filter
+  </button>
+         </div>
+</form>
+
+
+<div class="row g-4">
+                    <div class="col-md-6 col-xl-4">
+            <div class="card stat-card team-card h-100 animate-on-load">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                        <div class="d-flex align-items-center gap-2 min-w-0 flex-grow-1">
+                            <span class="avatar-initial rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:40px;height:40px;">
+                                <span class="fw-bold text-success">M</span>
+                         </span>
+                            <h5 class="mb-0 text-truncate" title="MGA VUANG">MGA VUANG</h5>
+                     </div>
+                        <span class="badge bg-success flex-shrink-0">Active</span>
+                 </div>
+
+                    <p class="text-muted small mb-3" style="min-height:2.5rem;">
+                        checkpoint
+                 </p>
+
+                    
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                                                                                <span class="avatar-initial rounded-circle bg-dark bg-opacity-10 d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:26px;height:26px;" title="Lead: Transportation Enforcer">
+                                <span class="fw-bold text-dark" style="font-size:0.75rem;">T</span>
+                         </span>
+                            <div class="small text-truncate" title="Transportation Enforcer">
+                                <i class="bi bi-star-fill text-warning" style="font-size:0.7rem</i>
+                                <span class="text-muted">Lead</span>
+                                <strong>Transportation Enforcer</strong>
+                         </div>
+                                         </div>
+
+                    
+                    <div class="d-flex align-items-center gap-2 mb-3" title="Transportation Enforcer">
+                        <div class="avatar-stack">
+                                                                                            <span class="avatar-initial avatar-stack-item rounded-circle bg-dark bg-opacity-25 d-inline-flex align-items-center justify-content-center" style="width:28px;height:28px;" title="Transportation Enforcer">
+                                    <span class="fw-bold text-dark" style="font-size:0.75rem;">T</span>
+                            </span>
+                                                                            </div>
+                        <span class="text-muted small">
+                            1 member
+                    </span>
+                </div>
+
+                    
+                    <div class="d-flex flex-wrap gap-3 small text-muted border-top pt-3 mt-auto mb-3">
+                        <span><i class="bi bi-geo-alt me-1</i>0 zones</span>
+                        <span><i class="bi bi-receipt me-1</i>0 citations/mo</span>
+                        <span title="2026-06-16 04:19:12"><i class="bi bi-clock-history me-1</i>1 month ago</span>
+                </div>
+
+                    
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="http://127.0.0.1:8001/teams/1/edit" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil me-1</i>Edit
+                    </a>
+                        <form action="http://127.0.0.1:8001/teams/1/toggle-active" method="POST" class="d-inline">
+                            <input type="hidden" name="_token" value="Y3Blus5iJ2lXAkRhkyGRkOJtvKwtgNznYAerzycl" autocomplete="off">                            <input type="hidden" name="_method" value="PATCH">                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Deactivate">
+                                <i class="bi bi-pause-fill</i>
+                        </button>
+                    </form>
+                        <form action="http://127.0.0.1:8001/teams/1" method="POST" class="d-inline ms-auto"
+                              onsubmit="return confirm('Delete team MGA VUANG?\n\nAssigned zones will be released and members detached.');">
+                            <input type="hidden" name="_token" value="Y3Blus5iJ2lXAkRhkyGRkOJtvKwtgNznYAerzycl" autocomplete="off">                            <input type="hidden" name="_method" value="DELETE">                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete team">
+                                <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+                    <div class="col-md-6 col-xl-4">
+            <div class="card stat-card team-card h-100 animate-on-load">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                        <div class="d-flex align-items-center gap-2 min-w-0 flex-grow-1">
+                            <span class="avatar-initial rounded-circle bg-dark bg-opacity-10 d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:40px;height:40px;">
+                                <span class="fw-bold text-dark">T</span>
+                         </span>
+                            <h5 class="mb-0 text-truncate" title="test">test</h5>
+                     </div>
+                        <span class="badge bg-success flex-shrink-0">Active</span>
+                 </div>
+
+                    <p class="text-muted small mb-3" style="min-height:2.5rem;">
+                        test
+                 </p>
+
+                    
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                                                    <span class="badge bg-warning-subtle text-warning" style="font-size:0.7rem;">
+                                <i class="bi bi-exclamation-triangle me-1</i>No lead assigned
+                         </span>
+                                         </div>
+
+                    
+                    <div class="d-flex align-items-center gap-2 mb-3" title="">
+                        <div class="avatar-stack">
+                                                                            </div>
+                        <span class="text-muted small">
+                            0 members
+                    </span>
+                </div>
+
+                    
+                    <div class="d-flex flex-wrap gap-3 small text-muted border-top pt-3 mt-auto mb-3">
+                        <span><i class="bi bi-geo-alt me-1</i>1 zone</span>
+                        <span><i class="bi bi-receipt me-1</i>0 citations/mo</span>
+                        <span title="2026-08-11 17:43:10"><i class="bi bi-clock-history me-1</i>13 hours ago</span>
+                </div>
+
+                    
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="http://127.0.0.1:8001/teams/2/edit" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil me-1</i>Edit
+                    </a>
+                        <form action="http://127.0.0.1:8001/teams/2/toggle-active" method="POST" class="d-inline">
+                            <input type="hidden" name="_token" value="Y3Blus5iJ2lXAkRhkyGRkOJtvKwtgNznYAerzycl" autocomplete="off">                            <input type="hidden" name="_method" value="PATCH">                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Deactivate">
+                                <i class="bi bi-pause-fill</i>
+                        </button>
+                    </form>
+                        <form action="http://127.0.0.1:8001/teams/2" method="POST" class="d-inline ms-auto"
+                              onsubmit="return confirm('Delete team test?\n\nAssigned zones will be released and members detached.');">
+                            <input type="hidden" name="_token" value="Y3Blus5iJ2lXAkRhkyGRkOJtvKwtgNznYAerzycl" autocomplete="off">                            <input type="hidden" name="_method" value="DELETE">                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete team">
+                                <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+            <div class="col-md-6 col-xl-4">
+            <a href="http://127.0.0.1:8001/teams/create" class="card stat-card dashed-create-card h-100 d-flex align-items-center justify-content-center text-decoration-none" style="min-height:280px;">
+                <div class="card-body text-center">
+                    <i class="bi bi-plus-circle" style="font-size:2.5rem;color:var(--itevcms-text-muted);</i>
+                    <div class="mt-2 fw-semibold text-muted">Create another team</div>
+           </div>
+       </a>
+   </div>
+    </div>
+        </main>
+    </div>
+</div>
+
+
+<style>
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 220px;
+        min-width: 220px;
+        max-width: 220px;
+        height: 100vh;
+        z-index: 1030;
+        background: linear-gradient(160deg, var(--itevcms-primary) 0%, #0a1f35 100%);
+        box-shadow: 20px 0 45px rgba(15, 23, 42, 0.15);
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden;
+    }
+
+    .main-content {
+        margin-left: 220px;
+        min-height: 100vh;
+        min-width: 0;
+    }
+
+    .min-width-0 {
+        min-width: 0;
+    }
+
+    @media (max-width: 991.98px) {
+        .main-content {
+            margin-left: 0;
+        }
+    }
+
+    .sidebar-brand {
+        height: 190px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .sidebar-logo {
+        width: 100px;
+        height: 100px;
+        object-fit: contain;
+        margin-bottom: 0.5rem;
+    }
+
+    .sidebar-brand-title {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #fff;
+        letter-spacing: 0.04em;
+        line-height: 1.2;
+    }
+
+    .sidebar-brand-sub {
+        width: 140px;
+        height: 36px;
+        font-size: 0.65rem;
+        line-height: 1.2;
+        font-weight: 500;
+        color: rgba(255,255,255,0.55);
+        text-align: center;
+        overflow: hidden;
+        margin-top: 0.15rem;
+    }
+
+    .sidebar-nav {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 0.5rem 0;
+        display: block;
+        min-height: 0;
+    }
+
+    .sidebar-group {
+        margin-bottom: 0.25rem;
+    }
+
+    .sidebar-group-label {
+        padding: 1rem 1rem 0.35rem;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.35);
+    }
+
+    .sidebar-nav .nav-link {
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+        gap: 0.75rem;
+        padding: 0.6rem 1rem;
+        color: rgba(255,255,255,0.75);
+        border-radius: 0;
+        border-left: 3px solid transparent;
+        transition: all 0.15s ease;
+        font-size: 0.875rem;
+        margin: 0 0.5rem;
+        border-radius: 0.5rem;
+    }
+
+    .sidebar-nav .nav-link:hover {
+        background: rgba(255,255,255,0.1);
+        color: #fff;
+    }
+
+    .sidebar-nav .nav-link.active {
+        background: rgba(255,255,255,0.14);
+        color: #fff;
+        border-left-color: #fff;
+        font-weight: 600;
+    }
+
+    .sidebar-nav-icon {
+        font-size: 1.1rem;
+        width: 1.25rem;
+        text-align: center;
+        flex-shrink: 0;
+    }
+
+    .sidebar-nav::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .sidebar-nav::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.15);
+        border-radius: 4px;
+    }
+
+    .topbar-icon-btn {
+        transition: color 0.15s ease;
+    }
+
+    .topbar-icon-btn:hover {
+        color: var(--itevcms-accent) !important;
+    }
+
+    #userDropdown:focus {
+        box-shadow: none;
+    }
+
+    #userDropdown::after {
+        font-size: 0.7rem;
+        color: #999;
+    }
+
+    .dropdown-header {
+        white-space: normal;
+    }
+
+    .topbar {
+        position: relative;
+        z-index: 1020;
+        background: var(--itevcms-card);
+    }
+
+    .topbar .dropdown-menu {
+        z-index: 1055;
+    }
+
+    .page-bg {
+        background-color: var(--itevcms-surface);
+    }
+
+    .sticky-save {
+        position: sticky;
+        bottom: 0;
+        z-index: 1025;
+        background: #fff;
+        border-top: 1px solid #e5e7eb;
+        padding: 1rem 0;
+        margin-top: 2rem;
+    }
+
+    .zone-map {
+        width: 100%;
+        height: 500px;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const badge = document.getElementById('notificationCount');
+    if (!badge) return;
+
+    function updateBadge() {
+        fetch('http://127.0.0.1:8001/api/notifications/unread-count')
+            .then(r => r.json())
+            .then(d => {
+                if (d.count > 0) { badge.textContent = d.count; badge.style.display = 'inline'; }
+                else { badge.style.display = 'none'; }
+            })
+            .catch(() => {});
+    }
+
+    updateBadge();
+    setInterval(updateBadge, 30000);
+});
+</script>
+</body>
+</html>

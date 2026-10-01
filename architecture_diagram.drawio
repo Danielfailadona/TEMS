@@ -1,0 +1,50 @@
+<mxfile host="app.diagrams.net" modified="2026-08-27T00:00:00.000Z" agent="5.0 (Windows)" etag="architecture-diagram" version="24.6.5" type="device">
+  <diagram name="Architecture" id="architecture">
+    <mxGraphModel dx="1158" dy="604" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- User -->
+        <mxCell id="user" value="User" style="ellipse;whiteSpace=wrap;html=1;fillColor=#a5d8ff;strokeColor=#1971c2;strokeWidth=2;fontSize=18;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="80" y="200" width="80" height="80" as="geometry"/>
+        </mxCell>
+        <!-- Frontend -->
+        <mxCell id="frontend" value="Frontend&#xa;(Web / Mobile App)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a5d8ff;strokeColor=#1971c2;strokeWidth=2;fontSize=16;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="280" y="180" width="200" height="100" as="geometry"/>
+        </mxCell>
+        <!-- API -->
+        <mxCell id="api" value="API&#xa;(Backend Services)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eebefa;strokeColor=#9c36b5;strokeWidth=2;fontSize=16;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="560" y="180" width="200" height="100" as="geometry"/>
+        </mxCell>
+        <!-- Database -->
+        <mxCell id="db" value="Database" style="shape=mxgraph.basic.rect;whiteSpace=wrap;html=1;fillColor=#99e9f2;strokeColor=#0c8599;strokeWidth=2;fontSize=16;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="840" y="190" width="140" height="80" as="geometry"/>
+        </mxCell>
+        <!-- Arrow: User -> Frontend -->
+        <mxCell id="arrow1" value="HTTPS" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#1971c2;strokeWidth=2;fontSize=14;fontFamily=Helvetica;endArrow=block;" edge="1" parent="1" source="user" target="frontend">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Arrow: Frontend -> API -->
+        <mxCell id="arrow2" value="REST / GraphQL" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9c36b5;strokeWidth=2;fontSize=14;fontFamily=Helvetica;endArrow=block;" edge="1" parent="1" source="frontend" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Arrow: API -> Database -->
+        <mxCell id="arrow3" value="SQL / ORM" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0c8599;strokeWidth=2;fontSize=14;fontFamily=Helvetica;endArrow=block;" edge="1" parent="1" source="api" target="db">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Title -->
+        <mxCell id="title" value="System Architecture Overview" style="text;html=1;strokeColor=#1e1e1e;fontSize=24;fontFamily=Helvetica;align=center;verticalAlign=middle;whiteSpace=wrap;strokeWidth=0;" vertex="1" parent="1">
+          <mxGeometry x="350" y="40" width="500" height="40" as="geometry"/>
+        </mxCell>
+        <!-- Frontend Layer Zone -->
+        <mxCell id="zone_frontend" value="Frontend Layer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a5d8ff;strokeColor=#1971c2;strokeWidth=1;strokeStyle=dashed;opacity=30;fontSize=14;fontFamily=Helvetica;fontColor=#1971c2;" vertex="1" parent="1">
+          <mxGeometry x="240" y="140" width="270" height="170" as="geometry"/>
+        </mxCell>
+        <!-- Backend Layer Zone -->
+        <mxCell id="zone_backend" value="Backend Layer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eebefa;strokeColor=#9c36b5;strokeWidth=1;strokeStyle=dashed;opacity=30;fontSize=14;fontFamily=Helvetica;fontColor=#9c36b5;" vertex="1" parent="1">
+          <mxGeometry x="520" y="140" width="310" height="170" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
