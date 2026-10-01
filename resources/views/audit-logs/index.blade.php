@@ -11,7 +11,7 @@
     <div class="card-body">
         <form method="GET" class="row g-2">
             <div class="col-md-3">
-                <select name="log_name" class="form-select">
+                <select name="log_name" class="form-select" onchange="this.form.submit()">
                     <option value="">All Logs</option>
                     @foreach ($logNames as $name)
                         <option value="{{ $name }}" {{ request('log_name') === $name ? 'selected' : '' }}>{{ $name }}</option>
@@ -19,7 +19,7 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <select name="event" class="form-select">
+                <select name="event" class="form-select" onchange="this.form.submit()">
                     <option value="">All Events</option>
                     @foreach ($events as $event)
                         <option value="{{ $event }}" {{ request('event') === $event ? 'selected' : '' }}>{{ ucfirst($event) }}</option>

@@ -40,26 +40,26 @@
 @endpush
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center gap-2 mb-4">
+<div class="d-flex justify-content-between align-items-center gap-2 mb-4 flex-wrap">
     <p class="text-muted small mb-0">Resolved and completed records across the system.</p>
     <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
         @if ($user->isAdmin())
             <a href="{{ route('archives.export', request()->query()) }}" class="btn btn-sm btn-outline-success"><i class="bi bi-download me-1"></i> Export CSV</a>
             <a href="{{ route('archives.backup', request()->query()) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-file-earmark-arrow-down me-1"></i> Download Backup</a>
         @endif
-        <form method="GET" class="d-flex align-items-center gap-2 mb-0 flex-wrap">
-            <input type="search" name="search" class="form-control form-select-sm" style="min-width:200px;" placeholder="Search archives..." value="{{ request('search') }}">
-            <select name="type" class="form-select form-select-sm" style="min-width:140px;" onchange="this.form.submit()">
+        <form method="GET" class="d-flex align-items-center gap-2 mb-0 flex-wrap flex-grow-1" style="max-width: 100%;">
+            <input type="search" name="search" class="form-control form-control-sm" style="min-width:180px; max-width: 300px;" placeholder="Search archives..." value="{{ request('search') }}">
+            <select name="type" class="form-select form-select-sm" style="min-width:130px;" onchange="this.form.submit()">
                 <option value="">All Types</option>
                 @foreach ($types as $type)
                     <option value="App\Models\{{ $type }}" @selected(request('type') === "App\Models\\{$type}")>{{ $type }}</option>
                 @endforeach
             </select>
-            <input type="date" name="date_from" class="form-control form-select-sm" style="min-width:160px;" placeholder="From" value="{{ request('date_from') }}" onchange="this.form.submit()">
-            <input type="date" name="date_to" class="form-control form-select-sm" style="min-width:160px;" placeholder="To" value="{{ request('date_to') }}" onchange="this.form.submit()">
-            <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i> Apply</button>
+            <input type="date" name="date_from" class="form-control form-control-sm" style="min-width:140px;" placeholder="From" value="{{ request('date_from') }}" onchange="this.form.submit()">
+            <input type="date" name="date_to" class="form-control form-control-sm" style="min-width:140px;" placeholder="To" value="{{ request('date_to') }}" onchange="this.form.submit()">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i> Apply</button>
             @if (request()->anyFilled(['search', 'type', 'date_from', 'date_to']))
-                <a href="{{ route('archives.index') }}" class="btn btn-outline-secondary"><i class="bi bi-x-lg"></i> Clear</a>
+                <a href="{{ route('archives.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-lg"></i> Clear</a>
             @endif
         </form>
     </div>
