@@ -102,10 +102,20 @@
 
     <table>
         <tr><td class="label">Receipt #</td><td class="value">{{ $payment->receipt_number }}</td></tr>
-        <tr><td class="label">Citation #</td><td class="value">{{ $payment->citation->citation_number }}</td></tr>
-        <tr><td class="label">Vehicle</td><td class="value">{{ $payment->citation->vehicle_plate }}</td></tr>
-        <tr><td class="label">Violation</td><td class="value">{{ $payment->citation->violationType->name }}</td></tr>
-        <tr><td class="label">Penalty Amount</td><td class="value">₱{{ number_format($payment->citation->penalty_amount, 2) }}</td></tr>
+        <tr><td class="label">Category</td><td class="value">{{ $payment->categoryLabel() }}</td></tr>
+        @if ($payment->category() === 'citation')
+            <tr><td class="label">Citation #</td><td class="value">{{ $payment->citation->citation_number }}</td></tr>
+            <tr><td class="label">Violation</td><td class="value">{{ $payment->citation->violationType->name }}</td></tr>
+        @else
+            <tr><td class="label">Notice #</td><td class="value">{{ $payment->payableNoticeNumber() }}</td></tr>
+            @if ($payment->citation)
+                <tr><td class="label">Related Citation</td><td class="value">{{ $payment->citation->citation_number }}</td></tr>
+            @endif
+        @endif
+        <tr><td class="label">Vehicle</td><td class="value">{{ $payment->payableVehicle() }}</td></tr>
+        @if ($payment->category() === 'citation')
+            <tr><td class="label">Driver</td><td class="value">{{ $payment->citation->driver_name }}</td></tr>
+        @endif
         <tr><td class="label">Amount Paid</td><td class="value">₱{{ number_format($payment->amount, 2) }}</td></tr>
         <tr><td class="label">Payment Method</td><td class="value">{{ $payment->isOnlinePayment() ? ucfirst($payment->online_payment_method ?? 'Online Payment') : $payment->payment_method->label() }}</td></tr>
         @if ($payment->reference_number)
@@ -118,7 +128,7 @@
         <tr><td class="label">Date Paid</td><td class="value">{{ $payment->paid_at?->format('F d, Y h:i A') ?? 'Pending' }}</td></tr>
     </table>
 
-    @if (! $payment->paid_at)
+    @if (! $payment->paid_at && $payment->citation)
         <div class="qr">
             {!! $payment->citation->getQRCodeSvg(100) !!}
             <div class="hint">Scan to view citation details and pay online</div>
@@ -127,7 +137,7 @@
 
     <div class="footer">
         @include('partials.ticket-print-footer', [
-            'officer' => $payment->citation->enforcer,
+            'officer' => $payment->citation?->enforcer ?? $payment->payable?->officer,
             'docType' => 'Receipt',
             'docNumber' => $payment->receipt_number,
         ])

@@ -6,6 +6,7 @@ use App\Enums\ImpoundingStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -69,6 +70,11 @@ class ImpoundingRecord extends Model
     public function release(): HasOne
     {
         return $this->hasOne(VehicleRelease::class, 'impounding_record_id');
+    }
+
+    public function payments(): MorphMany
+    {
+        return $this->morphMany(Payment::class, 'payable');
     }
 
     public function getTotalFees(): float

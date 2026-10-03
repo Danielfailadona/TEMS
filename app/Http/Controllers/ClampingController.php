@@ -27,7 +27,28 @@ class ClampingController extends Controller
 
         $query = ClampingRecord::with(['officer', 'citation']);
 
-        $records = $query->latest('clamped_at')->paginate(10);
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('notice_number', 'like', "%{$search}%")
+                  ->orWhere('vehicle_plate', 'like', "%{$search}%")
+                  ->orWhereHas('officer', fn ($o) => $o->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('clamped_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('clamped_at', '<=', $request->date_to);
+        }
+
+        $records = $query->latest('clamped_at')->paginate(12)->withQueryString();
 
         $pendingRequests = CitizenClampingRequest::where('status', 'pending')
             ->latest()
@@ -139,10 +160,12 @@ class ClampingController extends Controller
         DB::transaction(function () use ($clamping, $validated) {
             $citation = $clamping->citation;
 
-            if ($citation && ! $citation->payment) {
+            if (! $clamping->payments()->whereNotNull('paid_at')->exists()) {
                 Payment::create([
                     'receipt_number' => app(CitationNumberService::class)->receiptNumber(),
-                    'citation_id' => $citation->id,
+                    'citation_id' => ($citation && ! $citation->payment) ? $citation->id : null,
+                    'payable_type' => ClampingRecord::class,
+                    'payable_id' => $clamping->id,
                     'cashier_id' => auth()->id(),
                     'amount' => $validated['clamping_fee'],
                     'payment_method' => $validated['payment_method'],
@@ -150,7 +173,9 @@ class ClampingController extends Controller
                     'paid_at' => now(),
                 ]);
 
-                $citation->update(['status' => CitationStatus::Paid]);
+                if ($citation && ! $citation->payment) {
+                    $citation->update(['status' => CitationStatus::Paid]);
+                }
             }
 
             $clamping->update([

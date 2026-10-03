@@ -16,8 +16,8 @@
                 <input class="form-control" value="{{ $payment->receipt_number }}" disabled>
             </div>
             <div class="mb-3">
-                <label class="form-label">Citation</label>
-                <input class="form-control" value="{{ $payment->citation->citation_number }}" disabled>
+                <label class="form-label">{{ $payment->category() === 'citation' ? 'Citation' : 'Notice' }}</label>
+                <input class="form-control" value="{{ $payment->payableNoticeNumber() }}" disabled>
             </div>
             <div class="mb-3">
                 <label class="form-label">Amount</label>

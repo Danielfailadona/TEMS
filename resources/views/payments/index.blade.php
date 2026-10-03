@@ -67,6 +67,17 @@
                 </select>
             </div>
 
+            {{-- Category Filter --}}
+            <div class="col-12 col-md-3">
+                <label class="form-label visually-hidden">Category</label>
+                <select name="category" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Categories</option>
+                    <option value="citation" {{ request('category') === 'citation' ? 'selected' : '' }}>Citation</option>
+                    <option value="clamping" {{ request('category') === 'clamping' ? 'selected' : '' }}>Clamping</option>
+                    <option value="impounding" {{ request('category') === 'impounding' ? 'selected' : '' }}>Impounding</option>
+                </select>
+            </div>
+
             {{-- Date Range --}}
             <div class="col-12 col-md-3">
                 <label class="form-label visually-hidden">Date From</label>
@@ -93,7 +104,7 @@
             </div>
 
             {{-- Reset Button --}}
-            @if(request()->hasAny(['search', 'payment_method', 'date_from', 'date_to', 'online']))
+            @if(request()->hasAny(['search', 'category', 'payment_method', 'date_from', 'date_to', 'online']))
             <div class="col-12 col-md-auto d-flex align-items-end">
                 <a href="{{ route('payments.index') }}" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-clockwise me-1"></i>Reset
@@ -110,19 +121,21 @@
         <div class="col">
             <div class="card stat-card payment-card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center bg-white">
-                    <strong>{{ $payment->receipt_number }}</strong>
-                    <span class="payment-status-badge {{ $payment->getStatusBadgeClass() }}">
-                        {{ $payment->getStatusLabel() }}
-                    </span>
+                    <div class="min-width-0">
+                        <strong class="small d-block text-truncate">{{ $payment->receipt_number }}</strong>
+                        <span class="payment-status-badge {{ $payment->getStatusBadgeClass() }}">
+                            {{ $payment->getStatusLabel() }}
+                        </span>
+                    </div>
+                    <span class="payment-status-badge bg-primary">{{ $payment->categoryLabel() }}</span>
                 </div>
                 <div class="card-body">
                     <div class="row g-2 small">
-                        <div class="col-6"><strong class="text-muted d-block">Citation</strong>{{ $payment->citation->citation_number ?? '—' }}</div>
-                        <div class="col-6"><strong class="text-muted d-block">Vehicle</strong>{{ $payment->citation->vehicle_plate ?? '—' }}</div>
-                        <div class="col-6"><strong class="text-muted d-block">Driver</strong>{{ $payment->citation->driver_name ?? '—' }}</div>
-                        <div class="col-6"><strong class="text-muted d-block">Plate</strong>{{ $payment->citation->vehicle_plate ?? '—' }}</div>
+                        <div class="col-12"><strong class="text-muted d-block">{{ $payment->category() === 'citation' ? 'Citation' : 'Notice' }}</strong>{{ $payment->payableNoticeNumber() }}</div>
+                        <div class="col-6"><strong class="text-muted d-block">Vehicle</strong>{{ $payment->payableVehicle() }}</div>
+                        <div class="col-6"><strong class="text-muted d-block">{{ $payment->category() === 'citation' ? 'Driver' : 'Officer' }}</strong>{{ $payment->payablePerson() }}</div>
                         <div class="col-6"><strong class="text-muted d-block">Amount</strong>₱{{ number_format($payment->amount, 2) }}</div>
-                        <div class="col-6"><strong class="text-muted d-block">Method</strong>{{ $payment->payment_method->label() }}</div>
+                        <div class="col-6"><strong class="text-muted d-block">Method</strong>{{ $payment->isOnlinePayment() ? ucfirst($payment->online_payment_method ?? 'Online') : $payment->payment_method->label() }}</div>
                         <div class="col-6"><strong class="text-muted d-block">Type</strong>{{ $payment->isOnlinePayment() ? 'Online' : 'Manual' }}</div>
                         <div class="col-6"><strong class="text-muted d-block">Paid</strong>{{ $payment->paid_at?->format('M d, Y') ?? '—' }}</div>
                     </div>

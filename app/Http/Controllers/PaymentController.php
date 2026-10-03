@@ -7,6 +7,8 @@ use App\Enums\PaymentMethod;
 use App\Http\Requests\StorePaymentRequest;
 use App\Models\Archive;
 use App\Models\Citation;
+use App\Models\ClampingRecord;
+use App\Models\ImpoundingRecord;
 use App\Models\Payment;
 use App\Models\NumberSeries;
 use App\Models\SystemNotification;
@@ -24,17 +26,35 @@ class PaymentController extends Controller
     {
         $this->authorize('viewAny', Payment::class);
 
-        $query = Payment::with(['citation', 'cashier']);
+        $query = Payment::with(['citation', 'cashier', 'payable.officer']);
 
-        // Search: receipt #, citation #, plate, driver name
+        // Search: receipt #, citation #, plate, driver name (plus clamping/impounding notice #, plate)
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($w) use ($search) {
                 $w->where('receipt_number', 'like', "%{$search}%")
-                  ->orWhereHas('citation', fn ($q) => $q->where('citation_number', 'like', "%{$search}%"))
-                  ->orWhereHas('citation', fn ($q) => $q->where('vehicle_plate', 'like', "%{$search}%"))
-                  ->orWhereHas('citation', fn ($q) => $q->where('driver_name', 'like', "%{$search}%"));
+                  ->orWhereHas('citation', function ($q) use ($search) {
+                      $q->where('citation_number', 'like', "%{$search}%")
+                        ->orWhere('vehicle_plate', 'like', "%{$search}%")
+                        ->orWhere('driver_name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHasMorph('payable', [ClampingRecord::class, ImpoundingRecord::class], function ($q) use ($search) {
+                      $q->where('notice_number', 'like', "%{$search}%")
+                        ->orWhere('vehicle_plate', 'like', "%{$search}%");
+                  });
             });
+        }
+
+        // Payment category filter
+        if ($request->filled('category')) {
+            $category = $request->category;
+            if ($category === 'clamping') {
+                $query->where('payable_type', ClampingRecord::class);
+            } elseif ($category === 'impounding') {
+                $query->where('payable_type', ImpoundingRecord::class);
+            } else {
+                $query->where(fn ($q) => $q->where('payable_type', Citation::class)->orWhereNull('payable_type'));
+            }
         }
 
         // Payment method filter
@@ -185,7 +205,7 @@ class PaymentController extends Controller
     {
         $this->authorize('update', $payment);
 
-        $payment->load(['citation.violationType', 'cashier']);
+        $payment->load(['citation.violationType', 'cashier', 'payable.officer']);
 
         return view('payments.edit', [
             'payment' => $payment,
@@ -212,7 +232,7 @@ class PaymentController extends Controller
     {
         $this->authorize('view', $payment);
 
-        $payment->load(['citation.violationType', 'cashier']);
+        $payment->load(['citation.violationType', 'cashier', 'payable.officer']);
 
         return view('payments.show', compact('payment'));
     }
@@ -221,7 +241,7 @@ class PaymentController extends Controller
     {
         $this->authorize('view', $payment);
 
-        $payment->load(['citation.violationType', 'cashier']);
+        $payment->load(['citation.violationType', 'cashier', 'payable.officer']);
 
         return view('payments.print', compact('payment'));
     }

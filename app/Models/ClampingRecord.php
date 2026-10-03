@@ -6,6 +6,7 @@ use App\Enums\ClampingStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -58,6 +59,11 @@ class ClampingRecord extends Model
     public function impoundingRecord(): HasOne
     {
         return $this->hasOne(ImpoundingRecord::class, 'clamping_record_id');
+    }
+
+    public function payments(): MorphMany
+    {
+        return $this->morphMany(Payment::class, 'payable');
     }
 
     public function isActive(): bool

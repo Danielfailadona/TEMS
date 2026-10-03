@@ -104,10 +104,10 @@
 
                     @if ($r->latitude && $r->longitude)
                         <button class="btn btn-sm btn-outline-secondary mt-3 w-100 map-toggle" type="button"
-                                data-bs-target="#map-{{ $r->id }}" aria-expanded="false" aria-controls="map-{{ $r->id }}">
-                            <i class="bi bi-map me-1"></i>Show Map
+                                data-map-id="{{ $r->id }}" aria-expanded="false" aria-controls="map-{{ $r->id }}">
+                            <i class="bi bi-map me-1"></i><span class="map-label">Show Map</span>
                         </button>
-                        <div class="collapse mt-2" id="map-{{ $r->id }}">
+                        <div class="mt-2 map-panel" id="map-{{ $r->id }}" hidden>
                             <iframe
                                 src="https://www.openstreetmap.org/export/embed.html?bbox={{ $r->longitude - 0.002 }}%2C{{ $r->latitude - 0.001 }}%2C{{ $r->longitude + 0.002 }}%2C{{ $r->latitude + 0.001 }}&amp;layer=mapnik&amp;marker={{ $r->latitude }}%2C{{ $r->longitude }}"
                                 style="width:100%;height:180px;border:1px solid var(--itevcms-border);border-radius:0.5rem;"
@@ -144,27 +144,35 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const toggles = document.querySelectorAll('.map-toggle');
-    toggles.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            const target = document.querySelector(btn.getAttribute('data-bs-target'));
-            if (!target || !window.bootstrap) return;
+(function () {
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.map-toggle');
+        if (!btn) return;
 
-            toggles.forEach(function (other) {
-                const otherTarget = document.querySelector(other.getAttribute('data-bs-target'));
-                if (otherTarget && otherTarget !== target) {
-                    otherTarget.classList.remove('show');
-                    otherTarget.classList.remove('collapsing');
-                    other.setAttribute('aria-expanded', 'false');
-                }
-            });
+        var id = btn.getAttribute('data-map-id');
+        if (!id) return;
 
-            const instance = bootstrap.Collapse.getOrCreateInstance(target, { toggle: false });
-            instance.toggle();
-            btn.setAttribute('aria-expanded', instance._isShown ? 'true' : 'false');
+        var panel = document.getElementById('map-' + id);
+        if (!panel) return;
+
+        var willShow = panel.hidden;
+
+        document.querySelectorAll('.map-panel').forEach(function (p) {
+            p.hidden = true;
         });
+        document.querySelectorAll('.map-toggle').forEach(function (b) {
+            b.setAttribute('aria-expanded', 'false');
+            var label = b.querySelector('.map-label');
+            if (label) label.textContent = 'Show Map';
+        });
+
+        if (willShow) {
+            panel.hidden = false;
+            btn.setAttribute('aria-expanded', 'true');
+            var label = btn.querySelector('.map-label');
+            if (label) label.textContent = 'Hide Map';
+        }
     });
-});
+})();
 </script>
 @endpush

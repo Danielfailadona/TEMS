@@ -180,12 +180,12 @@ class ImpoundingController extends Controller
         DB::transaction(function () use ($impounding, $validated) {
             $citation = $impounding->citation;
 
-            if ($citation && !$citation->payment) {
-                $numberService = app(CitationNumberService::class);
-
+            if (! $impounding->payments()->whereNotNull('paid_at')->exists()) {
                 Payment::create([
                     'receipt_number' => app(CitationNumberService::class)->receiptNumber(),
-                    'citation_id' => $citation->id,
+                    'citation_id' => ($citation && ! $citation->payment) ? $citation->id : null,
+                    'payable_type' => ImpoundingRecord::class,
+                    'payable_id' => $impounding->id,
                     'cashier_id' => auth()->id(),
                     'amount' => $impounding->getTotalFees(),
                     'payment_method' => $validated['payment_method'],
@@ -193,7 +193,9 @@ class ImpoundingController extends Controller
                     'paid_at' => now(),
                 ]);
 
-                $citation->update(['status' => CitationStatus::Paid]);
+                if ($citation && ! $citation->payment) {
+                    $citation->update(['status' => CitationStatus::Paid]);
+                }
             }
 
             $impounding->update([

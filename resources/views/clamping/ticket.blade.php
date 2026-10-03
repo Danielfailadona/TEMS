@@ -98,14 +98,61 @@
     {{-- PAYMENT STATUS + ACTIONS --}}
     @if ($clamping->paid_at)
         <div class="card shadow-sm border-success mb-3">
-            <div class="card-body text-center py-4">
-                <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
-                <h5 class="mt-2 mb-1">Payment received.</h5>
-                <p class="text-muted mb-0 small">
-                    ₱{{ number_format($clamping->clamping_fee, 2) }} · Paid on {{ $clamping->paid_at->format('F d, Y') }}
-                    @if ($clamping->payment_method) · {{ ucwords(str_replace('_', ' ', $clamping->payment_method)) }}
-                    @endif
-                </p>
+            <div class="card-body py-4">
+                <div class="text-center">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                    <h5 class="mt-2 mb-1">Payment received.</h5>
+                    <p class="text-muted mb-0 small">
+                        ₱{{ number_format($clamping->clamping_fee, 2) }} · Paid on {{ $clamping->paid_at->format('F d, Y') }}
+                        @if ($clamping->payment_method) · {{ ucwords(str_replace('_', ' ', $clamping->payment_method)) }}
+                        @endif
+                    </p>
+                </div>
+
+                @php($clampingPayment = $clamping->payments->first())
+                @if ($clampingPayment)
+                    <div class="bg-white border rounded p-3 small mt-4 text-start">
+                        <h6 class="text-muted text-uppercase small fw-semibold mb-3">
+                            <i class="bi bi-receipt me-1"></i>Official Receipt
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <span class="text-muted d-block">Receipt #</span>
+                                <strong>{{ $clampingPayment->receipt_number }}</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted d-block">Related Citation</span>
+                                <strong>{{ $clampingPayment->citation?->citation_number ?? '—' }}</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted d-block">Amount Paid</span>
+                                <strong>₱{{ number_format($clampingPayment->amount, 2) }}</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted d-block">Payment Method</span>
+                                <strong>{{ ucwords(str_replace('_', ' ', $clampingPayment->payment_method?->value ?? '—')) }}</strong>
+                            </div>
+                            @if ($clampingPayment->reference_number)
+                                <div class="col-6">
+                                    <span class="text-muted d-block">Reference</span>
+                                    <strong>{{ $clampingPayment->reference_number }}</strong>
+                                </div>
+                            @endif
+                            <div class="col-6">
+                                <span class="text-muted d-block">Cashier</span>
+                                <strong>{{ $clampingPayment->cashier?->name ?? 'Office' }}</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted d-block">Date Paid</span>
+                                <strong>{{ $clampingPayment->paid_at?->format('M d, Y h:i A') }}</strong>
+                            </div>
+                            <div class="col-12">
+                                <span class="text-muted d-block">Vehicle</span>
+                                <strong>{{ $clamping->vehicle_plate }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
     @elseif($clamping->status !== App\Enums\ClampingStatus::Released)

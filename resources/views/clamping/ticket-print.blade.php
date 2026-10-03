@@ -114,6 +114,11 @@
 
     <table>
         @if ($clamping->paid_at)
+            @php($clampingPayment = $clamping->payments->first())
+            <tr><td class="label">Receipt #</td><td class="value">{{ $clampingPayment?->receipt_number ?? '—' }}</td></tr>
+            @if ($clampingPayment?->reference_number)
+                <tr><td class="label">Reference</td><td class="value">{{ $clampingPayment->reference_number }}</td></tr>
+            @endif
             <tr><td class="label">Amount</td><td class="value">₱{{ number_format($clamping->clamping_fee, 2) }}</td></tr>
             <tr><td class="label">Paid On</td><td class="value">{{ $clamping->paid_at->format('F d, Y h:i A') }}</td></tr>
             <tr><td class="label">Method</td><td class="value">{{ ucwords(str_replace('_', ' ', $clamping->payment_method ?? '—')) }}</td></tr>

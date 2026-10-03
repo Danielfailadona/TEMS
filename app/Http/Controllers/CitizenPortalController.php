@@ -26,7 +26,7 @@ class CitizenPortalController extends Controller
 
     public function clampingTicket(Request $request, $id, $token): View
     {
-        $clamping = ClampingRecord::with(['officer', 'citation', 'release.releasedBy'])
+        $clamping = ClampingRecord::with(['officer', 'citation', 'release.releasedBy', 'payments.cashier', 'payments.citation'])
             ->find($id);
 
         if (! $clamping || ! hash_equals($clamping->getValidationToken(), (string) $token)) {
@@ -38,7 +38,7 @@ class CitizenPortalController extends Controller
 
     public function clampingPrint(Request $request, $id, $token): View
     {
-        $clamping = ClampingRecord::with(['officer', 'citation', 'release.releasedBy'])
+        $clamping = ClampingRecord::with(['officer', 'citation', 'release.releasedBy', 'payments.cashier', 'payments.citation'])
             ->find($id);
 
         if (! $clamping || ! hash_equals($clamping->getValidationToken(), (string) $token)) {
