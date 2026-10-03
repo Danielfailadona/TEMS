@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CitationStatus;
+use App\Enums\ClampingStatus;
 use App\Enums\ImpoundingStatus;
 use App\Models\Archive;
 use App\Models\Citation;
@@ -105,10 +106,25 @@ class ImpoundingController extends Controller
             }
         }
 
+        $clampingRecord = null;
+        if ($citation) {
+            $clampingRecord = ClampingRecord::where('citation_id', $citation->id)
+                ->where('status', '!=', ClampingStatus::Released)
+                ->latest('clamped_at')
+                ->first();
+        }
+        if (! $clampingRecord) {
+            $clampingRecord = ClampingRecord::where('vehicle_plate', $validated['vehicle_plate'])
+                ->where('status', '!=', ClampingStatus::Released)
+                ->latest('clamped_at')
+                ->first();
+        }
+
         $record = ImpoundingRecord::create([
             'notice_number' => $numberService->noticeNumber(),
             'vehicle_plate' => $validated['vehicle_plate'],
             'citation_id' => $citation?->id,
+            'clamping_record_id' => $clampingRecord?->id,
             'impounded_by' => auth()->id(),
             'status' => ImpoundingStatus::Impounded,
             'location' => $validated['location'],

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Citation;
+use App\Models\ClampingRecord;
 use App\Models\ClampingRequest;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -14,6 +15,15 @@ class FrontDeskController extends Controller
         $status = $request->query('status');
         $plateNumber = $request->query('plate_number');
         $citationNumber = $request->query('citation_number');
+        $noticeNumber = $request->query('notice_number');
+
+        $clamping = null;
+        if ($noticeNumber) {
+            $clamping = ClampingRecord::with(['officer', 'citation', 'impoundingRecord'])
+                ->where('notice_number', 'like', "%{$noticeNumber}%")
+                ->latest('clamped_at')
+                ->first();
+        }
 
         // If searching by citation number or plate, return single result
         if ($citationNumber || $plateNumber) {
@@ -31,7 +41,7 @@ class FrontDeskController extends Controller
                     ->first();
             }
 
-            return view('frontdesk.index', compact('citation', 'plateNumber', 'citationNumber', 'status'));
+            return view('frontdesk.index', compact('citation', 'clamping', 'plateNumber', 'citationNumber', 'noticeNumber', 'status'));
         }
 
         // Default: paginated list with status filter
@@ -41,6 +51,6 @@ class FrontDeskController extends Controller
             ->paginate(6)
             ->withQueryString();
 
-        return view('frontdesk.index', compact('citations', 'status'));
+        return view('frontdesk.index', compact('citations', 'clamping', 'status'));
     }
 }

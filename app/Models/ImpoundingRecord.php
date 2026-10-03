@@ -56,9 +56,14 @@ class ImpoundingRecord extends Model
         return $this->belongsTo(ClampingRecord::class, 'clamping_record_id');
     }
 
-    public function impoundingOfficer(): BelongsTo
+    public function officer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'impounded_by');
+    }
+
+    public function impoundingOfficer(): BelongsTo
+    {
+        return $this->officer();
     }
 
     public function release(): HasOne

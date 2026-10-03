@@ -56,6 +56,8 @@ Route::middleware('guest')->group(function () {
         Route::get('citation/lookup', [CitizenPortalController::class, 'citationLookup'])->name('citation.lookup');
         Route::get('citation/search', [CitizenPortalController::class, 'citationSearch'])->name('citation.search');
         Route::get('citation/{citation}', [CitizenPortalController::class, 'citationDetail'])->name('citation.detail');
+        Route::get('clamping/lookup', [CitizenPortalController::class, 'clampingLookup'])->name('clamping.lookup');
+        Route::get('clamping/search', [CitizenPortalController::class, 'clampingSearch'])->name('clamping.search');
         
         // Clamping Request - Citizen Portal
         Route::get('request-clamping', [CitizenPortalController::class, 'clampingLanding'])->name('clamping.landing');
@@ -77,6 +79,12 @@ Route::middleware('guest')->group(function () {
             ->middleware('throttle:10,5')
             ->name('checkout');
         Route::get('{id}/{token}/payment/{payment}/success', [PayMongoController::class, 'publicSuccess'])->name('success');
+    });
+
+    // Public clamping ticket (scanned from clamping notice QR code)
+    Route::prefix('clamp')->name('public.clamping.')->group(function () {
+        Route::get('{id}/{token}', [CitizenPortalController::class, 'clampingTicket'])->name('ticket');
+        Route::get('{id}/{token}/print', [CitizenPortalController::class, 'clampingPrint'])->name('print');
     });
 });
 
@@ -109,6 +117,9 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
     Route::resource('payments', PaymentController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
     Route::get('payments/{payment}/print', [PaymentController::class, 'printReceipt'])->name('payments.print');
     Route::resource('clamping', ClampingController::class)->only(['index', 'create', 'store', 'show']);
+    Route::post('clamping/{clamping}/mark-paid', [ClampingController::class, 'markPaid'])->name('clamping.mark-paid');
+    Route::post('clamping/{clamping}/mark-waiting-release', [ClampingController::class, 'markWaitingRelease'])->name('clamping.mark-waiting-release');
+    Route::post('clamping/{clamping}/process-release', [ClampingController::class, 'processRelease'])->name('clamping.process-release');
     Route::prefix('clamping-requests')->name('clamping-requests.')->controller(ClampingRequestController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('{clampingRequest}', 'show')->name('show');

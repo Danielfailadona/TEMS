@@ -61,7 +61,7 @@
         }
 
         .form-panel {
-            width: 55%;
+            width: 50%;
             padding: 2.5rem 3rem;
             display: flex;
             flex-direction: column;
@@ -110,8 +110,8 @@
         .overlay-panel {
             position: absolute;
             top: 0;
-            left: 55%;
-            width: 45%;
+            left: 50%;
+            width: 50%;
             height: 100%;
             z-index: 10;
             overflow: hidden;
@@ -292,7 +292,7 @@
             border-color: #cbd5e1;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 991.98px) {
             .account-container {
                 flex-direction: column;
                 min-height: auto;
@@ -411,7 +411,7 @@
         <i class="bi bi-house-door-fill" style="font-size:1.2rem;"></i>
     </a>
     <div class="account-wrapper">
-        <div class="account-container" id="accountContainer">
+        <div class="account-container @if($showRegister) show-register @endif" id="accountContainer">
             <!-- Mobile Tab Switcher -->
             <div class="mobile-tabs d-lg-none" role="tablist" aria-label="Authentication mode">
                 <button type="button" class="mobile-tab active" role="tab" aria-selected="true" aria-controls="login-panel" onclick="showMobileTab('login')">Sign In</button>
@@ -637,6 +637,18 @@
     </div>
 
     <script>
+        function toggleForm(form) {
+            const container = document.getElementById('accountContainer');
+            if (container) {
+                if (form === 'register') {
+                    container.classList.add('show-register');
+                } else {
+                    container.classList.remove('show-register');
+                }
+            }
+            showMobileTab(form);
+        }
+
         function showMobileTab(tab) {
             const container = document.getElementById('accountContainer');
             
@@ -652,10 +664,14 @@
             history.replaceState(null, '', '#' + tab);
         }
 
-        // Initialize from URL hash on load
+        // Initialize from URL hash or ?form= query on load
         document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const formParam = params.get('form');
             const hash = window.location.hash.slice(1);
-            if (hash === 'register' || hash === 'login') {
+            if (formParam === 'register' || formParam === 'login') {
+                toggleForm(formParam);
+            } else if (hash === 'register' || hash === 'login') {
                 showMobileTab(hash);
             }
         });

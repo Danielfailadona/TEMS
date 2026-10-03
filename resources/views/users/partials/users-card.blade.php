@@ -70,7 +70,6 @@
                             'super_admin' => 'bg-dark',
                             'administrator' => 'bg-danger',
                             'enforcer' => 'bg-primary',
-                            'clamping_officer' => 'bg-warning text-dark',
                             'cashier' => 'bg-success',
                             'front_desk' => 'bg-info',
                             'vehicle_owner' => 'bg-info text-dark',

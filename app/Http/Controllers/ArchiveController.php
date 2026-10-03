@@ -10,7 +10,7 @@ use Illuminate\View\View;
 
 class ArchiveController extends Controller
 {
-public function index(Request $request): View
+    private function filteredQuery(Request $request)
     {
         $user = auth()->user();
         $query = Archive::with('archivedBy')->latest('archived_at');
@@ -52,6 +52,13 @@ public function index(Request $request): View
             });
         }
 
+        return $query;
+    }
+
+    public function index(Request $request): View
+    {
+        $query = $this->filteredQuery($request);
+
         $archives = $query->paginate(20)->withQueryString();
 
         $types = Archive::select('archivable_type')
@@ -61,7 +68,7 @@ public function index(Request $request): View
             ->sort()
             ->values();
 
-        return view('archives.index', compact('archives', 'types', 'user'));
+        return view('archives.index', compact('archives', 'types'));
     }
 
     public function print(Archive $archive): View
@@ -74,22 +81,7 @@ public function index(Request $request): View
 
     public function export(Request $request): Response
     {
-        $user = auth()->user();
-        $query = Archive::with('archivedBy')->latest('archived_at');
-
-        if ($user->isAdmin()) {
-            if ($request->filled('user_id')) {
-                $query->where('archived_by', $request->user_id);
-            }
-        } else {
-            $query->where('archived_by', $user->id);
-        }
-
-        if ($request->filled('type')) {
-            $query->where('archivable_type', $request->type);
-        }
-
-        $archives = $query->get();
+        $archives = $this->filteredQuery($request)->get();
 
         $callback = function () use ($archives) {
             $handle = fopen('php://output', 'w');
@@ -194,22 +186,7 @@ public function index(Request $request): View
 
     public function backup(Request $request): Response
     {
-        $user = auth()->user();
-        $query = Archive::with('archivedBy')->latest('archived_at');
-
-        if ($user->isAdmin()) {
-            if ($request->filled('user_id')) {
-                $query->where('archived_by', $request->user_id);
-            }
-        } else {
-            $query->where('archived_by', $user->id);
-        }
-
-        if ($request->filled('type')) {
-            $query->where('archivable_type', $request->type);
-        }
-
-        $archives = $query->get();
+        $archives = $this->filteredQuery($request)->get();
 
         $callback = function () use ($archives) {
             $handle = fopen('php://output', 'w');

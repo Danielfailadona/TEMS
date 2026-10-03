@@ -76,19 +76,24 @@
             </div>
         @endif
 
-        @if ($impounding->citation?->payment && $impounding->citation->paid_at)
+        @if ($impounding->clampingRecord)
             <div class="card stat-card mb-4">
-                <div class="card-header bg-white"><strong>Citation Payment Record</strong></div>
+                <div class="card-header bg-white"><strong>Clamping Details</strong></div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-6"><div class="text-muted small d-block">Receipt #</div>{{ $impounding->citation->payment->receipt_number }}</div>
-                        <div class="col-md-6"><div class="text-muted small d-block">Amount Paid</div>₱{{ number_format($impounding->citation->payment->amount, 2) }}</div>
-                        <div class="col-md-6"><div class="text-muted small d-block">Method</div>{{ $impounding->citation->payment->payment_method->label() }}</div>
-                        <div class="col-md-6"><div class="text-muted small d-block">Paid At</div>{{ $impounding->citation->payment->paid_at?->format('M d, Y h:i A') ?? '—' }}</div>
-                        <div class="col-md-6"><div class="text-muted small d-block">Cashier</div>{{ $impounding->citation->payment->cashier->name ?? 'Online Payment' }}</div>
-                        @if ($impounding->citation->payment->reference_number)
-                            <div class="col-md-6"><div class="text-muted small d-block">Reference</div>{{ $impounding->citation->payment->reference_number }}</div>
+                        <div class="col-md-6"><div class="text-muted small d-block">Notice #</div>{{ $impounding->clampingRecord->notice_number }}</div>
+                        <div class="col-md-6"><div class="text-muted small d-block">Clamped At</div>{{ $impounding->clampingRecord->clamped_at?->format('M d, Y h:i A') ?? '—' }}</div>
+                        <div class="col-md-6"><div class="text-muted small d-block">Status</div><span class="badge {{ $impounding->clampingRecord->status->badgeClass() }}">{{ $impounding->clampingRecord->status->label() }}</span></div>
+                        <div class="col-md-6"><div class="text-muted small d-block">Officer</div>{{ $impounding->clampingRecord->officer->name ?? '—' }}</div>
+                        @if ($impounding->clampingRecord->location)
+                            <div class="col-md-6"><div class="text-muted small d-block">Location</div>{{ $impounding->clampingRecord->location }}</div>
                         @endif
+                        @if ($impounding->clampingRecord->clamping_fee)
+                            <div class="col-md-6"><div class="text-muted small d-block">Clamping Fee</div>₱{{ number_format($impounding->clampingRecord->clamping_fee, 2) }}</div>
+                        @endif
+                        <div class="col-12">
+                            <a href="{{ route('clamping.show', $impounding->clampingRecord) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right me-1"></i>Open Clamp Record</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -138,7 +143,7 @@
             </div>
         </div>
 
-        @if ($impounding->citation?->payment && $impounding->citation->paid_at)
+        @if ($impounding->citation?->payment)
             <div class="card stat-card mb-4">
                 <div class="card-header bg-white"><strong>Citation Payment Record</strong></div>
                 <div class="card-body">

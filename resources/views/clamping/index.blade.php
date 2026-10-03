@@ -52,7 +52,31 @@
                         <td>{{ $record->officer->name }}</td>
                         <td>{{ $record->clamped_at->format('M d, Y') }}</td>
                         <td><span class="badge {{ $record->status->badgeClass() }}">{{ $record->status->label() }}</span></td>
-                        <td class="text-end"><a href="{{ route('clamping.show', $record) }}" class="btn btn-sm btn-outline-primary">View</a></td>
+                        <td class="text-end">
+                            <div class="d-inline-flex gap-1">
+                                @can('markPaid', $record)
+                                    <form method="POST" action="{{ route('clamping.mark-paid', $record) }}" class="d-inline" onsubmit="return confirm('Record payment for {{ addslashes($record->notice_number) }}?')">
+                                        @csrf
+                                        <input type="hidden" name="clamping_fee" value="{{ $record->citation?->penalty_amount ?? 0 }}">
+                                        <input type="hidden" name="payment_method" value="cash">
+                                        <button type="submit" class="btn btn-sm btn-success">Mark Paid</button>
+                                    </form>
+                                @endcan
+                                @can('markWaitingRelease', $record)
+                                    <form method="POST" action="{{ route('clamping.mark-waiting-release', $record) }}" class="d-inline" onsubmit="return confirm('Mark as waiting for release?')">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-warning">Waiting for Release</button>
+                                    </form>
+                                @endcan
+                                @can('processRelease', $record)
+                                    <form method="POST" action="{{ route('clamping.process-release', $record) }}" class="d-inline" onsubmit="return confirm('Release this vehicle?')">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">Release</button>
+                                    </form>
+                                @endcan
+                                <a href="{{ route('clamping.show', $record) }}" class="btn btn-sm btn-outline-primary">View</a>
+                            </div>
+                        </td>
                     </tr>
                 @empty
                     <tr><td colspan="6" class="text-center text-muted py-4">No clamping records.</td></tr>

@@ -179,7 +179,7 @@ class CitationController extends Controller
             return $clamping;
         });
 
-        return redirect()->route('impounding.show', $clamping)
-            ->with('success', 'Vehicle referred for impounding successfully.');
+        return redirect()->route('clamping.show', $clamping)
+            ->with('success', 'Vehicle clamped successfully. Create the impounding record to continue.');
     }
 }

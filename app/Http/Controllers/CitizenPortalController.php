@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Archive;
 use App\Models\Citation;
+use App\Models\ClampingRecord;
 use App\Models\ClampingRequest;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -21,6 +22,30 @@ class CitizenPortalController extends Controller
         }
 
         return view('citations.ticket', compact('citation'));
+    }
+
+    public function clampingTicket(Request $request, $id, $token): View
+    {
+        $clamping = ClampingRecord::with(['officer', 'citation', 'release.releasedBy'])
+            ->find($id);
+
+        if (! $clamping || ! hash_equals($clamping->getValidationToken(), (string) $token)) {
+            abort(404);
+        }
+
+        return view('clamping.ticket', compact('clamping'));
+    }
+
+    public function clampingPrint(Request $request, $id, $token): View
+    {
+        $clamping = ClampingRecord::with(['officer', 'citation', 'release.releasedBy'])
+            ->find($id);
+
+        if (! $clamping || ! hash_equals($clamping->getValidationToken(), (string) $token)) {
+            abort(404);
+        }
+
+        return view('clamping.ticket-print', compact('clamping'));
     }
 
     public function citationPrint(Request $request, $id, $token): View
@@ -62,6 +87,33 @@ class CitizenPortalController extends Controller
         }
 
         return view('citizen.citation-detail', compact('citation'));
+    }
+
+    public function clampingLookup(Request $request): View
+    {
+        return view('citizen.citation-lookup', ['clampingTab' => true]);
+    }
+
+    public function clampingSearch(Request $request)
+    {
+        $request->validate([
+            'search' => 'required|string|min:3',
+        ]);
+
+        $search = $request->input('search');
+
+        $clamping = \App\Models\ClampingRecord::with(['officer', 'citation', 'impoundingRecord', 'release'])
+            ->where(function ($query) use ($search) {
+                $query->where('notice_number', 'like', "%{$search}%")
+                    ->orWhere('vehicle_plate', 'like', "%{$search}%");
+            })
+            ->first();
+
+        if (! $clamping) {
+            return back()->with('error', 'No clamping notice found matching your search.');
+        }
+
+        return view('citizen.clamping-detail', compact('clamping'));
     }
 
     public function citationDetail(Citation $citation): View
