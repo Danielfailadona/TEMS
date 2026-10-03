@@ -214,6 +214,41 @@
                                         </button>
                                     </div>
                                 </form>
+
+                                @isset($citationResult)
+                                    <div class="card stat-card border-primary mt-4">
+                                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                            <strong><i class="bi bi-patch-check me-2 text-success"></i>Citation Found</strong>
+                                            <span class="badge {{ $citationResult->status->badgeClass() }}">{{ $citationResult->status->label() }}</span>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-6"><small class="text-muted d-block">Citation #</small><strong>{{ $citationResult->citation_number }}</strong></div>
+                                                <div class="col-6"><small class="text-muted d-block">Plate Number</small><strong>{{ $citationResult->vehicle_plate }}</strong></div>
+                                                <div class="col-6"><small class="text-muted d-block">Violation</small>{{ $citationResult->violationType->name ?? '—' }}</div>
+                                                <div class="col-6"><small class="text-muted d-block">Penalty</small>₱{{ number_format($citationResult->penalty_amount, 2) }}</div>
+                                                <div class="col-6"><small class="text-muted d-block">Driver</small>{{ $citationResult->driver_name ?? '—' }}</div>
+                                                <div class="col-6"><small class="text-muted d-block">Issued</small>{{ $citationResult->issued_at?->format('M d, Y') }}</div>
+                                                @if ($citationResult->payment)
+                                                    <div class="col-12">
+                                                        <small class="text-muted d-block">Payment</small>
+                                                        <strong>
+                                                            @if ($citationResult->payment->paid_at)
+                                                                Paid {{ $citationResult->payment->paid_at->format('M d, Y') }}
+                                                            @else
+                                                                Pending — Receipt {{ $citationResult->payment->receipt_number }}
+                                                            @endif
+                                                        </strong>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <div class="card-footer bg-white d-flex gap-2 justify-content-end flex-wrap">
+                                            <a href="{{ route('citizen.citation.detail', $citationResult) }}" class="btn btn-sm btn-primary"><i class="bi bi-ticket me-1"></i>Open Full Ticket</a>
+                                            <a href="{{ route('public.citation.print', ['id' => $citationResult->id, 'token' => $citationResult->getValidationToken()]) }}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer me-1"></i>Print</a>
+                                        </div>
+                                    </div>
+                                @endisset
                             </div>
 
                             <div class="tab-pane fade {{ ($clampingTab ?? false) ? 'show active' : '' }}" id="tab-clamping" role="tabpanel">
@@ -246,6 +281,31 @@
                                         </button>
                                     </div>
                                 </form>
+
+                                @isset($clampingResult)
+                                    <div class="card stat-card border-primary mt-4">
+                                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                            <strong><i class="bi bi-patch-check me-2 text-success"></i>Clamping Notice Found</strong>
+                                            <span class="badge {{ $clampingResult->status->badgeClass() }}">{{ $clampingResult->status->label() }}</span>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-6"><small class="text-muted d-block">Notice #</small><strong>{{ $clampingResult->notice_number }}</strong></div>
+                                                <div class="col-6"><small class="text-muted d-block">Plate Number</small><strong>{{ $clampingResult->vehicle_plate }}</strong></div>
+                                                <div class="col-6"><small class="text-muted d-block">Clamped At</small>{{ $clampingResult->clamped_at?->format('M d, Y h:i A') }}</div>
+                                                <div class="col-6"><small class="text-muted d-block">Officer</small>{{ $clampingResult->officer->name ?? '—' }}</div>
+                                                <div class="col-12"><small class="text-muted d-block">Location</small>{{ $clampingResult->location ?? '—' }}</div>
+                                                @if ($clampingResult->paid_at)
+                                                    <div class="col-6"><small class="text-muted d-block">Amount Paid</small>₱{{ number_format($clampingResult->clamping_fee, 2) }}</div>
+                                                    <div class="col-6"><small class="text-muted d-block">Paid At</small>{{ $clampingResult->paid_at->format('M d, Y') }}</div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <div class="card-footer bg-white d-flex gap-2 justify-content-end flex-wrap">
+                                            <a href="{{ route('public.clamping.ticket', ['id' => $clampingResult->id, 'token' => $clampingResult->getValidationToken()]) }}" target="_blank" class="btn btn-sm btn-primary"><i class="bi bi-ticket me-1"></i>Open Ticket</a>
+                                        </div>
+                                    </div>
+                                @endisset
                             </div>
                         </div>
                     </div>

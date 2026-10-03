@@ -86,7 +86,7 @@ class CitizenPortalController extends Controller
             return back()->with('error', 'No citation found matching your search.');
         }
 
-        return view('citizen.citation-detail', compact('citation'));
+        return view('citizen.citation-lookup', ['citationResult' => $citation]);
     }
 
     public function clampingLookup(Request $request): View
@@ -113,7 +113,7 @@ class CitizenPortalController extends Controller
             return back()->with('error', 'No clamping notice found matching your search.');
         }
 
-        return view('citizen.clamping-detail', compact('clamping'));
+        return view('citizen.citation-lookup', ['clampingTab' => true, 'clampingResult' => $clamping]);
     }
 
     public function citationDetail(Citation $citation): View

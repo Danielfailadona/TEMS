@@ -123,59 +123,54 @@
 
 <div id="users-card">
     {{-- Batch Actions Toolbar (shown when checkboxes selected) --}}
-    <div class="mb-3 d-none" id="batch-actions-toolbar" style="position: sticky; top: 0; z-index: 1020; background: #fff; padding: 0.5rem 0; border-bottom: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+    <div class="mb-3 d-none" id="batch-actions-toolbar" style="position: sticky; top: 0; z-index: 1020; background: rgba(255,255,255,0.98); padding: 0.6rem 1rem; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 4px 14px rgba(0,0,0,0.07);">
         <div class="d-flex flex-wrap align-items-center gap-2">
-            <span class="fw-semibold text-muted small" id="batch-selected-count">0 selected</span>
-            <div class="vr d-none d-md-block mx-2" style="height: 1.5rem;"></div>
-            
+            <span class="badge bg-primary rounded-pill px-3 py-2" id="batch-selected-count">0 selected</span>
+
             {{-- Group 1: Pending Actions (Approve/Reject) --}}
-            <div class="d-flex align-items-center gap-1" id="batch-pending-group">
-                <span class="text-muted small text-uppercase fw-semibold px-2" style="font-size: 0.65rem;">Pending</span>
-                <div class="vr d-none d-md-block mx-1" style="height: 1.25rem;"></div>
-                
+            <div class="d-flex align-items-center gap-1 bg-light border rounded-3 p-1" id="batch-pending-group">
                 {{-- Approve --}}
                 <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-approve-form">
                     @csrf
                     <input type="hidden" name="action" value="approve">
                     <input type="hidden" name="user_ids" id="batch-approve-ids">
-                    <button type="submit" class="btn btn-success btn-sm" disabled id="batch-approve-btn" data-bs-toggle="tooltip" title="Select pending users to enable">
+                    <button type="submit" class="btn btn-success btn-sm rounded-2" disabled id="batch-approve-btn" data-bs-toggle="tooltip" title="Approve selected pending users">
                         <i class="bi bi-check-lg me-1"></i> Approve
                     </button>
                 </form>
-    
+
                 {{-- Reject --}}
-                <button type="button" class="btn btn-danger btn-sm" disabled id="batch-reject-btn" data-bs-toggle="modal" data-bs-target="#batchRejectModal" data-bs-toggle="tooltip" title="Select pending users to enable">
+                <button type="button" class="btn btn-danger btn-sm rounded-2" disabled id="batch-reject-btn" data-bs-toggle="modal" data-bs-target="#batchRejectModal" title="Reject selected pending users">
                     <i class="bi bi-x-lg me-1"></i> Reject
                 </button>
             </div>
-    
-            <div class="vr d-none d-md-block mx-2" style="height: 1.5rem;"></div>
-    
+
             {{-- Group 2: Status Actions (Suspend/Unsuspend) --}}
-            <div class="d-flex align-items-center gap-1" id="batch-status-group">
-                <span class="text-muted small text-uppercase fw-semibold px-2" style="font-size: 0.65rem;">Status</span>
-                <div class="vr d-none d-md-block mx-1" style="height: 1.25rem;"></div>
-                
+            <div class="d-flex align-items-center gap-1 bg-light border rounded-3 p-1" id="batch-status-group">
                 {{-- Suspend --}}
                 <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-suspend-form">
                     @csrf
                     <input type="hidden" name="action" value="suspend">
                     <input type="hidden" name="user_ids" id="batch-suspend-ids">
-                    <button type="submit" class="btn btn-warning btn-sm" disabled id="batch-suspend-btn" data-bs-toggle="tooltip" title="Select approved or pending users to enable">
+                    <button type="submit" class="btn btn-warning btn-sm rounded-2" disabled id="batch-suspend-btn" data-bs-toggle="tooltip" title="Suspend selected approved or pending users">
                         <i class="bi bi-lock me-1"></i> Suspend
                     </button>
                 </form>
-                
+
                 {{-- Unsuspend --}}
                 <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-unsuspend-form">
                     @csrf
                     <input type="hidden" name="action" value="unsuspend">
                     <input type="hidden" name="user_ids" id="batch-unsuspend-ids">
-                    <button type="submit" class="btn btn-success btn-sm" disabled id="batch-unsuspend-btn" data-bs-toggle="tooltip" title="Select suspended users to enable">
+                    <button type="submit" class="btn btn-success btn-sm rounded-2" disabled id="batch-unsuspend-btn" data-bs-toggle="tooltip" title="Unsuspend selected suspended users">
                         <i class="bi bi-unlock me-1"></i> Unsuspend
                     </button>
                 </form>
             </div>
+
+            <button type="button" class="btn btn-sm btn-link text-muted ms-auto px-2" id="batch-deselect-btn">
+                <i class="bi bi-x-circle me-1"></i>Deselect
+            </button>
         </div>
     </div>
   <div class="table-responsive">
@@ -429,28 +424,29 @@
     .batch-actions-toolbar.d-none {
         display: none !important;
     }
-    .batch-actions-toolbar .btn:disabled {
+    #batch-actions-toolbar .btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
     }
-    .batch-actions-toolbar .vr {
-        opacity: 0.3;
+    #batch-actions-toolbar #batch-pending-group,
+    #batch-actions-toolbar #batch-status-group {
+        background: #f8fafc !important;
     }
-    .batch-actions-toolbar .text-uppercase {
-        letter-spacing: 0.05em;
-    }
-    @media (max-width: 767.98px) {
-        .batch-actions-toolbar .vr {
-            display: none !important;
+    @media (max-width: 575.98px) {
+        #batch-actions-toolbar .btn-sm {
+            font-size: 0.8rem;
+            padding: 0.3rem 0.55rem;
         }
-        .batch-actions-toolbar .text-uppercase {
-            display: none;
+        #batch-deselect-btn {
+            flex-basis: 100%;
+            margin-left: 0 !important;
+            text-align: center;
         }
     }
-    .batch-actions-toolbar [data-bs-toggle="tooltip"] {
+    #batch-actions-toolbar [data-bs-toggle="tooltip"] {
         cursor: not-allowed;
     }
-    .batch-actions-toolbar .btn:not(:disabled)[data-bs-toggle="tooltip"] {
+    #batch-actions-toolbar .btn:not(:disabled)[data-bs-toggle="tooltip"] {
         cursor: pointer;
     }
 </style>
@@ -731,6 +727,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (selectAllCb) {
         selectAllCb.addEventListener('change', () => {
             document.querySelectorAll('#users-table .row-checkbox').forEach(cb => cb.checked = selectAllCb.checked);
+            updateBatchToolbar();
+        });
+    }
+
+    // Deselect all (closes toolbar)
+    const deselectBtn = document.getElementById('batch-deselect-btn');
+    if (deselectBtn) {
+        deselectBtn.addEventListener('click', () => {
+            document.querySelectorAll('#users-table .row-checkbox').forEach(cb => cb.checked = false);
+            if (selectAllCb) selectAllCb.checked = false;
             updateBatchToolbar();
         });
     }

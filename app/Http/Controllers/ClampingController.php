@@ -146,7 +146,7 @@ class ClampingController extends Controller
                     'cashier_id' => auth()->id(),
                     'amount' => $validated['clamping_fee'],
                     'payment_method' => $validated['payment_method'],
-                    'reference_number' => $validated['reference_number'],
+                    'reference_number' => $validated['reference_number'] ?? null,
                     'paid_at' => now(),
                 ]);
 
@@ -157,7 +157,7 @@ class ClampingController extends Controller
                 'status' => ClampingStatus::Paid,
                 'clamping_fee' => $validated['clamping_fee'],
                 'payment_method' => $validated['payment_method'],
-                'reference_number' => $validated['reference_number'],
+                'reference_number' => $validated['reference_number'] ?? null,
                 'paid_at' => now(),
             ]);
 
@@ -209,7 +209,7 @@ class ClampingController extends Controller
                 'release_number' => app(CitationNumberService::class)->releaseNumber(),
                 'clamping_record_id' => $clamping->id,
                 'released_by' => auth()->id(),
-                'notes' => $validated['notes'],
+                'notes' => $validated['notes'] ?? null,
                 'released_at' => now(),
             ]);
 

@@ -103,8 +103,8 @@
                     </div>
 
                     @if ($r->latitude && $r->longitude)
-                        <button class="btn btn-sm btn-outline-secondary mt-3 w-100" type="button"
-                                data-bs-toggle="collapse" data-bs-target="#map-{{ $r->id }}" aria-expanded="false" aria-controls="map-{{ $r->id }}">
+                        <button class="btn btn-sm btn-outline-secondary mt-3 w-100 map-toggle" type="button"
+                                data-bs-target="#map-{{ $r->id }}" aria-expanded="false" aria-controls="map-{{ $r->id }}">
                             <i class="bi bi-map me-1"></i>Show Map
                         </button>
                         <div class="collapse mt-2" id="map-{{ $r->id }}">
@@ -141,3 +141,30 @@
     </div>
 @endif
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const toggles = document.querySelectorAll('.map-toggle');
+    toggles.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const target = document.querySelector(btn.getAttribute('data-bs-target'));
+            if (!target || !window.bootstrap) return;
+
+            toggles.forEach(function (other) {
+                const otherTarget = document.querySelector(other.getAttribute('data-bs-target'));
+                if (otherTarget && otherTarget !== target) {
+                    otherTarget.classList.remove('show');
+                    otherTarget.classList.remove('collapsing');
+                    other.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            const instance = bootstrap.Collapse.getOrCreateInstance(target, { toggle: false });
+            instance.toggle();
+            btn.setAttribute('aria-expanded', instance._isShown ? 'true' : 'false');
+        });
+    });
+});
+</script>
+@endpush
