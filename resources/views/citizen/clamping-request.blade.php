@@ -177,6 +177,7 @@
         </p>
 
         <div class="row g-4 mb-4">
+            <!-- Left column: Your Information + Location -->
             <div class="col-lg-7">
                 <div class="card stat-card h-100">
                     <div class="card-body p-3 p-md-4">
@@ -201,13 +202,9 @@
                                 @error('requester_email')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
 
-            <div class="col-lg-5">
-                <div class="card stat-card h-100">
-                    <div class="card-body p-3 p-md-4">
+                        <!-- Location section inside same card -->
+                        <hr class="my-4">
                         <div class="d-flex align-items-center gap-2 mb-3">
                             <span class="section-icon"><i class="bi bi-geo-alt-fill"></i></span>
                             <h5 class="mb-0 fw-bold text-primary">Location</h5>
@@ -244,43 +241,48 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="card stat-card mb-4">
-            <div class="card-body p-3 p-md-4">
-                <div class="d-flex align-items-center gap-2 mb-3">
-                    <span class="section-icon"><i class="bi bi-car-front-fill"></i></span>
-                    <h5 class="mb-0 fw-bold text-primary">Vehicle Information</h5>
+            <!-- Right column: Vehicle Information + Evidence stacked -->
+            <div class="col-lg-5">
+                <!-- Vehicle Information -->
+                <div class="card stat-card mb-4">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="section-icon"><i class="bi bi-car-front-fill"></i></span>
+                            <h5 class="mb-0 fw-bold text-primary">Vehicle Information</h5>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">License Plate <span class="text-danger">*</span></label>
+                                <input type="text" name="vehicle_plate" class="form-control text-uppercase @error('vehicle_plate') is-invalid @enderror" placeholder="e.g., ABC 1234" value="{{ old('vehicle_plate') }}" required>
+                                @error('vehicle_plate')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Vehicle Description</label>
+                                <input type="text" name="vehicle_description" class="form-control" placeholder="e.g., White Toyota Corolla" value="{{ old('vehicle_description') }}">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small">Additional Notes</label>
+                                <textarea name="additional_notes" class="form-control" rows="2" placeholder="Any additional details...">{{ old('additional_notes') }}</textarea>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold small">License Plate <span class="text-danger">*</span></label>
-                        <input type="text" name="vehicle_plate" class="form-control text-uppercase @error('vehicle_plate') is-invalid @enderror" placeholder="e.g., ABC 1234" value="{{ old('vehicle_plate') }}" required>
-                        @error('vehicle_plate')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold small">Vehicle Description</label>
-                        <input type="text" name="vehicle_description" class="form-control" placeholder="e.g., White Toyota Corolla" value="{{ old('vehicle_description') }}">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label fw-semibold small">Additional Notes</label>
-                        <textarea name="additional_notes" class="form-control" rows="2" placeholder="Any additional details...">{{ old('additional_notes') }}</textarea>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="card stat-card mb-4">
-            <div class="card-body p-3 p-md-4">
-                <div class="d-flex align-items-center gap-2 mb-3">
-                    <span class="section-icon"><i class="bi bi-camera-fill"></i></span>
-                    <h5 class="mb-0 fw-bold text-primary">Evidence</h5>
+                <!-- Evidence -->
+                <div class="card stat-card mb-4">
+                    <div class="card-body p-3 p-md-4">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <span class="section-icon"><i class="bi bi-camera-fill"></i></span>
+                            <h5 class="mb-0 fw-bold text-primary">Evidence</h5>
+                        </div>
+                        <label class="form-label fw-semibold small">Photo of Vehicle <span class="text-danger">*</span></label>
+                        <input type="file" name="evidence_photo" class="form-control @error('evidence_photo') is-invalid @enderror" accept="image/*" required id="photoInput" onchange="previewPhoto(event)">
+                        <small class="text-muted d-block mt-2"><i class="bi bi-info-circle me-1"></i>Max 5MB. Clear photo showing license plate and parking violation.</small>
+                        @error('evidence_photo')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                        <div id="photoPreview" class="mt-3"></div>
+                    </div>
                 </div>
-                <label class="form-label fw-semibold small">Photo of Vehicle <span class="text-danger">*</span></label>
-                <input type="file" name="evidence_photo" class="form-control @error('evidence_photo') is-invalid @enderror" accept="image/*" required id="photoInput" onchange="previewPhoto(event)">
-                <small class="text-muted d-block mt-2"><i class="bi bi-info-circle me-1"></i>Max 5MB. Clear photo showing license plate and parking violation.</small>
-                @error('evidence_photo')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
-                <div id="photoPreview" class="mt-3"></div>
             </div>
         </div>
 
