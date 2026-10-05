@@ -51,7 +51,7 @@
                         <td>{{ $record->clamped_at->format('M d, Y') }}</td>
                         <td><span class="badge {{ $record->status->badgeClass() }}">{{ $record->status->label() }}</span></td>
                         <td>
-                            @if ($record->evidence_path)
+                            @if ($record->evidence_path && \App\Services\SupabaseStorage::has($record->evidence_path))
                                 <a href="{{ \App\Services\SupabaseStorage::publicUrl($record->evidence_path) }}" target="_blank">
                                     <img src="{{ \App\Services\SupabaseStorage::publicUrl($record->evidence_path) }}" alt="ev" style="width:36px;height:36px;object-fit:cover;border-radius:4px;">
                                 </a>

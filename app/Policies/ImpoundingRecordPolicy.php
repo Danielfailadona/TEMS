@@ -30,7 +30,7 @@ class ImpoundingRecordPolicy
 
     public function markPaid(User $user, ImpoundingRecord $impoundingRecord): bool
     {
-        if (! $user->isRole(Role::SuperAdmin, Role::Administrator, Role::Cashier)) {
+        if (! $user->isRole(Role::SuperAdmin, Role::Cashier)) {
             return false;
         }
         return $impoundingRecord->status === ImpoundingStatus::Impounded || $impoundingRecord->status === ImpoundingStatus::AwaitingPayment;

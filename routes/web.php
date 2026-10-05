@@ -71,21 +71,22 @@ Route::middleware('guest')->group(function () {
     // PayMongo Webhook (public, verified by signature)
     Route::post('webhook/paymongo', [PayMongoController::class, 'webhook'])->name('webhook.paymongo');
 
-    // Public citation ticket (scanned from enforcer QR code)
-    Route::prefix('cite')->name('public.citation.')->group(function () {
-        Route::get('{id}/{token}', [CitizenPortalController::class, 'citationTicket'])->name('ticket');
-        Route::get('{id}/{token}/print', [CitizenPortalController::class, 'citationPrint'])->name('print');
-        Route::post('{id}/{token}/pay-online', [PayMongoController::class, 'publicCheckout'])
-            ->middleware('throttle:10,5')
-            ->name('checkout');
-        Route::get('{id}/{token}/payment/{payment}/success', [PayMongoController::class, 'publicSuccess'])->name('success');
-    });
+});
 
-    // Public clamping ticket (scanned from clamping notice QR code)
-    Route::prefix('clamp')->name('public.clamping.')->group(function () {
-        Route::get('{id}/{token}', [CitizenPortalController::class, 'clampingTicket'])->name('ticket');
-        Route::get('{id}/{token}/print', [CitizenPortalController::class, 'clampingPrint'])->name('print');
-    });
+// Public citation ticket (scanned from enforcer QR code)
+Route::prefix('cite')->name('public.citation.')->group(function () {
+    Route::get('{id}/{token}', [CitizenPortalController::class, 'citationTicket'])->name('ticket');
+    Route::get('{id}/{token}/print', [CitizenPortalController::class, 'citationPrint'])->name('print');
+    Route::post('{id}/{token}/pay-online', [PayMongoController::class, 'publicCheckout'])
+        ->middleware('throttle:10,5')
+        ->name('checkout');
+    Route::get('{id}/{token}/payment/{payment}/success', [PayMongoController::class, 'publicSuccess'])->name('success');
+});
+
+// Public clamping ticket (scanned from clamping notice QR code)
+Route::prefix('clamp')->name('public.clamping.')->group(function () {
+    Route::get('{id}/{token}', [CitizenPortalController::class, 'clampingTicket'])->name('ticket');
+    Route::get('{id}/{token}/print', [CitizenPortalController::class, 'clampingPrint'])->name('print');
 });
 
 Route::get('account/pending', [LoginController::class, 'pending'])->name('account.pending');

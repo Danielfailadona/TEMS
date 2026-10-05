@@ -50,14 +50,22 @@ class SupabaseStorage
     {
         $realPath = $file->getRealPath();
         $mime = $file->getMimeType() ?: 'application/octet-stream';
+        $objectPath = ltrim($path, '/');
+        $url = self::baseUrl().'/storage/v1/object/'.self::bucket().'/'.$objectPath;
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer '.self::key(),
+            'apikey' => self::key(),
+            'Content-Type' => $mime,
         ])->withBody(file_get_contents($realPath), $mime)
-            ->put(self::baseUrl().'/storage/v1/object/'.self::bucket().'/'.ltrim($path, '/'));
+            ->post($url);
 
         if (! $response->successful()) {
-            throw new RuntimeException('Supabase upload failed (HTTP '.$response->status().'): '.$response->body());
+            throw new RuntimeException('Supabase upload failed for ['.$objectPath.'] (HTTP '.$response->status().'): '.$response->body());
+        }
+
+        if (! self::exists($path)) {
+            throw new RuntimeException('Supabase upload reported success but object is missing for ['.$objectPath.'].');
         }
 
         return $path;
@@ -74,5 +82,20 @@ class SupabaseStorage
         ])->send('HEAD', self::baseUrl().'/storage/v1/object/'.self::bucket().'/'.ltrim($path, '/'));
 
         return $response->status() === 200;
+    }
+
+    protected static array $existsCache = [];
+
+    public static function has(string $path): bool
+    {
+        if (blank($path)) {
+            return false;
+        }
+
+        if (! array_key_exists($path, self::$existsCache)) {
+            self::$existsCache[$path] = self::exists($path);
+        }
+
+        return self::$existsCache[$path];
     }
 }

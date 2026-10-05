@@ -270,12 +270,16 @@
                 @if ($hasEvidence)
                     <div>
                         <div class="section-group-label mb-1"><i class="bi bi-camera me-1"></i>Evidence Photo</div>
-                        <a href="{{ \App\Services\SupabaseStorage::publicUrl($request->evidence_photo) }}" target="_blank" class="d-block">
-                            <img src="{{ \App\Services\SupabaseStorage::publicUrl($request->evidence_photo) }}" alt="Evidence" class="evidence-thumb">
-                        </a>
-                        <div class="text-center mt-1">
-                            <small class="text-muted"><i class="bi bi-arrows-angle-expand me-1"></i>Click to view full size</small>
-                        </div>
+                        @if (\App\Services\SupabaseStorage::has($request->evidence_photo))
+                            <a href="{{ \App\Services\SupabaseStorage::publicUrl($request->evidence_photo) }}" target="_blank" class="d-block">
+                                <img src="{{ \App\Services\SupabaseStorage::publicUrl($request->evidence_photo) }}" alt="Evidence" class="evidence-thumb">
+                            </a>
+                            <div class="text-center mt-1">
+                                <small class="text-muted"><i class="bi bi-arrows-angle-expand me-1"></i>Click to view full size</small>
+                            </div>
+                        @else
+                            <div class="text-muted small fst-italic">Evidence file unavailable</div>
+                        @endif
                     </div>
                 @endif
 

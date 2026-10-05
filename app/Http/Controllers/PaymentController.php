@@ -15,6 +15,8 @@ use App\Services\PaymentRecorder;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class PaymentController extends Controller
@@ -22,10 +24,6 @@ class PaymentController extends Controller
     public function index(Request $request): View
     {
         $this->authorize('viewAny', Payment::class);
-
-        if ($request->input('view') === 'payables') {
-            return $this->awaitingPayments($request);
-        }
 
         $query = Payment::with(['citation', 'cashier', 'payable.officer']);
 
@@ -91,75 +89,105 @@ class PaymentController extends Controller
             $query->whereNotNull('paymongo_checkout_id');
         }
 
-        $payments = $query->latest('paid_at')->paginate(6)->withQueryString();
+        $receipts = $query->latest('paid_at')->get()->map(fn (Payment $payment) => [
+            'kind' => 'receipt',
+            'category' => $payment->category(),
+            'date' => $payment->paid_at ?? $payment->created_at,
+            'payment' => $payment,
+            'payable' => null,
+        ]);
+
+        $pending = $this->pendingRows($request);
+
+        $all = $receipts->concat($pending)->sortByDesc('date')->values();
+
+        $perPage = 9;
+        $page = max(1, (int) $request->input('page', 1));
+        $items = $all->forPage($page, $perPage)->values();
+
+        $grid = new LengthAwarePaginator(
+            $items,
+            $all->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        $pendingCounts = $this->pendingCounts();
 
         return view('payments.index', [
-            'viewMode' => 'receipts',
-            'payments' => $payments,
+            'grid' => $grid,
+            'pendingCounts' => $pendingCounts,
+            'totalPending' => array_sum($pendingCounts),
         ]);
     }
 
     /**
-     * Tickets (citations, clamping, impounding) that are still awaiting payment.
+     * Outstanding citation, clamping and impounding tickets, normalised into
+     * the same row shape as receipts so both can render in one grid.
      */
-    protected function awaitingPayments(Request $request): View
+    protected function pendingRows(Request $request): Collection
     {
-        $category = in_array($request->input('category'), ['citation', 'clamping', 'impounding'], true)
-            ? $request->input('category')
-            : 'citation';
+        $category = $request->input('category');
+        $search = trim((string) $request->input('search', ''));
 
-        $counts = [
+        $rows = collect();
+
+        if ($category === null || $category === '' || $category === 'citation') {
+            $q = $this->awaitingCitationsQuery()->with('violationType');
+
+            if ($search !== '') {
+                $term = '%'.mb_strtolower($search).'%';
+                $q->where(fn ($w) => $w->whereRaw('LOWER(citation_number) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(driver_name) LIKE ?', [$term]));
+            }
+
+            $rows = $rows->concat($q->get()->map(fn ($c) => [
+                'kind' => 'pending',
+                'category' => 'citation',
+                'date' => $c->issued_at ?? $c->created_at,
+                'payment' => null,
+                'payable' => $c,
+            ]));
+        }
+
+        foreach ([
+            'clamping' => [$this->awaitingClampingQuery(), 'clamped_at'],
+            'impounding' => [$this->awaitingImpoundingQuery(), 'impounded_at'],
+        ] as $key => [$query, $dateColumn]) {
+            if ($category !== null && $category !== '' && $category !== $key) {
+                continue;
+            }
+
+            $q = $query->with(['officer', 'citation']);
+
+            if ($search !== '') {
+                $term = '%'.mb_strtolower($search).'%';
+                $q->where(fn ($w) => $w->whereRaw('LOWER(notice_number) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', [$term])
+                    ->orWhereHas('officer', fn ($o) => $o->whereRaw('LOWER(name) LIKE ?', [$term])));
+            }
+
+            $rows = $rows->concat($q->get()->map(fn ($m) => [
+                'kind' => 'pending',
+                'category' => $key,
+                'date' => $m->{$dateColumn} ?? $m->created_at,
+                'payment' => null,
+                'payable' => $m,
+            ]));
+        }
+
+        return $rows;
+    }
+
+    protected function pendingCounts(): array
+    {
+        return [
             'citation' => $this->awaitingCitationsQuery()->count(),
             'clamping' => $this->awaitingClampingQuery()->count(),
             'impounding' => $this->awaitingImpoundingQuery()->count(),
         ];
-
-        $search = trim((string) $request->input('search', ''));
-
-        if ($category === 'clamping') {
-            $query = $this->awaitingClampingQuery()->with(['officer', 'citation']);
-
-            if ($search !== '') {
-                $query->where(function ($q) use ($search) {
-                    $q->whereRaw('LOWER(notice_number) LIKE ?', ['%'.mb_strtolower($search).'%'])
-                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($search).'%'])
-                        ->orWhereHas('officer', fn ($o) => $o->whereRaw('LOWER(name) LIKE ?', ['%'.mb_strtolower($search).'%']));
-                });
-            }
-
-            $payables = $query->latest('clamped_at')->paginate(9)->withQueryString();
-        } elseif ($category === 'impounding') {
-            $query = $this->awaitingImpoundingQuery()->with(['officer', 'citation']);
-
-            if ($search !== '') {
-                $query->where(function ($q) use ($search) {
-                    $q->whereRaw('LOWER(notice_number) LIKE ?', ['%'.mb_strtolower($search).'%'])
-                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($search).'%'])
-                        ->orWhereHas('officer', fn ($o) => $o->whereRaw('LOWER(name) LIKE ?', ['%'.mb_strtolower($search).'%']));
-                });
-            }
-
-            $payables = $query->latest('impounded_at')->paginate(9)->withQueryString();
-        } else {
-            $query = $this->awaitingCitationsQuery()->with('violationType');
-
-            if ($search !== '') {
-                $query->where(function ($q) use ($search) {
-                    $q->whereRaw('LOWER(citation_number) LIKE ?', ['%'.mb_strtolower($search).'%'])
-                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($search).'%'])
-                        ->orWhereRaw('LOWER(driver_name) LIKE ?', ['%'.mb_strtolower($search).'%']);
-                });
-            }
-
-            $payables = $query->latest('issued_at')->paginate(9)->withQueryString();
-        }
-
-        return view('payments.index', [
-            'viewMode' => 'payables',
-            'payableCategory' => $category,
-            'payableCounts' => $counts,
-            'payables' => $payables,
-        ]);
     }
 
     protected function awaitingCitationsQuery()

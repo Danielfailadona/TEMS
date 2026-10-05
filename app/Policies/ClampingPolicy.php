@@ -30,7 +30,7 @@ class ClampingPolicy
 
     public function markPaid(User $user, ClampingRecord $clampingRecord): bool
     {
-        if (! $user->isRole(Role::SuperAdmin, Role::Administrator, Role::Cashier)) {
+        if (! $user->isRole(Role::SuperAdmin, Role::Cashier)) {
             return false;
         }
         return $clampingRecord->status === ClampingStatus::AwaitingPayment;

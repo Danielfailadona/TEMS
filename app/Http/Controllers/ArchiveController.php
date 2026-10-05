@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Archive;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ArchiveController extends Controller
 {
@@ -79,7 +79,7 @@ class ArchiveController extends Controller
         return view('archives.print', compact('archive', 'type'));
     }
 
-    public function export(Request $request): Response
+    public function export(Request $request): StreamedResponse
     {
         $archives = $this->filteredQuery($request)->get();
 
@@ -184,7 +184,7 @@ class ArchiveController extends Controller
         ]);
     }
 
-    public function backup(Request $request): Response
+    public function backup(Request $request): StreamedResponse
     {
         $archives = $this->filteredQuery($request)->get();
 

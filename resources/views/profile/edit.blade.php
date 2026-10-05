@@ -10,7 +10,7 @@
                 <div class="position-relative d-inline-block mb-3">
                     <div class="avatar-preview rounded-circle overflow-hidden border border-3 border-white shadow"
                          style="width: 120px; height: 120px; background: linear-gradient(135deg, #2563eb, #0f2b4a);">
-                        @if($user->profile_photo_path)
+                        @if($user->profile_photo_path && \App\Services\SupabaseStorage::has($user->profile_photo_path))
                             <img src="{{ \App\Services\SupabaseStorage::publicUrl($user->profile_photo_path) }}" alt="{{ $user->name }}"
                                  class="w-100 h-100 object-fit-cover">
                         @else

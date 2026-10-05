@@ -150,15 +150,22 @@
                 <div class="row g-3">
                     @foreach ($citation->evidence as $evidence)
                         <div class="col-md-4">
-                            <div class="position-relative overflow-hidden rounded-2" style="cursor: pointer; height: 200px; background: #f0f0f0;">
-                                <img src="{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}"
-                                     alt="{{ $evidence->original_name }}"
-                                     style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;"
-                                     onmouseover="this.style.transform='scale(1.05)'"
-                                     onmouseout="this.style.transform='scale(1)'"
-                                     onclick="openModal('{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}')">
-                            </div>
-                            <p class="text-center small text-muted mt-2 mb-0">{{ $evidence->original_name }}</p>
+                            @if (\App\Services\SupabaseStorage::has($evidence->file_path))
+                                <div class="position-relative overflow-hidden rounded-2" style="cursor: pointer; height: 200px; background: #f0f0f0;">
+                                    <img src="{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}"
+                                         alt="{{ $evidence->original_name }}"
+                                         style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;"
+                                         onmouseover="this.style.transform='scale(1.05)'"
+                                         onmouseout="this.style.transform='scale(1)'"
+                                         onclick="openModal('{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}')">
+                                </div>
+                                <p class="text-center small text-muted mt-2 mb-0">{{ $evidence->original_name }}</p>
+                            @else
+                                <div class="d-flex align-items-center justify-content-center rounded-2 fst-italic" style="height: 200px; background: #f0f0f0;">
+                                    <span class="text-muted small">Evidence file unavailable</span>
+                                </div>
+                                <p class="text-center small text-muted mt-2 mb-0">{{ $evidence->original_name }}</p>
+                            @endif
                         </div>
                     @endforeach
                 </div>
@@ -395,12 +402,17 @@ function openModal(imageSrc) {
                             @foreach ($citation->evidence as $evidence)
                                 <div class="col-md-4">
                                     <div class="card">
-                                        <img src="{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}"
-                                             class="card-img-top"
-                                             alt="{{ $evidence->original_name }}"
-                                             style="height: 200px; object-fit: cover;"
-                                             onclick="openModal('{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}')"
-                                             style="cursor: zoom-in;">
+                                        @if (\App\Services\SupabaseStorage::has($evidence->file_path))
+                                            <img src="{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}"
+                                                 class="card-img-top"
+                                                 alt="{{ $evidence->original_name }}"
+                                                 style="height: 200px; object-fit: cover; cursor: zoom-in;"
+                                                 onclick="openModal('{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}')">
+                                        @else
+                                            <div class="d-flex align-items-center justify-content-center bg-light fst-italic" style="height: 200px;">
+                                                <span class="text-muted small">Evidence file unavailable</span>
+                                            </div>
+                                        @endif
                                         <div class="card-body p-2">
                                             <p class="card-text small text-truncate mb-0">{{ $evidence->original_name }}</p>
                                         </div>
