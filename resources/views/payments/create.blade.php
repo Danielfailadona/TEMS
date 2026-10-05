@@ -163,24 +163,25 @@
                     <tbody>
                         @foreach ($suggestions as $sugg)
                             @php
-                                $suggCategory = $sugg['category'] ?? $category;
+                                $rec = $sugg['record'];
+                                $suggCategory = $sugg['category'];
                                 $due = match ($suggCategory) {
-                                    'clamping' => $sugg->clamping_fee ?? $sugg->citation?->penalty_amount ?? 0,
-                                    'impounding' => $sugg->getTotalFees(),
-                                    default => $sugg->penalty_amount,
+                                    'clamping' => $rec->clamping_fee ?? $rec->citation?->penalty_amount ?? 0,
+                                    'impounding' => $rec->getTotalFees(),
+                                    default => $rec->penalty_amount,
                                 };
                                 $selectUrl = route('payments.create', array_filter([
                                     'category' => $suggCategory,
-                                    $suggCategory === 'citation' ? 'citation_id' : $suggCategory.'_id' => $sugg->id,
+                                    $suggCategory === 'citation' ? 'citation_id' : $suggCategory.'_id' => $rec->id,
                                 ]));
                             @endphp
                             <tr>
                                 <td><span class="badge {{ $suggCategory === 'citation' ? 'bg-primary' : ($suggCategory === 'clamping' ? 'bg-warning text-dark' : 'bg-info') }}">{{ ucfirst($suggCategory) }}</span></td>
-                                <td class="fw-semibold">{{ $suggCategory === 'citation' ? $sugg->citation_number : $sugg->notice_number }}</td>
-                                <td>{{ $sugg->vehicle_plate ?: '—' }}</td>
-                                <td>{{ $suggCategory === 'citation' ? $sugg->violationType->name : ($sugg->officer?->name ?: '—') }}</td>
+                                <td class="fw-semibold">{{ $suggCategory === 'citation' ? $rec->citation_number : $rec->notice_number }}</td>
+                                <td>{{ $rec->vehicle_plate ?: '—' }}</td>
+                                <td>{{ $suggCategory === 'citation' ? $rec->violationType->name : ($rec->officer?->name ?: '—') }}</td>
                                 <td>₱{{ number_format((float) $due, 2) }}</td>
-                                <td><span class="badge {{ $sugg->status->badgeClass() }}">{{ $sugg->status->label() }}</span></td>
+                                <td><span class="badge {{ $rec->status->badgeClass() }}">{{ $rec->status->label() }}</span></td>
                                 <td class="text-end">
                                     <a href="{{ $selectUrl }}" class="btn btn-sm btn-outline-success">
                                         <i class="bi bi-cash-stack me-1"></i>Select

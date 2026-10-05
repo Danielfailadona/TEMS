@@ -137,14 +137,25 @@
                             </span>
                         @endif
                     </div>
-                    <span class="payment-status-badge {{ $isReceipt ? 'bg-primary' : 'bg-warning text-dark' }}">
-                        {{ $isReceipt ? $payment->categoryLabel() : 'Pending' }}
+                    @php
+                        $type = $isReceipt ? $payment->category() : $category;
+                        $badgeClass = match ($type) {
+                            'clamping' => 'border border-warning text-warning',
+                            'impounding' => 'border border-info text-info',
+                            default => 'border border-primary text-primary',
+                        };
+                        $badgeLabel = ucfirst($type);
+                    @endphp
+                    <span class="badge {{ $badgeClass }} d-inline-flex align-items-center gap-1">
+                        {{ $badgeLabel }}
+                        @if (! $isReceipt)
+                            <i class="bi bi-clock small"></i>
+                        @endif
                     </span>
                 </div>
                 <div class="card-body">
                     <div class="row g-2 small">
                         <div class="col-12">
-                            <strong class="text-muted d-block">{{ $isReceipt ? ($payment->category() === 'citation' ? 'Citation' : 'Notice') : ($category === 'citation' ? 'Citation' : 'Notice') }}</strong>
                             @if ($isReceipt)
                                 {{ $payment->payableNoticeNumber() }}
                             @else
