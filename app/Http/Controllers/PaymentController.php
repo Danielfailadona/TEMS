@@ -3,21 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CitationStatus;
+use App\Enums\ClampingStatus;
+use App\Enums\ImpoundingStatus;
 use App\Enums\PaymentMethod;
 use App\Http\Requests\StorePaymentRequest;
-use App\Models\Archive;
 use App\Models\Citation;
 use App\Models\ClampingRecord;
 use App\Models\ImpoundingRecord;
 use App\Models\Payment;
-use App\Models\NumberSeries;
-use App\Models\SystemNotification;
-use App\Models\User;
-use App\Services\CitationNumberService;
+use App\Services\PaymentRecorder;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class PaymentController extends Controller
@@ -25,6 +22,10 @@ class PaymentController extends Controller
     public function index(Request $request): View
     {
         $this->authorize('viewAny', Payment::class);
+
+        if ($request->input('view') === 'payables') {
+            return $this->awaitingPayments($request);
+        }
 
         $query = Payment::with(['citation', 'cashier', 'payable.officer']);
 
@@ -92,116 +93,240 @@ class PaymentController extends Controller
 
         $payments = $query->latest('paid_at')->paginate(6)->withQueryString();
 
-        return view('payments.index', compact('payments'));
+        return view('payments.index', [
+            'viewMode' => 'receipts',
+            'payments' => $payments,
+        ]);
+    }
+
+    /**
+     * Tickets (citations, clamping, impounding) that are still awaiting payment.
+     */
+    protected function awaitingPayments(Request $request): View
+    {
+        $category = in_array($request->input('category'), ['citation', 'clamping', 'impounding'], true)
+            ? $request->input('category')
+            : 'citation';
+
+        $counts = [
+            'citation' => $this->awaitingCitationsQuery()->count(),
+            'clamping' => $this->awaitingClampingQuery()->count(),
+            'impounding' => $this->awaitingImpoundingQuery()->count(),
+        ];
+
+        $search = trim((string) $request->input('search', ''));
+
+        if ($category === 'clamping') {
+            $query = $this->awaitingClampingQuery()->with(['officer', 'citation']);
+
+            if ($search !== '') {
+                $query->where(function ($q) use ($search) {
+                    $q->whereRaw('LOWER(notice_number) LIKE ?', ['%'.mb_strtolower($search).'%'])
+                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($search).'%'])
+                        ->orWhereHas('officer', fn ($o) => $o->whereRaw('LOWER(name) LIKE ?', ['%'.mb_strtolower($search).'%']));
+                });
+            }
+
+            $payables = $query->latest('clamped_at')->paginate(9)->withQueryString();
+        } elseif ($category === 'impounding') {
+            $query = $this->awaitingImpoundingQuery()->with(['officer', 'citation']);
+
+            if ($search !== '') {
+                $query->where(function ($q) use ($search) {
+                    $q->whereRaw('LOWER(notice_number) LIKE ?', ['%'.mb_strtolower($search).'%'])
+                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($search).'%'])
+                        ->orWhereHas('officer', fn ($o) => $o->whereRaw('LOWER(name) LIKE ?', ['%'.mb_strtolower($search).'%']));
+                });
+            }
+
+            $payables = $query->latest('impounded_at')->paginate(9)->withQueryString();
+        } else {
+            $query = $this->awaitingCitationsQuery()->with('violationType');
+
+            if ($search !== '') {
+                $query->where(function ($q) use ($search) {
+                    $q->whereRaw('LOWER(citation_number) LIKE ?', ['%'.mb_strtolower($search).'%'])
+                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($search).'%'])
+                        ->orWhereRaw('LOWER(driver_name) LIKE ?', ['%'.mb_strtolower($search).'%']);
+                });
+            }
+
+            $payables = $query->latest('issued_at')->paginate(9)->withQueryString();
+        }
+
+        return view('payments.index', [
+            'viewMode' => 'payables',
+            'payableCategory' => $category,
+            'payableCounts' => $counts,
+            'payables' => $payables,
+        ]);
+    }
+
+    protected function awaitingCitationsQuery()
+    {
+        return Citation::query()
+            ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped])
+            ->whereDoesntHave('payment', fn ($q) => $q->whereNotNull('paid_at'));
+    }
+
+    protected function awaitingClampingQuery()
+    {
+        return ClampingRecord::query()
+            ->where('status', ClampingStatus::AwaitingPayment)
+            ->whereDoesntHave('payments', fn ($q) => $q->whereNotNull('paid_at'));
+    }
+
+    protected function awaitingImpoundingQuery()
+    {
+        return ImpoundingRecord::query()
+            ->whereIn('status', [ImpoundingStatus::Impounded, ImpoundingStatus::AwaitingPayment])
+            ->whereDoesntHave('payments', fn ($q) => $q->whereNotNull('paid_at'));
     }
 
     public function create(Request $request): View
     {
         $this->authorize('create', Payment::class);
 
-        $citation = null;
+        $category = in_array($request->input('category'), ['citation', 'clamping', 'impounding'], true)
+            ? $request->input('category')
+            : 'citation';
+        $lookup = trim((string) $request->input('lookup', ''));
+
+        $record = null;
         $suggestions = collect();
 
-        if ($request->filled('citation_id')) {
-            $citation = Citation::with(['violationType', 'payment'])->find($request->citation_id);
-        } elseif ($request->filled('citation_number')) {
-            $search = trim($request->citation_number);
+        if ($category === 'clamping') {
+            if ($request->filled('clamping_id')) {
+                $record = ClampingRecord::with(['officer', 'citation'])->find($request->clamping_id);
+            } elseif ($lookup !== '') {
+                $record = ClampingRecord::with(['officer', 'citation'])
+                    ->where(fn ($q) => $q->whereRaw('LOWER(notice_number) LIKE ?', ['%'.mb_strtolower($lookup).'%'])
+                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($lookup).'%']))
+                    ->orderByRaw('notice_number = ? desc', [$lookup])
+                    ->latest('clamped_at')
+                    ->first();
+            }
 
-            $citation = Citation::with(['violationType', 'payment'])
-                ->where(function ($q) use ($search) {
-                    $q->whereRaw('LOWER(citation_number) LIKE ?', ['%'.mb_strtolower($search).'%'])
-                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($search).'%']);
-                })
-                ->orderByRaw('citation_number = ? desc', [$search])
-                ->latest('issued_at')
-                ->first();
-        }
+            if (! $record) {
+                $suggestions = $this->awaitingClampingQuery()->with(['officer'])
+                    ->when($lookup !== '', fn ($q) => $q->where(fn ($inner) => $inner
+                        ->whereRaw('LOWER(notice_number) LIKE ?', ['%'.mb_strtolower($lookup).'%'])
+                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($lookup).'%'])))
+                    ->latest('clamped_at')
+                    ->limit(10)
+                    ->get();
+            }
+        } elseif ($category === 'impounding') {
+            if ($request->filled('impounding_id')) {
+                $record = ImpoundingRecord::with(['officer', 'citation'])->find($request->impounding_id);
+            } elseif ($lookup !== '') {
+                $record = ImpoundingRecord::with(['officer', 'citation'])
+                    ->where(fn ($q) => $q->whereRaw('LOWER(notice_number) LIKE ?', ['%'.mb_strtolower($lookup).'%'])
+                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($lookup).'%']))
+                    ->orderByRaw('notice_number = ? desc', [$lookup])
+                    ->latest('impounded_at')
+                    ->first();
+            }
 
-        if (! $citation) {
-            $suggestions = Citation::with(['violationType', 'payment'])
-                ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped])
-                ->whereDoesntHave('payment')
-                ->when($request->filled('citation_number'), function ($q) use ($request) {
-                    $search = '%'.mb_strtolower(trim($request->citation_number)).'%';
-                    $q->where(function ($inner) use ($search) {
-                        $inner->whereRaw('LOWER(citation_number) LIKE ?', [$search])
-                            ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', [$search]);
-                    });
-                })
-                ->latest('issued_at')
-                ->limit(10)
-                ->get();
+            if (! $record) {
+                $suggestions = $this->awaitingImpoundingQuery()->with(['officer'])
+                    ->when($lookup !== '', fn ($q) => $q->where(fn ($inner) => $inner
+                        ->whereRaw('LOWER(notice_number) LIKE ?', ['%'.mb_strtolower($lookup).'%'])
+                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($lookup).'%'])))
+                    ->latest('impounded_at')
+                    ->limit(10)
+                    ->get();
+            }
+        } else {
+            if ($request->filled('citation_id')) {
+                $record = Citation::with(['violationType', 'payment'])->find($request->citation_id);
+            } elseif ($lookup !== '') {
+                $record = Citation::with(['violationType', 'payment'])
+                    ->where(fn ($q) => $q->whereRaw('LOWER(citation_number) LIKE ?', ['%'.mb_strtolower($lookup).'%'])
+                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($lookup).'%']))
+                    ->orderByRaw('citation_number = ? desc', [$lookup])
+                    ->latest('issued_at')
+                    ->first();
+            }
+
+            if (! $record) {
+                $suggestions = $this->awaitingCitationsQuery()->with('violationType')
+                    ->when($lookup !== '', fn ($q) => $q->where(fn ($inner) => $inner
+                        ->whereRaw('LOWER(citation_number) LIKE ?', ['%'.mb_strtolower($lookup).'%'])
+                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($lookup).'%'])))
+                    ->latest('issued_at')
+                    ->limit(10)
+                    ->get();
+            }
         }
 
         return view('payments.create', [
-            'citation' => $citation,
+            'category' => $category,
+            'record' => $record,
             'paymentMethods' => PaymentMethod::cases(),
             'suggestions' => $suggestions,
         ]);
     }
 
-    public function store(StorePaymentRequest $request, CitationNumberService $numberService): RedirectResponse
+    public function store(StorePaymentRequest $request): RedirectResponse
     {
         $this->authorize('create', Payment::class);
 
-        $citation = Citation::with('payment')->findOrFail($request->citation_id);
+        $category = $request->input('category');
+        $data = $request->safe()->only(['amount', 'payment_method', 'reference_number', 'notes']);
+        $recorder = app(PaymentRecorder::class);
+        $cashierId = auth()->id();
 
-        if ($citation->payment && $citation->payment->paid_at) {
-            return back()->withErrors(['citation_id' => 'This citation has already been paid.']);
-        }
+        if ($category === 'clamping') {
+            $clamping = ClampingRecord::with(['officer', 'citation'])->findOrFail($request->clamping_id);
 
-        // If a pending/abandoned online payment exists, let the manual payment replace it.
-        if ($citation->payment && !$citation->payment->paid_at) {
-            $citation->payment->delete();
-        }
-
-        if (! $citation->isPayable()) {
-            return back()->withErrors(['citation_id' => 'This citation is not eligible for payment.']);
-        }
-
-        $payment = DB::transaction(function () use ($request, $citation, $numberService) {
-            $payment = Payment::create([
-                'receipt_number' => $numberService->receiptNumber(),
-                'citation_id' => $citation->id,
-                'cashier_id' => auth()->id(),
-                'amount' => $citation->penalty_amount,
-                'payment_method' => $request->payment_method,
-                'reference_number' => $request->reference_number,
-                'notes' => $request->notes,
-                'paid_at' => now(),
-            ]);
-
-            $citation->update(['status' => CitationStatus::Paid]);
-
-            Archive::create([
-                'archivable_type' => Citation::class,
-                'archivable_id' => $citation->id,
-                'archived_by' => auth()->id(),
-                'archived_at' => now(),
-                'reason' => 'Citation paid - Receipt: '.($payment->receipt_number ?? 'N/A'),
-                'snapshot' => $citation->refresh()->toArray(),
-            ]);
-
-            if ($citation->issued_by) {
-                $enforcer = User::find($citation->issued_by);
-                if ($enforcer) {
-                    SystemNotification::notify(
-                        $enforcer,
-                        'payment_received',
-                        'Citation Payment Received',
-                        "Citation {$citation->citation_number} has been paid (₱".number_format($payment->amount, 2).").",
-                        ['citation_number' => $citation->citation_number, 'payment_id' => $payment->id]
-                    );
-                }
+            if ($clamping->status === ClampingStatus::Released) {
+                return back()->withErrors(['clamping_id' => 'This vehicle has already been released.'])->withInput();
             }
 
-            return $payment;
-        });
+            if ($clamping->payments()->whereNotNull('paid_at')->exists()) {
+                return back()->withErrors(['clamping_id' => 'This clamping notice has already been paid.'])->withInput();
+            }
+
+            $payment = $recorder->recordClamping($clamping, $data->toArray(), $cashierId);
+        } elseif ($category === 'impounding') {
+            $impounding = ImpoundingRecord::with(['officer', 'citation'])->findOrFail($request->impounding_id);
+
+            if ($impounding->status === ImpoundingStatus::Released) {
+                return back()->withErrors(['impounding_id' => 'This vehicle has already been released.'])->withInput();
+            }
+
+            if ($impounding->payments()->whereNotNull('paid_at')->exists()) {
+                return back()->withErrors(['impounding_id' => 'This impounding notice has already been paid.'])->withInput();
+            }
+
+            $payment = $recorder->recordImpounding($impounding, $data->toArray(), $cashierId);
+        } else {
+            $citation = Citation::with('payment')->findOrFail($request->citation_id);
+
+            if ($citation->payment && $citation->payment->paid_at) {
+                return back()->withErrors(['citation_id' => 'This citation has already been paid.'])->withInput();
+            }
+
+            // A pending/abandoned online payment may be replaced by this manual payment.
+            if ($citation->payment) {
+                $citation->payment->delete();
+            }
+
+            if (! $citation->isPayable()) {
+                return back()->withErrors(['citation_id' => 'This citation is not eligible for payment.'])->withInput();
+            }
+
+            $payment = $recorder->recordCitation($citation, [
+                ...$data->toArray(),
+                'amount' => $citation->penalty_amount,
+            ], $cashierId);
+        }
 
         return redirect()->route('payments.show', $payment)->with('success', 'Payment recorded successfully.');
     }
 
-    public function edit(Payment $payment): View
+public function edit(Payment $payment): View
     {
         $this->authorize('update', $payment);
 

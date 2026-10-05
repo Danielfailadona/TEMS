@@ -122,7 +122,11 @@
         <tr><td class="label">Admin Fee</td><td class="value">₱{{ number_format($impounding->admin_fee, 2) }}</td></tr>
         <tr><td class="label"><strong>Total Fees</strong></td><td class="value"><strong>₱{{ number_format($impounding->getTotalFees(), 2) }}</strong></td></tr>
 
-        @if ($impounding->citation?->payment && $impounding->citation->paid_at)
+        @php($ownPayment = $impounding->payments->firstWhere('paid_at'))
+        @if ($ownPayment)
+            <tr><td class="label">Payment Paid</td><td class="value">Yes (₱{{ number_format($ownPayment->amount, 2) }})</td></tr>
+            <tr><td class="label">Receipt #</td><td class="value">{{ $ownPayment->receipt_number }}</td></tr>
+        @elseif ($impounding->citation?->payment && $impounding->citation->paid_at)
             <tr><td class="label">Citation Paid</td><td class="value">Yes (₱{{ number_format($impounding->citation->payment->amount, 2) }})</td></tr>
             <tr><td class="label">Citation Receipt</td><td class="value">{{ $impounding->citation->payment->receipt_number }}</td></tr>
         @endif

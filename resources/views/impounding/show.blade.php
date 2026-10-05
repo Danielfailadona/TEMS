@@ -143,19 +143,31 @@
             </div>
         </div>
 
-        @if ($impounding->citation?->payment)
+        @php($ownPayment = $impounding->payments->firstWhere('paid_at'))
+        @if ($ownPayment || $impounding->citation?->payment)
+            @php($payment = $ownPayment ?? $impounding->citation->payment)
             <div class="card stat-card mb-4">
-                <div class="card-header bg-white"><strong>Citation Payment Record</strong></div>
+                <div class="card-header bg-white">
+                    <strong>{{ $ownPayment ? 'Payment Record' : 'Citation Payment Record' }}</strong>
+                </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-6"><div class="text-muted small d-block">Receipt #</div>{{ $impounding->citation->payment->receipt_number }}</div>
-                        <div class="col-md-6"><div class="text-muted small d-block">Amount Paid</div>₱{{ number_format($impounding->citation->payment->amount, 2) }}</div>
-                        <div class="col-md-6"><div class="text-muted small d-block">Method</div>{{ $impounding->citation->payment->payment_method->label() }}</div>
-                        <div class="col-md-6"><div class="text-muted small d-block">Paid At</div>{{ $impounding->citation->payment->paid_at?->format('M d, Y h:i A') ?? '—' }}</div>
-                        <div class="col-md-6"><div class="text-muted small d-block">Cashier</div>{{ $impounding->citation->payment->cashier->name ?? 'Online Payment' }}</div>
-                        @if ($impounding->citation->payment->reference_number)
-                            <div class="col-md-6"><div class="text-muted small d-block">Reference</div>{{ $impounding->citation->payment->reference_number }}</div>
+                        <div class="col-md-6"><div class="text-muted small d-block">Receipt #</div>{{ $payment->receipt_number }}</div>
+                        <div class="col-md-6"><div class="text-muted small d-block">Amount Paid</div>₱{{ number_format($payment->amount, 2) }}</div>
+                        <div class="col-md-6"><div class="text-muted small d-block">Method</div>{{ $payment->payment_method->label() }}</div>
+                        <div class="col-md-6"><div class="text-muted small d-block">Paid At</div>{{ $payment->paid_at?->format('M d, Y h:i A') ?? '—' }}</div>
+                        <div class="col-md-6"><div class="text-muted small d-block">Cashier</div>{{ $payment->cashier->name ?? 'Online Payment' }}</div>
+                        @if ($payment->reference_number)
+                            <div class="col-md-6"><div class="text-muted small d-block">Reference</div>{{ $payment->reference_number }}</div>
                         @endif
+                        <div class="col-12">
+                            <a href="{{ route('payments.show', $payment) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye me-1"></i>View Receipt
+                            </a>
+                            <a href="{{ route('payments.print', $payment) }}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-printer me-1"></i>Print
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

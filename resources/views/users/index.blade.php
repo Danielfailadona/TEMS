@@ -122,57 +122,7 @@
 </form>
 
 <div id="users-card">
-    {{-- Batch Actions Toolbar (shown when checkboxes selected) --}}
-    <div class="mb-3 d-none" id="batch-actions-toolbar" style="position: sticky; top: 0; z-index: 1020; background: rgba(255,255,255,0.98); padding: 0.6rem 1rem; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 4px 14px rgba(0,0,0,0.07);">
-        <div class="d-flex flex-wrap align-items-center gap-2">
-            <span class="badge bg-primary rounded-pill px-3 py-2" id="batch-selected-count">0 selected</span>
-
-            {{-- Group 1: Pending Actions (Approve/Reject) --}}
-            <div class="d-flex align-items-center gap-1 bg-light border rounded-3 p-1" id="batch-pending-group">
-                {{-- Approve --}}
-                <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-approve-form">
-                    @csrf
-                    <input type="hidden" name="action" value="approve">
-                    <input type="hidden" name="user_ids" id="batch-approve-ids">
-                    <button type="submit" class="btn btn-success btn-sm rounded-2" disabled id="batch-approve-btn" data-bs-toggle="tooltip" title="Approve selected pending users">
-                        <i class="bi bi-check-lg me-1"></i> Approve
-                    </button>
-                </form>
-
-                {{-- Reject --}}
-                <button type="button" class="btn btn-danger btn-sm rounded-2" disabled id="batch-reject-btn" data-bs-toggle="modal" data-bs-target="#batchRejectModal" title="Reject selected pending users">
-                    <i class="bi bi-x-lg me-1"></i> Reject
-                </button>
-            </div>
-
-            {{-- Group 2: Status Actions (Suspend/Unsuspend) --}}
-            <div class="d-flex align-items-center gap-1 bg-light border rounded-3 p-1" id="batch-status-group">
-                {{-- Suspend --}}
-                <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-suspend-form">
-                    @csrf
-                    <input type="hidden" name="action" value="suspend">
-                    <input type="hidden" name="user_ids" id="batch-suspend-ids">
-                    <button type="submit" class="btn btn-warning btn-sm rounded-2" disabled id="batch-suspend-btn" data-bs-toggle="tooltip" title="Suspend selected approved or pending users">
-                        <i class="bi bi-lock me-1"></i> Suspend
-                    </button>
-                </form>
-
-                {{-- Unsuspend --}}
-                <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-unsuspend-form">
-                    @csrf
-                    <input type="hidden" name="action" value="unsuspend">
-                    <input type="hidden" name="user_ids" id="batch-unsuspend-ids">
-                    <button type="submit" class="btn btn-success btn-sm rounded-2" disabled id="batch-unsuspend-btn" data-bs-toggle="tooltip" title="Unsuspend selected suspended users">
-                        <i class="bi bi-unlock me-1"></i> Unsuspend
-                    </button>
-                </form>
-            </div>
-
-            <button type="button" class="btn btn-sm btn-link text-muted ms-auto px-2" id="batch-deselect-btn">
-                <i class="bi bi-x-circle me-1"></i>Deselect
-            </button>
-        </div>
-    </div>
+  @include('users.partials.batch-toolbar')
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0" id="users-table">
       <thead class="table-light">
@@ -517,6 +467,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 // Re-initialize tooltips for new toolbar buttons
                 initTooltips();
+                // Selection is gone after the refresh; keep the toolbar in sync
+                updateBatchToolbar();
             })
             .catch(() => { window.location.href = url.toString(); });
     }
@@ -640,15 +592,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }).catch(() => { cb.checked = !isActive; });
     });
 
-    // Handle batch action form submissions
-    document.getElementById('batch-approve-form')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    // Handle batch action form submissions (delegated so it survives AJAX replacement)
+    const busyState = {
+        approve: { label: 'Approving...', html: '<span class="spinner-border spinner-border-sm me-1"></span>Approving...', reset: '<i class="bi bi-check-lg me-1"></i> Approve', fail: 'Failed to approve users' },
+        suspend: { label: 'Suspending...', html: '<span class="spinner-border spinner-border-sm me-1"></span>Suspending...', reset: '<i class="bi bi-lock me-1"></i> Suspend', fail: 'Failed to suspend users' },
+        unsuspend: { label: 'Unsuspending...', html: '<span class="spinner-border spinner-border-sm me-1"></span>Unsuspending...', reset: '<i class="bi bi-unlock me-1"></i> Unsuspend', fail: 'Failed to unsuspend users' },
+    };
+
+    document.addEventListener('submit', async (e) => {
         const form = e.target;
-        const fd = new FormData(form);
-        const btn = document.getElementById('batch-approve-btn');
+        const action = form.id?.replace('batch-', '').replace('-form', '');
+        if (!form.id || !busyState[action]) return;
+
+        e.preventDefault();
+        const btn = form.querySelector('button[type="submit"]');
+        const state = busyState[action];
+        const originalHtml = btn.innerHTML;
+
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Approving...';
-        
+        btn.innerHTML = state.html;
+
         try {
             const res = await fetch(form.action, {
                 method: 'POST',
@@ -657,59 +620,21 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             if (res.ok) {
                 window.location.reload();
-            } else {
-                alert('Failed to approve users');
+                return;
             }
+            alert(state.fail);
         } catch (err) {
             alert('Error: ' + err.message);
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Approve';
+            btn.innerHTML = originalHtml || state.reset;
         }
     });
 
-    document.getElementById('batch-suspend-form')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const form = e.target;
-        const btn = document.getElementById('batch-suspend-btn');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Suspending...';
-        
-        try {
-            const res = await fetch(form.action, {
-                method: 'POST',
-                body: new FormData(form),
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            });
-            if (res.ok) window.location.reload();
-            else alert('Failed to suspend users');
-        } catch (err) { alert('Error: ' + err.message); }
-        finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-lock me-1"></i> Suspend'; }
-    });
-
-    document.getElementById('batch-unsuspend-form')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const form = e.target;
-        const btn = document.getElementById('batch-unsuspend-btn');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Unsuspending...';
-        
-        try {
-            const res = await fetch(form.action, {
-                method: 'POST',
-                body: new FormData(form),
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            });
-            if (res.ok) window.location.reload();
-            else alert('Failed to unsuspend users');
-        } catch (err) { alert('Error: ' + err.message); }
-        finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-unlock me-1"></i> Unsuspend'; }
-    });
-
-    // Update batch reject modal with selected count
-    const batchRejectBtn = document.getElementById('batch-reject-btn');
-    if (batchRejectBtn) {
-        batchRejectBtn.addEventListener('click', () => {
+    // Update batch reject modal with selected count (delegated)
+    document.addEventListener('click', (e) => {
+        const rejectBtn = e.target.closest('#batch-reject-btn');
+        if (rejectBtn) {
             const checkedRows = document.querySelectorAll('#users-table .row-checkbox:checked');
             const pendingCount = Array.from(checkedRows).filter(cb => {
                 const statusCell = cb.closest('tr').querySelector('td:nth-child(4) .badge');
@@ -719,27 +644,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (el.batchRejectCountEl) {
                 el.batchRejectCountEl.textContent = `${pendingCount} pending user${pendingCount !== 1 ? 's' : ''} will be rejected`;
             }
-        });
-    }
-    
-    // Select all checkbox
-    const selectAllCb = document.getElementById('select-all');
-    if (selectAllCb) {
-        selectAllCb.addEventListener('change', () => {
-            document.querySelectorAll('#users-table .row-checkbox').forEach(cb => cb.checked = selectAllCb.checked);
-            updateBatchToolbar();
-        });
-    }
+        }
 
-    // Deselect all (closes toolbar)
-    const deselectBtn = document.getElementById('batch-deselect-btn');
-    if (deselectBtn) {
-        deselectBtn.addEventListener('click', () => {
+        // Deselect all (closes toolbar)
+        if (e.target.closest('#batch-deselect-btn')) {
             document.querySelectorAll('#users-table .row-checkbox').forEach(cb => cb.checked = false);
-            if (selectAllCb) selectAllCb.checked = false;
+            const selectAll = document.getElementById('select-all');
+            if (selectAll) selectAll.checked = false;
             updateBatchToolbar();
-        });
-    }
+        }
+    });
 
     // Status tab clicks
     document.querySelectorAll('#status-tabs .user-mgmt-tab').forEach(tab => {

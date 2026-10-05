@@ -9,9 +9,9 @@ use App\Models\Archive;
 use App\Models\Citation;
 use App\Models\ClampingRecord;
 use App\Models\ImpoundingRecord;
-use App\Models\Payment;
 use App\Models\VehicleRelease;
 use App\Services\CitationNumberService;
+use App\Services\PaymentRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -161,6 +161,7 @@ class ImpoundingController extends Controller
             'officer',
             'citation.violationType',
             'citation.payment.cashier',
+            'payments.cashier',
             'release.releasedBy',
             'clampingRecord',
         ]);
@@ -177,32 +178,10 @@ class ImpoundingController extends Controller
             'reference_number' => 'nullable|string|max:255',
         ]);
 
-        DB::transaction(function () use ($impounding, $validated) {
-            $citation = $impounding->citation;
-
-            if (! $impounding->payments()->whereNotNull('paid_at')->exists()) {
-                Payment::create([
-                    'receipt_number' => app(CitationNumberService::class)->receiptNumber(),
-                    'citation_id' => ($citation && ! $citation->payment) ? $citation->id : null,
-                    'payable_type' => ImpoundingRecord::class,
-                    'payable_id' => $impounding->id,
-                    'cashier_id' => auth()->id(),
-                    'amount' => $impounding->getTotalFees(),
-                    'payment_method' => $validated['payment_method'],
-                    'reference_number' => $validated['reference_number'],
-                    'paid_at' => now(),
-                ]);
-
-                if ($citation && ! $citation->payment) {
-                    $citation->update(['status' => CitationStatus::Paid]);
-                }
-            }
-
-            $impounding->update([
-                'status' => ImpoundingStatus::Paid,
-                'paid_at' => now(),
-            ]);
-        });
+        app(PaymentRecorder::class)->recordImpounding($impounding, [
+                'payment_method' => $validated['payment_method'],
+                'reference_number' => $validated['reference_number'],
+            ], auth()->id());
 
         return redirect()->route('impounding.show', $impounding)
             ->with('success', 'Payment recorded. Total: ₱' . number_format($impounding->fresh()->getTotalFees(), 2));
@@ -228,6 +207,7 @@ class ImpoundingController extends Controller
             'officer',
             'citation.violationType',
             'citation.payment.cashier',
+            'payments.cashier',
             'release.releasedBy',
         ]);
 

@@ -9,10 +9,10 @@ use App\Models\Archive;
 use App\Models\Citation;
 use App\Models\ClampingRecord;
 use App\Models\ClampingRequest as CitizenClampingRequest;
-use App\Models\Payment;
 use App\Models\User;
 use App\Models\VehicleRelease;
 use App\Services\CitationNumberService;
+use App\Services\PaymentRecorder;
 use App\Enums\Role;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -142,7 +142,7 @@ class ClampingController extends Controller
     {
         $this->authorize('view', $clamping);
 
-        $clamping->load(['officer', 'citation', 'release.releasedBy']);
+        $clamping->load(['officer', 'citation', 'payments.cashier', 'release.releasedBy']);
 
         return view('clamping.show', compact('clamping'));
     }
@@ -157,44 +157,11 @@ class ClampingController extends Controller
             'reference_number' => 'nullable|string|max:255',
         ]);
 
-        DB::transaction(function () use ($clamping, $validated) {
-            $citation = $clamping->citation;
-
-            if (! $clamping->payments()->whereNotNull('paid_at')->exists()) {
-                Payment::create([
-                    'receipt_number' => app(CitationNumberService::class)->receiptNumber(),
-                    'citation_id' => ($citation && ! $citation->payment) ? $citation->id : null,
-                    'payable_type' => ClampingRecord::class,
-                    'payable_id' => $clamping->id,
-                    'cashier_id' => auth()->id(),
-                    'amount' => $validated['clamping_fee'],
-                    'payment_method' => $validated['payment_method'],
-                    'reference_number' => $validated['reference_number'] ?? null,
-                    'paid_at' => now(),
-                ]);
-
-                if ($citation && ! $citation->payment) {
-                    $citation->update(['status' => CitationStatus::Paid]);
-                }
-            }
-
-            $clamping->update([
-                'status' => ClampingStatus::Paid,
-                'clamping_fee' => $validated['clamping_fee'],
-                'payment_method' => $validated['payment_method'],
-                'reference_number' => $validated['reference_number'] ?? null,
-                'paid_at' => now(),
-            ]);
-
-            Archive::create([
-                'archivable_type' => ClampingRecord::class,
-                'archivable_id' => $clamping->id,
-                'archived_by' => auth()->id(),
-                'archived_at' => now(),
-                'reason' => 'Clamp payment recorded (Notice: '.$clamping->notice_number.')',
-                'snapshot' => $clamping->fresh()->toArray(),
-            ]);
-        });
+        app(PaymentRecorder::class)->recordClamping($clamping, [
+            'amount' => $validated['clamping_fee'],
+            'payment_method' => $validated['payment_method'],
+            'reference_number' => $validated['reference_number'] ?? null,
+        ], auth()->id());
 
         return redirect()->route('clamping.show', $clamping)
             ->with('success', 'Payment recorded. Total: ₱'.number_format($clamping->fresh()->clamping_fee, 2));

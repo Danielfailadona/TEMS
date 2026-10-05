@@ -40,6 +40,21 @@
                         <div class="col-md-6"><strong class="text-muted small d-block">Paid At</strong>{{ $clamping->paid_at->format('M d, Y h:i A') }}</div>
                         <div class="col-md-6"><strong class="text-muted small d-block">Method</strong>{{ ucwords(str_replace('_', ' ', $clamping->payment_method ?? '—')) }}</div>
                         <div class="col-md-6"><strong class="text-muted small d-block">Reference</strong>{{ $clamping->reference_number ?? '—' }}</div>
+                        @php($clampingPayment = $clamping->payments->firstWhere('paid_at'))
+                        @if ($clampingPayment)
+                            <div class="col-12">
+                                <strong class="text-muted small d-block">Receipt</strong>
+                                <span class="d-flex flex-wrap align-items-center gap-2">
+                                    <span>{{ $clampingPayment->receipt_number }}</span>
+                                    <a href="{{ route('payments.show', $clampingPayment) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye me-1"></i>View
+                                    </a>
+                                    <a href="{{ route('payments.print', $clampingPayment) }}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-printer me-1"></i>Print
+                                    </a>
+                                </span>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

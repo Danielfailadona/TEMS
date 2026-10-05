@@ -38,6 +38,146 @@
     </div>
 </div>
 
+{{-- Receipts / Awaiting Payment toggle --}}
+<ul class="nav nav-pills mb-4">
+    <li class="nav-item">
+        <a class="nav-link {{ $viewMode === 'receipts' ? 'active' : '' }}" href="{{ route('payments.index', array_filter(request()->only(['search','payment_method','category','date_from','date_to','online']))) }}">
+            <i class="bi bi-receipt me-1"></i>Receipts
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ $viewMode === 'payables' ? 'active' : '' }}" href="{{ route('payments.index', ['view' => 'payables']) }}">
+            <i class="bi bi-hourglass-split me-1"></i>Awaiting Payment
+        </a>
+    </li>
+</ul>
+
+@if ($viewMode === 'payables')
+    {{-- Category pills with outstanding counts --}}
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <a href="{{ route('payments.index', ['view' => 'payables', 'category' => 'citation']) }}"
+           class="btn btn-sm {{ $payableCategory === 'citation' ? 'btn-primary' : 'btn-outline-secondary' }}">
+            Citations <span class="badge bg-light text-dark ms-1">{{ $payableCounts['citation'] }}</span>
+        </a>
+        <a href="{{ route('payments.index', ['view' => 'payables', 'category' => 'clamping']) }}"
+           class="btn btn-sm {{ $payableCategory === 'clamping' ? 'btn-primary' : 'btn-outline-secondary' }}">
+            Clamping <span class="badge bg-light text-dark ms-1">{{ $payableCounts['clamping'] }}</span>
+        </a>
+        <a href="{{ route('payments.index', ['view' => 'payables', 'category' => 'impounding']) }}"
+           class="btn btn-sm {{ $payableCategory === 'impounding' ? 'btn-primary' : 'btn-outline-secondary' }}">
+            Impounding <span class="badge bg-light text-dark ms-1">{{ $payableCounts['impounding'] }}</span>
+        </a>
+    </div>
+
+    {{-- Search --}}
+    <div class="card stat-card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <input type="hidden" name="view" value="payables">
+                <input type="hidden" name="category" value="{{ $payableCategory }}">
+                <div class="col-12 col-md-9">
+                    <label class="form-label visually-hidden">Search</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="search" name="search" class="form-control" placeholder="Search notice #, plate, {{ $payableCategory === 'citation' ? 'or driver' : 'or officer' }}" value="{{ request('search') }}">
+                    </div>
+                </div>
+                <div class="col-12 col-md-auto d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i>Apply</button>
+                    @if (request('search'))
+                        <a href="{{ route('payments.index', ['view' => 'payables', 'category' => $payableCategory]) }}" class="btn btn-outline-secondary">Reset</a>
+                    @endif
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Awaiting ticket cards --}}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+        @forelse ($payables as $item)
+            <div class="col">
+                <div class="card stat-card payment-card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                        <div class="min-width-0">
+                            <strong class="small d-block text-truncate">
+                                {{ $item->citation_number ?? $item->notice_number }}
+                            </strong>
+                            <span class="payment-status-badge {{ $item->status->badgeClass() }}">{{ $item->status->label() }}</span>
+                        </div>
+                        <span class="payment-status-badge bg-primary">
+                            {{ $payableCategory === 'citation' ? 'Citation' : 'Notice' }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2 small">
+                            <div class="col-6"><strong class="text-muted d-block">Vehicle</strong>{{ $item->vehicle_plate ?: '—' }}</div>
+                            <div class="col-6"><strong class="text-muted d-block">{{ $payableCategory === 'citation' ? 'Driver' : 'Officer' }}</strong>
+                                {{ $payableCategory === 'citation' ? ($item->driver_name ?: '—') : ($item->officer?->name ?: '—') }}
+                            </div>
+                            <div class="col-12">
+                                <strong class="text-muted d-block">{{ $payableCategory === 'citation' ? 'Penalty' : 'Amount Due' }}</strong>
+                                @php
+                                    $due = match ($payableCategory) {
+                                        'clamping' => $item->clamping_fee ?? $item->citation?->penalty_amount ?? 0,
+                                        'impounding' => $item->getTotalFees(),
+                                        default => $item->penalty_amount,
+                                    };
+                                @endphp
+                                ₱{{ number_format((float) $due, 2) }}
+                            </div>
+                            <div class="col-12"><strong class="text-muted d-block">{{ $payableCategory === 'citation' ? 'Issued' : 'Recorded' }}</strong>
+                                {{ ($item->issued_at ?? $item->clamped_at ?? $item->impounded_at)?->format('M d, Y') ?? '—' }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white d-flex justify-content-between align-items-center gap-2">
+                        @php
+                            $detailRoute = match ($payableCategory) {
+                                'clamping' => route('clamping.show', $item),
+                                'impounding' => route('impounding.show', $item),
+                                default => route('citations.show', $item),
+                            };
+                            $payRoute = route('payments.create', array_filter([
+                                'category' => $payableCategory,
+                                $payableCategory === 'citation' ? 'citation_id' : $payableCategory.'_id' => $item->id,
+                            ]));
+                        @endphp
+                        <a href="{{ $detailRoute }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-eye me-1"></i>View
+                        </a>
+                        @can('create', App\Models\Payment::class)
+                            <a href="{{ $payRoute }}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-cash-coin me-1"></i>Collect
+                            </a>
+                        @endcan
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="col-12">
+                <div class="card stat-card text-center py-5">
+                    <div class="card-body">
+                        <i class="bi bi-check2-circle fs-1 text-success mb-3 d-block"></i>
+                        <h5 class="mb-2">Nothing awaiting payment</h5>
+                        <p class="text-muted small mb-0">
+                            @if (request('search'))
+                                Try adjusting your search.
+                            @else
+                                All {{ ucfirst($payableCategory) }} tickets have been paid.
+                            @endif
+                        </p>
+                    </div>
+                </div>
+            </div>
+        @endforelse
+    </div>
+
+    @if ($payables->hasPages())
+        <div class="d-flex justify-content-center mt-4">
+            {{ $payables->links() }}
+        </div>
+    @endif
+@else
 {{-- Search & Filter Bar --}}
 <div class="card stat-card mb-4">
     <div class="card-body">
@@ -170,5 +310,6 @@
     <div class="d-flex justify-content-center mt-4">
         {{ $payments->withQueryString()->links() }}
     </div>
+@endif
 @endif
 @endsection
