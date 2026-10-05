@@ -113,12 +113,8 @@ class PaymentController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
-        $pendingCounts = $this->pendingCounts();
-
         return view('payments.index', [
             'grid' => $grid,
-            'pendingCounts' => $pendingCounts,
-            'totalPending' => array_sum($pendingCounts),
         ]);
     }
 
@@ -181,15 +177,6 @@ class PaymentController extends Controller
         return $rows;
     }
 
-    protected function pendingCounts(): array
-    {
-        return [
-            'citation' => $this->awaitingCitationsQuery()->count(),
-            'clamping' => $this->awaitingClampingQuery()->count(),
-            'impounding' => $this->awaitingImpoundingQuery()->count(),
-        ];
-    }
-
     protected function awaitingCitationsQuery()
     {
         return Citation::query()
@@ -215,81 +202,135 @@ class PaymentController extends Controller
     {
         $this->authorize('create', Payment::class);
 
-        $category = in_array($request->input('category'), ['citation', 'clamping', 'impounding'], true)
+        $filter = in_array($request->input('category'), ['citation', 'clamping', 'impounding'], true)
             ? $request->input('category')
-            : 'citation';
+            : null;
         $lookup = trim((string) $request->input('lookup', ''));
 
         $record = null;
         $suggestions = collect();
+        $category = $filter ?? 'citation'; // default for form when no filter
 
-        if ($category === 'clamping') {
-            if ($request->filled('clamping_id')) {
-                $record = ClampingRecord::with(['officer', 'citation'])->find($request->clamping_id);
-            } elseif ($lookup !== '') {
-                $record = ClampingRecord::with(['officer', 'citation'])
-                    ->where(fn ($q) => $q->whereRaw('LOWER(notice_number) LIKE ?', ['%'.mb_strtolower($lookup).'%'])
-                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($lookup).'%']))
-                    ->orderByRaw('notice_number = ? desc', [$lookup])
-                    ->latest('clamped_at')
-                    ->first();
-            }
+        // If a specific record ID is provided, it determines the category
+        if ($request->filled('citation_id') && ($filter === null || $filter === 'citation')) {
+            $record = Citation::with(['violationType', 'payment'])->find($request->citation_id);
+            $category = 'citation';
+        } elseif ($request->filled('clamping_id') && ($filter === null || $filter === 'clamping')) {
+            $record = ClampingRecord::with(['officer', 'citation'])->find($request->clamping_id);
+            $category = 'clamping';
+        } elseif ($request->filled('impounding_id') && ($filter === null || $filter === 'impounding')) {
+            $record = ImpoundingRecord::with(['officer', 'citation'])->find($request->impounding_id);
+            $category = 'impounding';
+        } elseif ($lookup !== '') {
+            // Search across all categories (or filtered) for exact match first, then best match
+            $term = '%'.mb_strtolower($lookup).'%';
 
-            if (! $record) {
-                $suggestions = $this->awaitingClampingQuery()->with(['officer'])
-                    ->when($lookup !== '', fn ($q) => $q->where(fn ($inner) => $inner
-                        ->whereRaw('LOWER(notice_number) LIKE ?', ['%'.mb_strtolower($lookup).'%'])
-                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($lookup).'%'])))
-                    ->latest('clamped_at')
-                    ->limit(10)
-                    ->get();
-            }
-        } elseif ($category === 'impounding') {
-            if ($request->filled('impounding_id')) {
-                $record = ImpoundingRecord::with(['officer', 'citation'])->find($request->impounding_id);
-            } elseif ($lookup !== '') {
-                $record = ImpoundingRecord::with(['officer', 'citation'])
-                    ->where(fn ($q) => $q->whereRaw('LOWER(notice_number) LIKE ?', ['%'.mb_strtolower($lookup).'%'])
-                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($lookup).'%']))
-                    ->orderByRaw('notice_number = ? desc', [$lookup])
-                    ->latest('impounded_at')
-                    ->first();
-            }
+            $candidates = collect();
 
-            if (! $record) {
-                $suggestions = $this->awaitingImpoundingQuery()->with(['officer'])
-                    ->when($lookup !== '', fn ($q) => $q->where(fn ($inner) => $inner
-                        ->whereRaw('LOWER(notice_number) LIKE ?', ['%'.mb_strtolower($lookup).'%'])
-                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($lookup).'%'])))
-                    ->latest('impounded_at')
-                    ->limit(10)
-                    ->get();
-            }
-        } else {
-            if ($request->filled('citation_id')) {
-                $record = Citation::with(['violationType', 'payment'])->find($request->citation_id);
-            } elseif ($lookup !== '') {
-                $record = Citation::with(['violationType', 'payment'])
-                    ->where(fn ($q) => $q->whereRaw('LOWER(citation_number) LIKE ?', ['%'.mb_strtolower($lookup).'%'])
-                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($lookup).'%']))
+            if ($filter === null || $filter === 'citation') {
+                $c = Citation::with(['violationType', 'payment'])
+                    ->where(fn ($q) => $q->whereRaw('LOWER(citation_number) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', [$term]))
                     ->orderByRaw('citation_number = ? desc', [$lookup])
                     ->latest('issued_at')
                     ->first();
+                if ($c) {
+                    $candidates->push(['record' => $c, 'category' => 'citation', 'priority' => 1]);
+                }
             }
 
-            if (! $record) {
-                $suggestions = $this->awaitingCitationsQuery()->with('violationType')
-                    ->when($lookup !== '', fn ($q) => $q->where(fn ($inner) => $inner
-                        ->whereRaw('LOWER(citation_number) LIKE ?', ['%'.mb_strtolower($lookup).'%'])
-                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', ['%'.mb_strtolower($lookup).'%'])))
-                    ->latest('issued_at')
-                    ->limit(10)
-                    ->get();
+            if ($filter === null || $filter === 'clamping') {
+                $c = ClampingRecord::with(['officer', 'citation'])
+                    ->where(fn ($q) => $q->whereRaw('LOWER(notice_number) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', [$term]))
+                    ->orderByRaw('notice_number = ? desc', [$lookup])
+                    ->latest('clamped_at')
+                    ->first();
+                if ($c) {
+                    $candidates->push(['record' => $c, 'category' => 'clamping', 'priority' => 1]);
+                }
+            }
+
+            if ($filter === null || $filter === 'impounding') {
+                $c = ImpoundingRecord::with(['officer', 'citation'])
+                    ->where(fn ($q) => $q->whereRaw('LOWER(notice_number) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', [$term]))
+                    ->orderByRaw('notice_number = ? desc', [$lookup])
+                    ->latest('impounded_at')
+                    ->first();
+                if ($c) {
+                    $candidates->push(['record' => $c, 'category' => 'impounding', 'priority' => 1]);
+                }
+            }
+
+            if ($candidates->isNotEmpty()) {
+                $best = $candidates->sortBy('priority')->first();
+                $record = $best['record'];
+                $category = $best['category'];
+            }
+        }
+
+        // Build suggestions when no exact record found
+        if (! $record) {
+            $suggestions = collect();
+
+            if ($filter === null || $filter === 'citation') {
+                $q = $this->awaitingCitationsQuery()->with('violationType');
+
+                if ($lookup !== '') {
+                    $term = '%'.mb_strtolower($lookup).'%';
+                    $q->where(fn ($w) => $w->whereRaw('LOWER(citation_number) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(driver_name) LIKE ?', [$term]));
+                }
+
+                $suggestions = $suggestions->concat($q->get()->map(fn ($c) => [
+                    'category' => 'citation',
+                    'record' => $c,
+                ]));
+            }
+
+            if ($filter === null || $filter === 'clamping') {
+                $q = $this->awaitingClampingQuery()->with(['officer', 'citation']);
+
+                if ($lookup !== '') {
+                    $term = '%'.mb_strtolower($lookup).'%';
+                    $q->where(fn ($w) => $w->whereRaw('LOWER(notice_number) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', [$term])
+                        ->orWhereHas('officer', fn ($o) => $o->whereRaw('LOWER(name) LIKE ?', [$term])));
+                }
+
+                $suggestions = $suggestions->concat($q->get()->map(fn ($c) => [
+                    'category' => 'clamping',
+                    'record' => $c,
+                ]));
+            }
+
+            if ($filter === null || $filter === 'impounding') {
+                $q = $this->awaitingImpoundingQuery()->with(['officer', 'citation']);
+
+                if ($lookup !== '') {
+                    $term = '%'.mb_strtolower($lookup).'%';
+                    $q->where(fn ($w) => $w->whereRaw('LOWER(notice_number) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', [$term])
+                        ->orWhereHas('officer', fn ($o) => $o->whereRaw('LOWER(name) LIKE ?', [$term])));
+                }
+
+                $suggestions = $suggestions->concat($q->get()->map(fn ($c) => [
+                    'category' => 'impounding',
+                    'record' => $c,
+                ]));
+            }
+
+            // Sort by date descending (newest first) when filter is null
+            if ($filter === null) {
+                $suggestions = $suggestions->sortByDesc(fn ($s) => $s['record']->{$s['category'] === 'citation' ? 'issued_at' : ($s['category'] === 'clamping' ? 'clamped_at' : 'impounded_at')} ?? $s['record']->created_at)->values();
             }
         }
 
         return view('payments.create', [
             'category' => $category,
+            'filter' => $filter,
             'record' => $record,
             'paymentMethods' => PaymentMethod::cases(),
             'suggestions' => $suggestions,

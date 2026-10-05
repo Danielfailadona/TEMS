@@ -38,21 +38,6 @@
     </div>
 </div>
 
-<div class="d-flex flex-wrap gap-2 mb-3">
-    <span class="btn btn-sm btn-outline-secondary disabled">
-        Pending <span class="badge bg-secondary text-white ms-1">{{ $totalPending }}</span>
-    </span>
-    <span class="btn btn-sm btn-outline-secondary disabled">
-        Citations <span class="badge bg-light text-dark ms-1">{{ $pendingCounts['citation'] }}</span>
-    </span>
-    <span class="btn btn-sm btn-outline-secondary disabled">
-        Clamping <span class="badge bg-light text-dark ms-1">{{ $pendingCounts['clamping'] }}</span>
-    </span>
-    <span class="btn btn-sm btn-outline-secondary disabled">
-        Impounding <span class="badge bg-light text-dark ms-1">{{ $pendingCounts['impounding'] }}</span>
-    </span>
-</div>
-
 <div class="card stat-card mb-4">
     <div class="card-body">
         <form method="GET" id="filterForm" class="row g-3">

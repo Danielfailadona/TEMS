@@ -9,32 +9,24 @@
         <h1 class="h3 mb-1">Record Payment</h1>
         <p class="text-muted mb-0">Collect payment for citations, clamping, and impounding tickets</p>
     </div>
-    <a href="{{ route('payments.index', ['view' => 'payables']) }}" class="btn btn-outline-secondary">
+    <a href="{{ route('payments.index') }}" class="btn btn-outline-secondary">
         <i class="bi bi-hourglass-split me-1"></i>Awaiting Payment
     </a>
 </div>
 
-{{-- Category selector --}}
-<div class="card stat-card mb-4"><div class="card-body">
-    <form method="GET" action="{{ route('payments.create') }}">
-        <label class="form-label">What are you collecting payment for?</label>
-        <div class="btn-group flex-wrap" role="group">
-            @foreach (['citation' => 'Citation', 'clamping' => 'Clamping', 'impounding' => 'Impounding'] as $key => $label)
-                <input type="radio" class="btn-check" name="category" id="cat-{{ $key }}" value="{{ $key }}"
-                       {{ $category === $key ? 'checked' : '' }}>
-                <label class="btn btn-outline-primary" for="cat-{{ $key }}">{{ $label }}</label>
-            @endforeach
-        </div>
-        <button class="btn btn-primary mt-3"><i class="bi bi-arrow-right me-1"></i>Continue</button>
-    </form>
-</div></div>
-
-{{-- Lookup --}}
 <div class="card stat-card mb-4"><div class="card-body">
     <form method="GET" action="{{ route('payments.create') }}" class="row g-2">
-        <input type="hidden" name="category" value="{{ $category }}">
+        <div class="col-md-3">
+            <label class="form-label visually-hidden">Category</label>
+            <select name="category" class="form-select" onchange="this.form.submit()">
+                <option value="" {{ request('category') === '' ? 'selected' : '' }}>All Categories</option>
+                <option value="citation" {{ request('category') === 'citation' ? 'selected' : '' }}>Citation</option>
+                <option value="clamping" {{ request('category') === 'clamping' ? 'selected' : '' }}>Clamping</option>
+                <option value="impounding" {{ request('category') === 'impounding' ? 'selected' : '' }}>Impounding</option>
+            </select>
+        </div>
         <div class="col-md-6">
-            <input type="text" name="lookup" class="form-control" placeholder="Enter {{ $category === 'citation' ? 'citation' : 'notice' }} number or vehicle plate..." value="{{ request('lookup') }}">
+            <input type="text" name="lookup" class="form-control" placeholder="Enter citation/notice number or vehicle plate..." value="{{ request('lookup') }}">
         </div>
         <div class="col-auto"><button class="btn btn-outline-secondary"><i class="bi bi-search me-1"></i>Look Up</button></div>
     </form>
@@ -138,7 +130,7 @@
                     <button type="submit" class="btn btn-success">
                         <i class="bi bi-check-lg me-1"></i>Confirm Payment
                     </button>
-                    <a href="{{ route('payments.index', ['view' => 'payables']) }}" class="btn btn-link">Cancel</a>
+                    <a href="{{ route('payments.index') }}" class="btn btn-link">Cancel</a>
                 </div>
             </form>
         </div></div>
@@ -150,7 +142,7 @@
                 @if (request('lookup'))
                     <i class="bi bi-search me-1"></i>No match for "{{ request('lookup') }}" — closest matches:
                 @else
-                    <i class="bi bi-inbox me-1"></i>Awaiting Payment — {{ ucfirst($category) }}
+                    <i class="bi bi-inbox me-1"></i>Awaiting Payment
                 @endif
             </strong>
         </div>
@@ -159,13 +151,10 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>{{ $category === 'citation' ? 'Citation #' : 'Notice #' }}</th>
+                            <th>Category</th>
+                            <th>{{ request('category') === 'citation' ? 'Citation #' : 'Notice #' }}</th>
                             <th>Plate</th>
-                            @if ($category === 'citation')
-                                <th>Violation</th>
-                            @else
-                                <th>Officer</th>
-                            @endif
+                            <th>Violation / Officer</th>
                             <th>Amount Due</th>
                             <th>Status</th>
                             <th class="text-end">Action</th>
@@ -174,20 +163,22 @@
                     <tbody>
                         @foreach ($suggestions as $sugg)
                             @php
-                                $due = match ($category) {
+                                $suggCategory = $sugg['category'] ?? $category;
+                                $due = match ($suggCategory) {
                                     'clamping' => $sugg->clamping_fee ?? $sugg->citation?->penalty_amount ?? 0,
                                     'impounding' => $sugg->getTotalFees(),
                                     default => $sugg->penalty_amount,
                                 };
                                 $selectUrl = route('payments.create', array_filter([
-                                    'category' => $category,
-                                    $category === 'citation' ? 'citation_id' : $category.'_id' => $sugg->id,
+                                    'category' => $suggCategory,
+                                    $suggCategory === 'citation' ? 'citation_id' : $suggCategory.'_id' => $sugg->id,
                                 ]));
                             @endphp
                             <tr>
-                                <td class="fw-semibold">{{ $category === 'citation' ? $sugg->citation_number : $sugg->notice_number }}</td>
+                                <td><span class="badge {{ $suggCategory === 'citation' ? 'bg-primary' : ($suggCategory === 'clamping' ? 'bg-warning text-dark' : 'bg-info') }}">{{ ucfirst($suggCategory) }}</span></td>
+                                <td class="fw-semibold">{{ $suggCategory === 'citation' ? $sugg->citation_number : $sugg->notice_number }}</td>
                                 <td>{{ $sugg->vehicle_plate ?: '—' }}</td>
-                                <td>{{ $category === 'citation' ? $sugg->violationType->name : ($sugg->officer?->name ?: '—') }}</td>
+                                <td>{{ $suggCategory === 'citation' ? $sugg->violationType->name : ($sugg->officer?->name ?: '—') }}</td>
                                 <td>₱{{ number_format((float) $due, 2) }}</td>
                                 <td><span class="badge {{ $sugg->status->badgeClass() }}">{{ $sugg->status->label() }}</span></td>
                                 <td class="text-end">
@@ -204,11 +195,11 @@
     </div>
 @elseif (request('lookup'))
     <div class="alert alert-danger">
-        <i class="bi bi-exclamation-circle me-1"></i>No {{ $category }} found matching "{{ request('lookup') }}".
+        <i class="bi bi-exclamation-circle me-1"></i>No record found matching "{{ request('lookup') }}".
     </div>
 @else
     <div class="alert alert-warning mb-0">
-        <i class="bi bi-info-circle me-1"></i>No {{ $category }} tickets are awaiting payment right now.
+        <i class="bi bi-info-circle me-1"></i>No tickets are awaiting payment right now.
     </div>
 @endif
 @endsection
