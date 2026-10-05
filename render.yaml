@@ -1,32 +1,73 @@
 services:
   - type: web
-    name: tems
+    name: tems-design
     runtime: docker
-    repo: https://github.com/dhyllrocoedu-ai/transenfo
-    branch: v4.5.0
+    repo: https://github.com/Danielfailadona/TEMS
+    branch: design-v1.1
     dockerfilePath: Dockerfile
     dockerContext: .
     healthCheckPath: /health
+    autoDeploy: true
     envVars:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
-        value: false
+        value: "false"
       - key: APP_URL
-        value: https://transenfo-1.onrender.com
+        value: https://tems-design.onrender.com
       - key: LOG_LEVEL
         value: warning
+      - key: SESSION_DRIVER
+        value: database
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: FILESYSTEM_PUBLIC_S3
+        value: "true"
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
         sync: false
       - key: DB_PORT
-        sync: false
+        value: "5432"
       - key: DB_DATABASE
         sync: false
       - key: DB_USERNAME
         sync: false
       - key: DB_PASSWORD
         sync: false
+      - key: DB_SSLMODE
+        value: require
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: PAYMONGO_SECRET_KEY
+        sync: false
+      - key: PAYMONGO_PUBLIC_KEY
+        sync: false
+      - key: PAYMONGO_WEBHOOK_SECRET
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_DEFAULT_REGION
+        value: ap-southeast-1
+      - key: AWS_BUCKET
+        value: tems-public
+      - key: AWS_ENDPOINT
+        sync: false
+      - key: AWS_URL
+        sync: false
+      - key: AWS_USE_PATH_STYLE_ENDPOINT
+        value: "true"
       - key: APP_KEY
         generateValue: true
