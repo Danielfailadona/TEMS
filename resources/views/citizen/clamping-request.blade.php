@@ -1,96 +1,173 @@
-@extends('layouts.guest')
-
-@section('title', 'Report Illegal Parking')
-
-@push('styles')
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
-<style>
-    .login-shell {
-        width: min(1100px, 95vw) !important;
-    }
-    .login-card {
-        max-width: 100% !important;
-    }
-    #location-map {
-        width: 100%;
-        aspect-ratio: 4 / 3;
-        min-height: 240px;
-        border-radius: 0.5rem;
-        position: relative;
-    }
-    .map-detail-overlay {
-        position:absolute; bottom:12px; left:12px; z-index:10;
-        background:rgba(15,23,42,0.92); backdrop-filter:blur(12px);
-        border:1px solid rgba(255,255,255,0.12); border-radius:0.75rem;
-        padding:0.85rem 1rem; color:#e2e8f0; font-family:system-ui,sans-serif;
-        max-width:300px; pointer-events:auto; box-shadow:0 8px 32px rgba(0,0,0,0.35);
-        transition:opacity 0.2s, transform 0.2s;
-    }
-    .map-detail-overlay.is-hidden { opacity:0; transform:translateY(8px); pointer-events:none; }
-    .map-detail-overlay .mdo-title { font-weight:700; font-size:0.9rem; margin-bottom:0.4rem; }
-    .map-detail-overlay .mdo-row { display:flex; justify-content:space-between; padding:0.15rem 0; font-size:0.75rem; }
-    .map-detail-overlay .mdo-row .mdo-lbl { color:rgba(148,163,184,0.9); }
-    .map-detail-overlay .mdo-row .mdo-val { font-weight:600; text-align:right; }
-    .map-detail-overlay .mdo-badge { display:inline-block; font-size:0.62rem; font-weight:700; border-radius:999px; padding:0.1rem 0.45rem; background:rgba(34,197,94,0.18); color:#4ade80; }
-    .map-detail-overlay .mdo-close { position:absolute; top:6px; right:8px; background:none; border:none; color:rgba(203,213,225,0.6); cursor:pointer; font-size:0.85rem; padding:2px 4px; }
-    .map-detail-overlay .mdo-close:hover { color:#fff; }
-    .section-icon {
-        width: 2rem;
-        height: 2rem;
-        background: linear-gradient(135deg, #2563eb, #0f2b4a);
-        border-radius: 0.6rem;
-        display: grid;
-        place-items: center;
-        color: #fff;
-        font-size: 1rem;
-        flex-shrink: 0;
-    }
-    /* Responsive map container */
-    @media (max-width: 991.98px) {
-        #location-map {
-            min-height: 300px;
-            height: 50vh;
-            max-height: 400px;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Report Illegal Parking — {{ config('itevcms.app_name') }}</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
+    <style>
+        body {
+            background: #f8fbff;
+            min-height: 100vh;
         }
-    }
-    @media (min-width: 992px) {
-        #location-map {
-            min-height: 500px;
-            height: 500px;
+        .animate-on-load {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.55s ease, transform 0.55s ease;
         }
-    }
-</style>
-@endpush
-
-@section('content')
-<div class="container py-3">
-    <div class="d-flex align-items-center gap-3 mb-3 flex-wrap animate-on-load">
-        <a href="{{ route('welcome') }}" class="d-inline-flex align-items-center justify-content-center text-decoration-none"
-           style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.9);box-shadow:0 2px 8px rgba(0,0,0,0.12);color:#1e293b;transition:all 0.2s;"
-           onmouseover="this.style.background='#2563eb';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,0.9)';this.style.color='#1e293b'">
-            <i class="bi bi-house-door-fill" style="font-size:1.2rem;"></i>
+        .animate-on-load.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .stat-card {
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 1.1rem;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+            background: rgba(255, 255, 255, 0.92);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.1);
+        }
+        .form-control, .form-select {
+            border-radius: 0.8rem;
+            border: 1px solid rgba(15, 23, 42, 0.12);
+            padding: 0.7rem 0.85rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: rgba(37, 99, 235, 0.45);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.16);
+        }
+        .btn {
+            border-radius: 0.8rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+        /* Map and form specific styles from clamping-request */
+        #location-map {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            min-height: 240px;
+            border-radius: 0.5rem;
+            position: relative;
+        }
+        .map-detail-overlay {
+            position:absolute; bottom:12px; left:12px; z-index:10;
+            background:rgba(15,23,42,0.92); backdrop-filter:blur(12px);
+            border:1px solid rgba(255,255,255,0.12); border-radius:0.75rem;
+            padding:0.85rem 1rem; color:#e2e8f0; font-family:system-ui,sans-serif;
+            max-width:300px; pointer-events:auto; box-shadow:0 8px 32px rgba(0,0,0,0.35);
+            transition:opacity 0.2s, transform 0.2s;
+        }
+        .map-detail-overlay.is-hidden { opacity:0; transform:translateY(8px); pointer-events:none; }
+        .map-detail-overlay .mdo-title { font-weight:700; font-size:0.9rem; margin-bottom:0.4rem; }
+        .map-detail-overlay .mdo-row { display:flex; justify-content:space-between; padding:0.15rem 0; font-size:0.75rem; }
+        .map-detail-overlay .mdo-row .mdo-lbl { color:rgba(148,163,184,0.9); }
+        .map-detail-overlay .mdo-row .mdo-val { font-weight:600; text-align:right; }
+        .map-detail-overlay .mdo-badge { display:inline-block; font-size:0.62rem; font-weight:700; border-radius:999px; padding:0.1rem 0.45rem; background:rgba(34,197,94,0.18); color:#4ade80; }
+        .map-detail-overlay .mdo-close { position:absolute; top:6px; right:8px; background:none; border:none; color:rgba(203,213,225,0.6); cursor:pointer; font-size:0.85rem; padding:2px 4px; }
+        .map-detail-overlay .mdo-close:hover { color:#fff; }
+        .section-icon {
+            width: 2rem;
+            height: 2rem;
+            background: linear-gradient(135deg, #2563eb, #0f2b4a);
+            border-radius: 0.6rem;
+            display: grid;
+            place-items: center;
+            color: #fff;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        /* Responsive map container */
+        @media (max-width: 991.98px) {
+            #location-map {
+                min-height: 300px;
+                height: 50vh;
+                max-height: 400px;
+            }
+        }
+        @media (min-width: 992px) {
+            #location-map {
+                min-height: 500px;
+                height: 500px;
+            }
+        }
+    </style>
+    @stack('styles')
+</head>
+<body>
+<nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top" style="z-index: 100;">
+    <div class="container-fluid px-4 px-lg-5">
+        <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ route('welcome') }}">
+            <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" height="32" class="me-2">
+            <span style="background: linear-gradient(135deg, #0f2b4a, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">TEMs</span>
         </a>
-        <div>
-            <h2 class="mb-0 h4">Report Illegally Parked Vehicle</h2>
-            <p class="text-muted mb-0 small">Help us enforce parking regulations in your area</p>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="{{ route('welcome') }}#features">Features</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ route('citizen.citation.lookup') }}">Ticket Lookup</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ route('citizen.clamping.landing') }}">Report Parking</a></li>
+                <li class="nav-item ms-2">
+                    <a href="{{ route('welcome') }}" class="nav-link" title="Home" data-bs-toggle="tooltip" data-bs-placement="bottom">
+                        <i class="bi bi-house-door-fill" style="font-size:1.2rem;"></i>
+                    </a>
+                </li>
+                <li class="nav-item ms-2">
+                    <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">Sign In</a>
+                </li>
+                <li class="nav-item ms-2">
+                    <a href="{{ route('register') }}" class="btn btn-primary btn-sm">Sign Up</a>
+                </li>
+            </ul>
         </div>
     </div>
+</nav>
 
-    <ul class="nav nav-pills nav-fill bg-white bg-opacity-75 rounded-pill p-1 shadow-sm mb-4" id="clampingTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active rounded-pill" data-bs-toggle="tab" data-bs-target="#clamping-report" type="button" role="tab" aria-controls="clamping-report" aria-selected="true">
-                <i class="bi bi-car-front-fill me-2"></i>Report
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link rounded-pill" data-bs-toggle="tab" data-bs-target="#clamping-track" type="button" role="tab" aria-controls="clamping-track" aria-selected="false">
-                <i class="bi bi-search me-2"></i>Track
-            </button>
-        </li>
-    </ul>
+<div class="container py-4 py-lg-5">
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show animate-on-load" role="alert">
+            <i class="bi bi-exclamation-circle me-2"></i>{{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
-    <div class="tab-content">
-        <div class="tab-pane fade show active" id="clamping-report" role="tabpanel" aria-labelledby="clamping-report-tab">
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center gap-3 mb-3 flex-wrap animate-on-load">
+                <a href="{{ route('welcome') }}" class="d-inline-flex align-items-center justify-content-center text-decoration-none"
+                   style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.9);box-shadow:0 2px 8px rgba(0,0,0,0.12);color:#1e293b;transition:all 0.2s;"
+                   onmouseover="this.style.background='#2563eb';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,0.9)';this.style.color='#1e293b'">
+                    <i class="bi bi-house-door-fill" style="font-size:1.2rem;"></i>
+                </a>
+                <div>
+                    <h2 class="mb-0 h4">Report Illegally Parked Vehicle</h2>
+                    <p class="text-muted mb-0 small">Help us enforce parking regulations in your area</p>
+                </div>
+            </div>
+
+            <ul class="nav nav-pills nav-fill bg-white bg-opacity-75 rounded-pill p-1 shadow-sm mb-4" id="clampingTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active rounded-pill" data-bs-toggle="tab" data-bs-target="#clamping-report" type="button" role="tab" aria-controls="clamping-report" aria-selected="true">
+                        <i class="bi bi-car-front-fill me-2"></i>Report
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill" data-bs-toggle="tab" data-bs-target="#clamping-track" type="button" role="tab" aria-controls="clamping-track" aria-selected="false">
+                        <i class="bi bi-search me-2"></i>Track
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="clamping-report" role="tabpanel" aria-labelledby="clamping-report-tab">
 
     <form method="POST" action="{{ route('citizen.clamping.store') }}" enctype="multipart/form-data">
         @csrf
@@ -220,16 +297,17 @@
         </p>
     </form>
 
-        </div>
+                </div>
 
-        <div class="tab-pane fade" id="clamping-track" role="tabpanel" aria-labelledby="clamping-track-tab">
-            @include('citizen.partials.clamping-track-panel', ['requestInfo' => $requestInfo ?? null])
+                <div class="tab-pane fade" id="clamping-track" role="tabpanel" aria-labelledby="clamping-track-tab">
+                    @include('citizen.partials.clamping-track-panel', ['requestInfo' => $requestInfo ?? null])
+                </div>
+            </div>
         </div>
     </div>
 </div>
-@endsection
 
-@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
 <script>
 const MAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
@@ -373,4 +451,5 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
-@endpush
+</body>
+</html>
