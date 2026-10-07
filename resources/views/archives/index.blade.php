@@ -75,7 +75,6 @@
                 <input type="date" name="date_to" class="form-control form-control-sm" value="{{ request('date_to') }}">
             </div>
             <div class="col-6 col-md-3 d-flex gap-2">
-                <button type="submit" class="btn btn-primary btn-sm flex-grow-1"><i class="bi bi-funnel me-1"></i> Apply</button>
                 @if (request()->anyFilled(['search', 'type', 'date_from', 'date_to']))
                     <a href="{{ route('archives.index') }}" class="btn btn-outline-secondary btn-sm flex-grow-1"><i class="bi bi-x-lg"></i> Clear</a>
                 @endif
@@ -276,5 +275,27 @@ function toggleArchive(el) {
         chevron.style.transform = el.classList.contains('is-expanded') ? 'rotate(180deg)' : '';
     }
 }
+
+// Auto-submit filter form on input change
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('form[method="GET"]');
+    if (form) {
+        const inputs = form.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            // For date inputs, submit on change
+            if (input.type === 'date' || input.tagName === 'SELECT') {
+                input.addEventListener('change', () => form.submit());
+            }
+            // For search input, debounce
+            if (input.type === 'search') {
+                let timeout;
+                input.addEventListener('input', () => {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => form.submit(), 500);
+                });
+            }
+        });
+    }
+});
 </script>
 @endpush
