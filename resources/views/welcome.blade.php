@@ -571,17 +571,5 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const toggler = document.querySelector('.navbar-toggler');
-    const collapse = document.querySelector('#navbarNav');
-    if (toggler && collapse) {
-        toggler.addEventListener('click', () => {
-            const expanded = toggler.getAttribute('aria-expanded') === 'true';
-            toggler.setAttribute('aria-expanded', !expanded);
-        });
-    }
-});
-</script>
 </body>
 </html>

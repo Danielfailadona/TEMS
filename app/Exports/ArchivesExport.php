@@ -163,7 +163,7 @@ class ArchivesExport implements FromCollection, WithHeadings, WithMapping, WithC
         ];
     }
 
-    public function styles(Worksheet $sheet)
+    public function styles(Worksheet $sheet): array
     {
         // Header row bold
         $sheet->getStyle('A1:K1')->getFont()->setBold(true);
@@ -171,5 +171,6 @@ class ArchivesExport implements FromCollection, WithHeadings, WithMapping, WithC
         $sheet->setAutoFilter('A1:K1');
         // Freeze header
         $sheet->freezePane('A2');
+        return [];
     }
 }
