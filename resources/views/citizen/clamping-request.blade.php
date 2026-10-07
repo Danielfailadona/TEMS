@@ -107,25 +107,16 @@
             <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" height="32" class="me-2">
             <span style="background: linear-gradient(135deg, #0f2b4a, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">TEMs</span>
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="{{ route('welcome') }}#features">Features</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('citizen.citation.lookup') }}">Ticket Lookup</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('citizen.clamping.landing') }}">Report Parking</a></li>
-                <li class="nav-item ms-2">
-                    <a href="{{ route('welcome') }}" class="nav-link" title="Home" data-bs-toggle="tooltip" data-bs-placement="bottom">
-                        <i class="bi bi-house-door-fill" style="font-size:1.2rem;"></i>
-                    </a>
-                </li>
-                <li class="nav-item ms-2">
-                    <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">Sign In</a>
-                </li>
-                <li class="nav-item ms-2">
-                    <a href="{{ route('register') }}" class="btn btn-primary btn-sm">Sign Up</a>
-                </li>
+            <ul class="navbar-nav ms-auto align-items-center gap-2">
+                <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('welcome') }}#features">Features</a></li>
+                <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('citizen.citation.lookup') }}">Ticket Lookup</a></li>
+                <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('citizen.clamping.landing') }}">Report Parking</a></li>
+                <li class="nav-item"><a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">Sign In</a></li>
+                <li class="nav-item"><a href="{{ route('register') }}" class="btn btn-primary btn-sm">Sign Up</a></li>
             </ul>
         </div>
     </div>
@@ -141,16 +132,9 @@
 
     <div class="row g-4">
         <div class="col-12">
-            <div class="d-flex align-items-center gap-3 mb-3 flex-wrap animate-on-load">
-                <a href="{{ route('welcome') }}" class="d-inline-flex align-items-center justify-content-center text-decoration-none"
-                   style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.9);box-shadow:0 2px 8px rgba(0,0,0,0.12);color:#1e293b;transition:all 0.2s;"
-                   onmouseover="this.style.background='#2563eb';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,0.9)';this.style.color='#1e293b'">
-                    <i class="bi bi-house-door-fill" style="font-size:1.2rem;"></i>
-                </a>
-                <div>
-                    <h2 class="mb-0 h4">Report Illegally Parked Vehicle</h2>
-                    <p class="text-muted mb-0 small">Help us enforce parking regulations in your area</p>
-                </div>
+            <div class="mb-3 animate-on-load">
+                <h2 class="mb-0 h4">Report Illegally Parked Vehicle</h2>
+                <p class="text-muted mb-0 small">Help us enforce parking regulations in your area</p>
             </div>
 
             <ul class="nav nav-pills nav-fill bg-white bg-opacity-75 rounded-pill p-1 shadow-sm mb-4" id="clampingTabs" role="tablist">
