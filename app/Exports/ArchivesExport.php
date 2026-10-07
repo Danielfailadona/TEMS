@@ -22,7 +22,7 @@ class ArchivesExport implements FromCollection, WithHeadings, WithMapping, WithC
         $this->request = $request;
     }
 
-    public function collection()
+    public function collection(): \Illuminate\Support\Collection
     {
         $query = Archive::with('archivedBy')->latest('archived_at');
 
