@@ -6,7 +6,7 @@
 
         {{-- Pending actions (Approve / Reject) --}}
         <div class="d-flex align-items-center gap-1 bg-light border rounded-3 p-1" id="batch-pending-group">
-            <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-approve-form">
+            <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline-flex align-items-center" id="batch-approve-form">
                 @csrf
                 <input type="hidden" name="action" value="approve">
                 <input type="hidden" name="user_ids" id="batch-approve-ids">
@@ -16,11 +16,14 @@
             </form>
 
             {{-- Reject opens the shared reason modal; the modal owns the user_ids input --}}
-            <span class="d-inline-flex">
-                <button type="button" class="btn btn-danger btn-sm rounded-2" disabled id="batch-reject-btn" data-bs-toggle="modal" data-bs-target="#batchRejectModal" title="Reject selected pending users">
+            <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline-flex align-items-center" id="batch-reject-form">
+                @csrf
+                <input type="hidden" name="action" value="reject">
+                <input type="hidden" name="user_ids" id="batch-reject-ids">
+                <button type="submit" class="btn btn-danger btn-sm rounded-2" disabled id="batch-reject-btn" title="Reject selected pending users">
                     <i class="bi bi-x-lg me-1"></i> Reject
                 </button>
-            </span>
+            </form>
         </div>
 
         {{-- Status actions (Suspend / Unsuspend) --}}

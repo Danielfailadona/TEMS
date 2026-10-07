@@ -377,7 +377,7 @@
 <section class="hero">
     <div class="hero-content">
         <div class="hero-text">
-            <h1>Modern Traffic Enforcement Management</h1>
+            <h1>Traffic Enforcement Management System</h1>
             <p>Streamline enforcement operations with real-time tracking, digital citations, and citizen-friendly portals.</p>
 
             <div class="hero-feature">
