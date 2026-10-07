@@ -571,5 +571,13 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('navbarNav');
+    if (el && !el._bsCollapse) {
+        new bootstrap.Collapse(el, { toggle: false });
+    }
+});
+</script>
 </body>
 </html>

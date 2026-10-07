@@ -73,7 +73,11 @@ class ArchivesExport implements FromCollection, WithHeadings, WithMapping, WithC
             'Archived By',
             'Archived At',
             'Record Title',
-            'Driver/Vehicle',
+            'Driver',
+            'Driver License',
+            'Vehicle Plate',
+            'Vehicle Make',
+            'Vehicle Model',
             'Location',
             'Status',
             'Penalty',
@@ -87,7 +91,11 @@ class ArchivesExport implements FromCollection, WithHeadings, WithMapping, WithC
         $type = class_basename($archive->archivable_type);
 
         $recordTitle = '';
-        $driverVehicle = '';
+        $driver = '';
+        $driverLicense = '';
+        $vehiclePlate = '';
+        $vehicleMake = '';
+        $vehicleModel = '';
         $location = '';
         $status = $snap['status'] ?? '';
         $penalty = '';
@@ -96,35 +104,55 @@ class ArchivesExport implements FromCollection, WithHeadings, WithMapping, WithC
         match ($type) {
             'Citation' => [
                 $recordTitle = $snap['citation_number'] ?? "CIT-{$archive->archivable_id}",
-                $driverVehicle = ($snap['driver_name'] ?? '') . ' / ' . ($snap['vehicle_plate'] ?? ''),
+                $driver = $snap['driver_name'] ?? '',
+                $driverLicense = $snap['driver_license'] ?? '',
+                $vehiclePlate = $snap['vehicle_plate'] ?? '',
+                $vehicleMake = $snap['vehicle_make'] ?? '',
+                $vehicleModel = $snap['vehicle_model'] ?? '',
                 $location = $snap['location'] ?? '',
                 $penalty = isset($snap['penalty_amount']) ? number_format($snap['penalty_amount'], 2) : '',
                 $notes = $snap['notes'] ?? '',
             ],
             'Appeal' => [
                 $recordTitle = "Appeal #{$archive->archivable_id}",
-                $driverVehicle = 'Citation: ' . ($snap['citation_number'] ?? '#' . ($snap['citation_id'] ?? '')),
+                $driver = $snap['driver_name'] ?? '',
+                $driverLicense = '',
+                $vehiclePlate = $snap['vehicle_plate'] ?? '',
+                $vehicleMake = '',
+                $vehicleModel = '',
                 $location = '',
                 $penalty = '',
                 $notes = $snap['reason'] ?? '',
             ],
             'ClampingRecord' => [
                 $recordTitle = $snap['notice_number'] ?? "CLP-{$archive->archivable_id}",
-                $driverVehicle = $snap['vehicle_plate'] ?? '',
+                $driver = $snap['driver_name'] ?? '',
+                $driverLicense = '',
+                $vehiclePlate = $snap['vehicle_plate'] ?? '',
+                $vehicleMake = '',
+                $vehicleModel = '',
                 $location = $snap['location'] ?? '',
                 $penalty = '',
                 $notes = $snap['notes'] ?? '',
             ],
             'ClampingRequest' => [
                 $recordTitle = $snap['requester_name'] ?? "Request #{$archive->archivable_id}",
-                $driverVehicle = $snap['vehicle_plate'] ?? '',
+                $driver = $snap['requester_name'] ?? '',
+                $driverLicense = '',
+                $vehiclePlate = $snap['vehicle_plate'] ?? '',
+                $vehicleMake = '',
+                $vehicleModel = '',
                 $location = $snap['location_address'] ?? '',
                 $penalty = '',
                 $notes = $snap['additional_notes'] ?? '',
             ],
             default => [
                 $recordTitle = "Record #{$archive->archivable_id}",
-                $driverVehicle = '',
+                $driver = '',
+                $driverLicense = '',
+                $vehiclePlate = '',
+                $vehicleMake = '',
+                $vehicleModel = '',
                 $location = '',
                 $penalty = '',
                 $notes = '',
@@ -138,7 +166,11 @@ class ArchivesExport implements FromCollection, WithHeadings, WithMapping, WithC
             $archive->archivedBy?->name ?? 'System',
             $archive->archived_at->format('Y-m-d H:i:s'),
             $recordTitle,
-            $driverVehicle,
+            $driver,
+            $driverLicense,
+            $vehiclePlate,
+            $vehicleMake,
+            $vehicleModel,
             $location,
             $status,
             $penalty,
@@ -149,17 +181,21 @@ class ArchivesExport implements FromCollection, WithHeadings, WithMapping, WithC
     public function columnWidths(): array
     {
         return [
-            'A' => 8,
-            'B' => 18,
-            'C' => 30,
-            'D' => 20,
-            'E' => 22,
-            'F' => 25,
-            'G' => 30,
-            'H' => 30,
-            'I' => 18,
-            'J' => 12,
-            'K' => 40,
+            'A' => 8,   // ID
+            'B' => 18,  // Type
+            'C' => 30,  // Reason
+            'D' => 20,  // Archived By
+            'E' => 22,  // Archived At
+            'F' => 25,  // Record Title
+            'G' => 20,  // Driver
+            'H' => 18,  // Driver License
+            'I' => 18,  // Vehicle Plate
+            'J' => 15,  // Vehicle Make
+            'K' => 15,  // Vehicle Model
+            'L' => 30,  // Location
+            'M' => 18,  // Status
+            'N' => 12,  // Penalty
+            'O' => 40,  // Notes
         ];
     }
 
