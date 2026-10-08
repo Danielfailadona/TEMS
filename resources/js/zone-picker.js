@@ -511,10 +511,40 @@ export function initZoneViewer(containerId, options = {}) {
             el.addEventListener('click', (e) => {
                 e.stopPropagation();
                 e.stopImmediatePropagation();
-                map.flyTo({ center: [lng, lat], zoom: 14, duration: 600 });
-                showCircle(zone);
-                if (detailOverlay) detailOverlay.show(zone);
-                if (onZoneClick) onZoneClick(zone);
+
+                const flyAndShow = (targetLng, targetLat) => {
+                    map.flyTo({ center: [targetLng, targetLat], zoom: 14, duration: 600 });
+                    showCircle(zone);
+                    if (detailOverlay) detailOverlay.show(zone);
+                    if (onZoneClick) onZoneClick(zone);
+                };
+
+                if (zone.lng && zone.lat) {
+                    flyAndShow(zone.lng, zone.lat);
+                } else {
+                    // Fallback: geocode via Nominatim
+                    const query = encodeURIComponent(zone.address || zone.name || '');
+                    if (!query) {
+                        console.warn('Zone missing address/name for geocoding', zone);
+                        return;
+                    }
+                    fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${query}&limit=1`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data && data.length > 0) {
+                                const lat = parseFloat(data[0].lat);
+                                const lng = parseFloat(data[0].lon);
+                                if (!isNaN(lat) && !isNaN(lng)) {
+                                    zone.lat = lat;
+                                    zone.lng = lng;
+                                    flyAndShow(lng, lat);
+                                }
+                            } else {
+                                console.warn('Geocoding returned no results for zone', zone);
+                            }
+                        })
+                        .catch(err => console.error('Geocoding error:', err));
+                }
             });
 
             markers.push({ zone, marker, el });

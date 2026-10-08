@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Console\Commands\GeocodeMissingZones;
 use App\Models\Appeal;
 use App\Models\ClampingRecord;
 use App\Models\ImpoundingRecord;
@@ -21,7 +22,9 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        $this->commands([
+            GeocodeMissingZones::class,
+        ]);
     }
 
     public function boot(): void
