@@ -4,30 +4,118 @@
 
 @section('content')
 
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h1 class="h3 mb-1">Record Payment</h1>
+        <p class="text-muted mb-0">Collect payment for citations, clamping, and impounding tickets</p>
+    </div>
+    <a href="{{ route('payments.index', ['view' => 'payables']) }}" class="btn btn-outline-secondary">
+        <i class="bi bi-hourglass-split me-1"></i>Awaiting Payment
+    </a>
+</div>
+
+{{-- Category selector --}}
 <div class="card stat-card mb-4"><div class="card-body">
-    <form method="GET" action="{{ route('payments.create') }}" class="row g-2">
-        <div class="col-md-6">
-            <input type="text" name="citation_number" class="form-control" placeholder="Enter citation number..." value="{{ request('citation_number') }}">
+    <form method="GET" action="{{ route('payments.create') }}">
+        <label class="form-label">What are you collecting payment for?</label>
+        <div class="btn-group flex-wrap" role="group">
+            @foreach (['citation' => 'Citation', 'clamping' => 'Clamping', 'impounding' => 'Impounding'] as $key => $label)
+                <input type="radio" class="btn-check" name="category" id="cat-{{ $key }}" value="{{ $key }}"
+                       {{ $category === $key ? 'checked' : '' }}>
+                <label class="btn btn-outline-primary" for="cat-{{ $key }}">{{ $label }}</label>
+            @endforeach
         </div>
-        <div class="col-auto"><button class="btn btn-outline-secondary">Look Up</button></div>
+        <button class="btn btn-primary mt-3"><i class="bi bi-arrow-right me-1"></i>Continue</button>
     </form>
 </div></div>
 
-@if ($citation)
-    @if ($citation->payment && $citation->payment->paid_at)
-        <div class="alert alert-info">Citation {{ $citation->citation_number }} has already been paid.</div>
-    @elseif (!$citation->isPayable())
-        <div class="alert alert-warning">Citation {{ $citation->citation_number }} is not eligible for payment.</div>
+{{-- Lookup --}}
+<div class="card stat-card mb-4"><div class="card-body">
+    <form method="GET" action="{{ route('payments.create') }}" class="row g-2">
+        <input type="hidden" name="category" value="{{ $category }}">
+        <div class="col-md-6">
+            <input type="text" name="lookup" class="form-control" placeholder="Enter {{ $category === 'citation' ? 'citation' : 'notice' }} number or vehicle plate..." value="{{ request('lookup') }}">
+        </div>
+        <div class="col-auto"><button class="btn btn-outline-secondary"><i class="bi bi-search me-1"></i>Look Up</button></div>
+    </form>
+</div></div>
+
+@if ($record)
+    @php
+        $alreadyPaid = $category === 'citation'
+            ? ($record->payment && $record->payment->paid_at)
+            : $record->payments()->whereNotNull('paid_at')->exists();
+
+        $released = $category !== 'citation' && $record->status->value === 'released';
+        $eligible = $category === 'citation' ? $record->isPayable() : !$alreadyPaid && !$released;
+
+        $amountDue = match ($category) {
+            'clamping' => $record->clamping_fee ?? $record->citation?->penalty_amount ?? 0,
+            'impounding' => $record->getTotalFees(),
+            default => $record->penalty_amount,
+        };
+
+        $reference = $category === 'citation' ? $record->citation_number : $record->notice_number;
+        $idField = $category === 'citation' ? 'citation_id' : $category.'_id';
+    @endphp
+
+    @if ($alreadyPaid)
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-1"></i>{{ $reference }} has already been paid.
+        </div>
+    @elseif ($released)
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-circle me-1"></i>{{ $reference }} has already been released and cannot take a payment.
+        </div>
+    @elseif (! $eligible)
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-circle me-1"></i>{{ $reference }} is not eligible for payment.
+        </div>
     @else
         <div class="card stat-card"><div class="card-body">
-            <h5 class="mb-3">Citation: {{ $citation->citation_number }}</h5>
-            <p class="mb-1"><strong>Violation:</strong> {{ $citation->violationType->name }}</p>
-            <p class="mb-1"><strong>Vehicle:</strong> {{ $citation->vehicle_plate }}</p>
-            <p class="mb-4"><strong>Amount Due:</strong> ₱{{ number_format($citation->penalty_amount, 2) }}</p>
+            <h5 class="mb-3">
+                {{ $category === 'citation' ? 'Citation' : 'Notice' }}: {{ $reference }}
+                <span class="badge {{ $record->status->badgeClass() }}">{{ $record->status->label() }}</span>
+            </h5>
+
+            <div class="row g-2 small mb-4">
+                @if ($category === 'citation')
+                    <div class="col-md-4"><strong class="text-muted d-block">Violation</strong>{{ $record->violationType->name }}</div>
+                    <div class="col-md-4"><strong class="text-muted d-block">Vehicle</strong>{{ $record->vehicle_plate ?: '—' }}</div>
+                    <div class="col-md-4"><strong class="text-muted d-block">Driver</strong>{{ $record->driver_name ?: '—' }}</div>
+                @else
+                    <div class="col-md-4"><strong class="text-muted d-block">Vehicle</strong>{{ $record->vehicle_plate ?: '—' }}</div>
+                    <div class="col-md-4"><strong class="text-muted d-block">Officer</strong>{{ $record->officer?->name ?: '—' }}</div>
+                    <div class="col-md-4">
+                        <strong class="text-muted d-block">{{ $category === 'clamping' ? 'Clamped' : 'Impounded' }}</strong>
+                        {{ ($record->clamped_at ?? $record->impounded_at)?->format('M d, Y') ?? '—' }}
+                    </div>
+                @endif
+            </div>
 
             <form method="POST" action="{{ route('payments.store') }}">@csrf
-                <input type="hidden" name="citation_id" value="{{ $citation->id }}">
+                <input type="hidden" name="category" value="{{ $category }}">
+                <input type="hidden" name="{{ $idField }}" value="{{ $record->id }}">
+
                 <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">
+                            @if ($category === 'citation')
+                                Amount Due
+                            @else
+                                Amount Received <span class="text-muted small">(editable)</span>
+                            @endif
+                        </label>
+                        @if ($category === 'citation')
+                            <input type="text" class="form-control" value="₱{{ number_format((float) $amountDue, 2) }}" disabled>
+                        @else
+                            <div class="input-group">
+                                <span class="input-group-text">₱</span>
+                                <input type="number" step="0.01" min="0" max="9999999" name="amount" class="form-control"
+                                       value="{{ number_format((float) $amountDue, 2, '.', '') }}" required>
+                            </div>
+                        @endif
+                    </div>
                     <div class="col-md-4">
                         <label class="form-label">Payment Method</label>
                         <select name="payment_method" class="form-select" required>
@@ -38,14 +126,20 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Reference Number</label>
-                        <input type="text" name="reference_number" class="form-control">
+                        <input type="text" name="reference_number" class="form-control" value="{{ old('reference_number') }}">
                     </div>
                     <div class="col-12">
                         <label class="form-label">Notes</label>
-                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                        <textarea name="notes" class="form-control" rows="2">{{ old('notes') }}</textarea>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-success mt-3">Confirm Payment — ₱{{ number_format($citation->penalty_amount, 2) }}</button>
+
+                <div class="d-flex align-items-center gap-3 mt-3">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg me-1"></i>Confirm Payment
+                    </button>
+                    <a href="{{ route('payments.index', ['view' => 'payables']) }}" class="btn btn-link">Cancel</a>
+                </div>
             </form>
         </div></div>
     @endif
@@ -53,10 +147,10 @@
     <div class="card stat-card">
         <div class="card-header bg-white">
             <strong>
-                @if (request('citation_number'))
-                    <i class="bi bi-search me-1"></i>No match for "{{ request('citation_number') }}" — closest citations:
+                @if (request('lookup'))
+                    <i class="bi bi-search me-1"></i>No match for "{{ request('lookup') }}" — closest matches:
                 @else
-                    <i class="bi bi-inbox me-1"></i>Recent Unpaid Citations
+                    <i class="bi bi-inbox me-1"></i>Awaiting Payment — {{ ucfirst($category) }}
                 @endif
             </strong>
         </div>
@@ -65,9 +159,13 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Citation #</th>
+                            <th>{{ $category === 'citation' ? 'Citation #' : 'Notice #' }}</th>
                             <th>Plate</th>
-                            <th>Violation</th>
+                            @if ($category === 'citation')
+                                <th>Violation</th>
+                            @else
+                                <th>Officer</th>
+                            @endif
                             <th>Amount Due</th>
                             <th>Status</th>
                             <th class="text-end">Action</th>
@@ -75,16 +173,25 @@
                     </thead>
                     <tbody>
                         @foreach ($suggestions as $sugg)
+                            @php
+                                $due = match ($category) {
+                                    'clamping' => $sugg->clamping_fee ?? $sugg->citation?->penalty_amount ?? 0,
+                                    'impounding' => $sugg->getTotalFees(),
+                                    default => $sugg->penalty_amount,
+                                };
+                                $selectUrl = route('payments.create', array_filter([
+                                    'category' => $category,
+                                    $category === 'citation' ? 'citation_id' : $category.'_id' => $sugg->id,
+                                ]));
+                            @endphp
                             <tr>
-                                <td class="fw-semibold">{{ $sugg->citation_number }}</td>
-                                <td>{{ $sugg->vehicle_plate }}</td>
-                                <td>{{ $sugg->violationType->name }}</td>
-                                <td>₱{{ number_format($sugg->penalty_amount, 2) }}</td>
-                                <td>
-                                    <span class="badge {{ $sugg->status->badgeClass() }}">{{ $sugg->status->label() }}</span>
-                                </td>
+                                <td class="fw-semibold">{{ $category === 'citation' ? $sugg->citation_number : $sugg->notice_number }}</td>
+                                <td>{{ $sugg->vehicle_plate ?: '—' }}</td>
+                                <td>{{ $category === 'citation' ? $sugg->violationType->name : ($sugg->officer?->name ?: '—') }}</td>
+                                <td>₱{{ number_format((float) $due, 2) }}</td>
+                                <td><span class="badge {{ $sugg->status->badgeClass() }}">{{ $sugg->status->label() }}</span></td>
                                 <td class="text-end">
-                                    <a href="{{ route('payments.create', ['citation_id' => $sugg->id]) }}" class="btn btn-sm btn-outline-success">
+                                    <a href="{{ $selectUrl }}" class="btn btn-sm btn-outline-success">
                                         <i class="bi bi-cash-stack me-1"></i>Select
                                     </a>
                                 </td>
@@ -95,13 +202,13 @@
             </div>
         </div>
     </div>
-@elseif (request('citation_number'))
+@elseif (request('lookup'))
     <div class="alert alert-danger">
-        <i class="bi bi-exclamation-circle me-1"></i>No citation found matching "{{ request('citation_number') }}".
+        <i class="bi bi-exclamation-circle me-1"></i>No {{ $category }} found matching "{{ request('lookup') }}".
     </div>
 @else
     <div class="alert alert-warning mb-0">
-        <i class="bi bi-info-circle me-1"></i>No unpaid citations to display. Enter a citation number or vehicle plate above, or issue a citation first.
+        <i class="bi bi-info-circle me-1"></i>No {{ $category }} tickets are awaiting payment right now.
     </div>
 @endif
 @endsection

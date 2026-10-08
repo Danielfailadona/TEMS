@@ -24,6 +24,7 @@ class ClampingRequest extends Model
         'processed_by',
         'processed_at',
         'clamping_record_id',
+        'reference_number',
     ];
 
     protected function casts(): array

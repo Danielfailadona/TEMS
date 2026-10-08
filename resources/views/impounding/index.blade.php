@@ -169,6 +169,7 @@ if (! array_key_exists($activeStatus, $options)) {
                         <th scope="col">Officer</th>
                         <th scope="col">Clamped At</th>
                         <th scope="col">Status</th>
+                        <th scope="col">Evidence</th>
                         <th scope="col"><span class="visually-hidden">Actions</span></th>
                     </tr>
                 </thead>
@@ -182,6 +183,15 @@ if (! array_key_exists($activeStatus, $options)) {
                             <td>{{ $record->clamped_at->format('M d, Y') }}</td>
                             <td><span class="imp-status {{ $record->status->badgeClass() }}">{{ $record->status->label() }}</span></td>
                             <td>
+                                @if ($record->evidence_path)
+                                    <a href="{{ \App\Services\SupabaseStorage::publicUrl($record->evidence_path) }}" target="_blank" rel="noopener">
+                                        <img src="{{ \App\Services\SupabaseStorage::publicUrl($record->evidence_path) }}" alt="Evidence for {{ $record->vehicle_plate }}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;">
+                                    </a>
+                                @else
+                                    <span class="imp-muted-dash">-</span>
+                                @endif
+                            </td>
+                            <td>
                                 <div class="imp-actions">
                                     <a href="{{ route('impounding.show', $record) }}" class="imp-eye-btn" title="View details" aria-label="View {{ $record->vehicle_plate }}">
                                         <svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-5 9.5-5 9.5 5 9.5 5-3.5 5-9.5 5-9.5-5-9.5-5Z"/><circle cx="12" cy="12" r="2.3"/></svg>
@@ -189,11 +199,20 @@ if (! array_key_exists($activeStatus, $options)) {
                                     @can('markPaid', $record)
                                         <button type="button" class="imp-payment-btn" data-bs-toggle="modal" data-bs-target="#payModal-{{ $record->id }}">Record Payment</button>
                                     @endcan
+                                    @can('markWaitingRelease', $record)
+                                        <form action="{{ route('impounding.mark-waiting-release', $record) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-warning">Queue Release</button>
+                                        </form>
+                                    @endcan
+                                    @can('processRelease', $record)
+                                        <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#releaseModal-{{ $record->id }}">Process Release</button>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="imp-empty">No impounded vehicles found.</td></tr>
+                        <tr><td colspan="8" class="imp-empty">No impounded vehicles found.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -237,6 +256,33 @@ if (! array_key_exists($activeStatus, $options)) {
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                             <button type="submit" class="btn btn-success">Confirm Payment</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endcan
+
+    @can('processRelease', $record)
+        <div class="modal fade" id="releaseModal-{{ $record->id }}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog">
+                <form method="POST" action="{{ route('impounding.process-release', $record) }}">
+                    @csrf
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Process Release &mdash; {{ $record->vehicle_plate }}</h5>
+                            <button class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Confirm release of vehicle <strong>{{ $record->vehicle_plate }}</strong>?</p>
+                            <div class="mb-3">
+                                <label class="form-label">Release Notes</label>
+                                <textarea name="notes" class="form-control" rows="2" placeholder="Optional notes"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success">Release Vehicle</button>
                         </div>
                     </div>
                 </form>

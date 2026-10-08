@@ -13,17 +13,21 @@
             @if ($status)
                 <input type="hidden" name="status" value="{{ $status }}">
             @endif
-            <div class="col-md-5">
+            <div class="col-md-4">
                 <label class="form-label">Plate Number</label>
                 <input type="text" name="plate_number" class="form-control" placeholder="ABC-1234" value="{{ $plateNumber ?? '' }}">
             </div>
-            <div class="col-md-5">
+            <div class="col-md-4">
                 <label class="form-label">Citation Number</label>
                 <input type="text" name="citation_number" class="form-control" placeholder="CIT-20260614-XXXXXX" value="{{ $citationNumber ?? '' }}">
             </div>
-            <div class="col-md-2 align-self-end d-flex gap-2">
-                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Look Up</button>
-                <a href="{{ route('frontdesk.index') }}" class="btn btn-outline-secondary w-100" title="Reset filters"><i class="bi bi-arrow-clockwise"></i> Reset</a>
+            <div class="col-md-4">
+                <label class="form-label">Clamp Notice Number</label>
+                <input type="text" name="notice_number" class="form-control" placeholder="CLP-20260614-XXXXXX" value="{{ $noticeNumber ?? '' }}">
+            </div>
+            <div class="col-12 d-flex gap-2 justify-content-end">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Look Up</button>
+                <a href="{{ route('frontdesk.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i> Reset</a>
             </div>
         </form>
     </div>
@@ -52,7 +56,40 @@
             </div>
         </div>
     </div>
-@elseif (request('plate_number') || request('citation_number'))
+@endif
+
+@if (isset($clamping))
+    <div class="card stat-card mb-4">
+        <div class="card-header bg-white"><strong>Clamping Notice Information</strong></div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4"><strong class="text-muted small d-block">Notice #</strong>{{ $clamping->notice_number }}</div>
+                <div class="col-md-4"><strong class="text-muted small d-block">Vehicle</strong>{{ $clamping->vehicle_plate }}</div>
+                <div class="col-md-4"><strong class="text-muted small d-block">Officer</strong>{{ $clamping->officer->name ?? '—' }}</div>
+                <div class="col-md-4"><strong class="text-muted small d-block">Clamped At</strong>{{ $clamping->clamped_at->format('M d, Y') }}</div>
+                <div class="col-md-4"><strong class="text-muted small d-block">Status</strong><span class="badge {{ $clamping->status->badgeClass() }}">{{ $clamping->status->label() }}</span></div>
+                <div class="col-md-4"><strong class="text-muted small d-block">Location</strong>{{ $clamping->location ?? '—' }}</div>
+                @if ($clamping->paid_at)
+                    <div class="col-md-4"><strong class="text-muted small d-block">Amount Paid</strong>₱{{ number_format($clamping->clamping_fee, 2) }}</div>
+                    <div class="col-md-4"><strong class="text-muted small d-block">Paid At</strong>{{ $clamping->paid_at->format('M d, Y') }}</div>
+                    <div class="col-md-4"><strong class="text-muted small d-block">Method</strong>{{ ucwords(str_replace('_', ' ', $clamping->payment_method ?? '—')) }}</div>
+                @endif
+                <div class="col-12">
+                    <a href="{{ route('clamping.show', $clamping) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye me-1"></i>Open Clamp Record
+                    </a>
+                    @if ($clamping->impoundingRecord)
+                        <a href="{{ route('impounding.show', $clamping->impoundingRecord) }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-truck me-1"></i>Impounding
+                        </a>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
+
+@if (! isset($citation) && ! isset($clamping) && (request('plate_number') || request('citation_number') || request('notice_number')))
     <div class="alert alert-danger mb-4">No records found matching your search.</div>
 @endif
 

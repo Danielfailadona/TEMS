@@ -2,131 +2,39 @@
 
 @section('title', 'Vehicle Clamping')
 
-@push('styles')
-<style>
-    .clp-dash {
-        --clp-blue: #176ff2;
-        --clp-ink: #182235;
-        --clp-muted: #78869a;
-        --clp-line: #dfe5eb;
-    }
-    .clp-dash .clp-toolbar { display: flex; align-items: center; gap: 16px; width: 100%; flex-wrap: wrap; }
-    .clp-dash .clp-search-box { display: flex; height: 38px; min-width: 100px; flex: 1; }
-    .clp-dash .clp-search-submit {
-        display: grid; place-items: center; width: 34px; flex: 0 0 34px; background: #fff;
-        color: var(--clp-blue); border: 1px solid var(--clp-blue); border-radius: 4px 0 0 4px; cursor: pointer;
-    }
-    .clp-dash .clp-search-submit svg { width: 19px; height: 19px; stroke: currentColor; }
-    .clp-dash .clp-search-box input {
-        min-width: 0; width: 100%; border: 1px solid #d7dee7; border-left: 0; padding: 0 22px;
-        outline: none; background: #fff; color: #263247; font-size: 16px; border-radius: 0 4px 4px 0;
-    }
-    .clp-dash .clp-search-box input:focus { border-color: #7aa9f8; box-shadow: inset 0 0 0 1px #7aa9f8; }
-    .clp-dash .clp-danger-btn {
-        height: 38px; border: 0; background: #dc3545; color: #fff; border-radius: 16px;
-        padding: 0 16px; font-weight: 650; white-space: nowrap; display: inline-flex; align-items: center;
-        gap: 6px; text-decoration: none; font-size: 14px;
-    }
-    .clp-dash .clp-danger-btn:hover { background: #bb2d3b; color: #fff; }
-    .clp-dash .clp-table-card { margin-top: 22px; background: #fff; border: 1px solid var(--clp-line); border-radius: 12px; overflow: hidden; }
-    .clp-dash .clp-table-wrap { overflow-x: auto; }
-    .clp-dash .clp-table { width: 100%; border-collapse: collapse; min-width: 790px; table-layout: fixed; background: #fff; }
-    .clp-dash .clp-table thead th {
-        height: 51px; text-align: left; font-size: 14px; font-weight: 700; padding: 0 16px;
-        border-bottom: 2px solid #e8edf2; white-space: nowrap; color: var(--clp-ink);
-    }
-    .clp-dash .clp-table tbody tr { height: 78px; border-bottom: 2px solid #e8edf2; }
-    .clp-dash .clp-table tbody tr:last-child { border-bottom: 0; }
-    .clp-dash .clp-table td { padding: 0 16px; white-space: nowrap; font-size: 14px; color: var(--clp-ink); }
-    .clp-dash .clp-table th:nth-child(1), .clp-dash .clp-table td:nth-child(1) { width: 22%; }
-    .clp-dash .clp-table th:nth-child(2), .clp-dash .clp-table td:nth-child(2) { width: 20%; }
-    .clp-dash .clp-table th:nth-child(3), .clp-dash .clp-table td:nth-child(3) { width: 18%; }
-    .clp-dash .clp-table th:nth-child(4), .clp-dash .clp-table td:nth-child(4) { width: 15%; }
-    .clp-dash .clp-table th:nth-child(5), .clp-dash .clp-table td:nth-child(5) { width: 14%; }
-    .clp-dash .clp-table th:last-child, .clp-dash .clp-table td:last-child { width: 11%; text-align: center; }
-    .clp-dash .clp-badge {
-        display: inline-block; font-size: 11px; font-weight: 700; line-height: 24px; padding: 0 10px;
-        border-radius: 7px; min-width: 40px; text-align: center;
-    }
-    .clp-dash .clp-view-btn {
-        width: 48px; height: 34px; border: 1px solid var(--clp-blue); color: var(--clp-blue);
-        background: #fff; border-radius: 18px; display: inline-grid; place-items: center; text-decoration: none;
-    }
-    .clp-dash .clp-view-btn svg { width: 20px; height: 20px; stroke: currentColor; }
-    .clp-dash .clp-view-btn:hover { background: #edf5ff; color: var(--clp-blue); }
-    .clp-dash .clp-empty { padding: 45px 20px; text-align: center; color: #738197; }
-    .clp-dash .clp-table-footer {
-        min-height: 42px; display: flex; justify-content: space-between; align-items: center; gap: 16px;
-        color: #74839a; font-size: 11px; padding: 12px 4px 0; flex-wrap: wrap;
-    }
-    .clp-dash .pagination { display: flex; align-items: center; gap: 0; margin-bottom: 0; }
-    .clp-dash .pagination .page-link {
-        width: 38px; height: 30px; background: #fff; border: 1px solid #dce3eb; color: #176ff2;
-        margin-left: -1px; display: grid; place-items: center; font-size: 13px; border-radius: 0;
-        padding: 0; text-decoration: none;
-    }
-    .clp-dash .pagination .page-item:first-child .page-link { border-radius: 5px 0 0 5px; color: #60728a; }
-    .clp-dash .pagination .page-item:last-child .page-link { border-radius: 0 5px 5px 0; color: #60728a; }
-    .clp-dash .pagination .page-item.active .page-link { background: #176ff2; border-color: #176ff2; color: #fff; }
-    .clp-dash .pagination .page-item.disabled .page-link { background: #fff; color: #c3cdd9; }
-    @media (max-width: 600px) {
-        .clp-dash .clp-toolbar { flex-wrap: wrap; gap: 10px; }
-        .clp-dash .clp-search-box { order: 3; flex-basis: 100%; }
-        .clp-dash .clp-danger-btn { margin-left: auto; }
-    }
-</style>
-@endpush
-
 @section('content')
-<div class="clp-dash">
-    <form method="GET" class="clp-toolbar" id="clpForm" aria-label="Clamping record search">
-        <label class="clp-search-box" aria-label="Search clamping records">
-            <button type="submit" class="clp-search-submit" aria-label="Search clamping records">
-                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
-            </button>
-            <input type="search" name="search" id="clpSearchInput" placeholder="Search notice #, plate, or officer..." value="{{ request('search') }}" autocomplete="off">
-        </label>
-
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h1 class="h3 mb-1">Vehicle Clamping</h1>
+        <p class="text-muted mb-0">Record and manage clamped vehicles</p>
+    </div>
+    <div class="d-flex gap-2">
         @can('create', App\Models\ClampingRecord::class)
-            <a href="{{ route('clamping.create') }}" class="clp-danger-btn">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-                Record Clamp
+            <a href="{{ route('clamping.create') }}" class="btn btn-danger">
+                <i class="bi bi-plus-lg me-1"></i>Record Clamp
             </a>
         @endcan
-    </form>
+    </div>
+</div>
 
-    @if (isset($pendingRequests) && $pendingRequests->isNotEmpty())
-        <div class="card stat-card mb-4">
-            <div class="card-header bg-white"><strong>Citizen Clamping Requests</strong></div>
-            <div class="table-responsive">
-                <table class="table mb-0">
-                    <thead><tr><th>Requester</th><th>Vehicle Plate</th><th>Location</th><th>Date</th><th>Status</th></tr></thead>
-                    <tbody>
-                        @foreach ($pendingRequests as $request)
-                            <tr>
-                                <td>{{ $request->requester_name ?? '—' }}</td>
-                                <td>{{ $request->vehicle_plate }}</td>
-                                <td>{{ $request->location ?? '—' }}</td>
-                                <td>{{ $request->created_at->format('M d, Y') }}</td>
-                                <td><span class="badge bg-warning">{{ ucfirst($request->status ?? 'pending') }}</span></td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+@if (isset($overdueCitations) && $overdueCitations->isNotEmpty())
+    <div class="card stat-card mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center"
+             role="button" data-bs-toggle="collapse" data-bs-target="#eligibleVehicles" aria-expanded="false">
+            <strong>Eligible Vehicles
+                <span class="badge bg-danger ms-1">{{ $overdueCitations->count() }}</span>
+            </strong>
+            <small class="text-muted"><i class="bi bi-chevron-down"></i></small>
         </div>
-    @endif
-
-    @if (isset($overdueCitations) && $overdueCitations->isNotEmpty())
-        <div class="card stat-card mb-4">
-            <div class="card-header bg-white"><strong>Eligible Vehicles</strong></div>
+        <div class="collapse show" id="eligibleVehicles">
             <div class="table-responsive">
                 <table class="table mb-0">
-                    <thead><tr><th>Plate #</th><th></th></tr></thead>
+                    <thead><tr><th>Plate #</th><th>Driver</th><th class="text-end"></th></tr></thead>
                     <tbody>
                         @foreach ($overdueCitations as $citation)
                             <tr>
                                 <td>{{ $citation->vehicle_plate }}</td>
+                                <td>{{ $citation->driver_name }}</td>
                                 <td class="text-end">
                                     <a href="{{ route('clamping.create', ['vehicle_plate' => $citation->vehicle_plate]) }}" class="btn btn-sm btn-danger">Clamp</a>
                                 </td>
@@ -136,64 +44,137 @@
                 </table>
             </div>
         </div>
-    @endif
+    </div>
+@endif
 
-    <section class="clp-table-card" aria-label="Clamping records table">
-        <div class="clp-table-wrap">
-            <table class="clp-table">
-                <thead>
-                    <tr>
-                        <th scope="col">Notice #</th>
-                        <th scope="col">Vehicle</th>
-                        <th scope="col">Officer</th>
-                        <th scope="col">Clamped At</th>
-                        <th scope="col">Status</th>
-                        <th scope="col"><span class="visually-hidden">Actions</span></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($records as $record)
-                        <tr>
-                            <td>{{ $record->notice_number }}</td>
-                            <td>{{ $record->vehicle_plate }}</td>
-                            <td>{{ $record->officer->name }}</td>
-                            <td>{{ $record->clamped_at->format('M d, Y') }}</td>
-                            <td><span class="clp-badge {{ $record->status->badgeClass() }}">{{ $record->status->label() }}</span></td>
-                            <td>
-                                <a href="{{ route('clamping.show', $record) }}" class="clp-view-btn" aria-label="View clamping record {{ $record->notice_number }}" title="View">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>
-                                </a>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="6" class="clp-empty">No clamping records found.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <footer class="clp-table-footer">
-            <span id="clpResultCount">Showing {{ $records->firstItem() ?? 0 }} to {{ $records->lastItem() ?? 0 }} of {{ $records->total() }} results</span>
-            @if ($records->hasPages())
-                {{ $records->links() }}
-            @endif
-        </footer>
-    </section>
+{{-- Search & Filter Bar --}}
+<div class="card stat-card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-12 col-md-5">
+                <label class="form-label visually-hidden">Search</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="search" name="search" class="form-control" placeholder="Search notice #, plate, or officer..." value="{{ request('search') }}">
+                </div>
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label visually-hidden">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    @foreach (App\Enums\ClampingStatus::cases() as $status)
+                        <option value="{{ $status->value }}" {{ request('status') === $status->value ? 'selected' : '' }}>
+                            {{ $status->label() }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label visually-hidden">Date From</label>
+                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}" title="Clamped from">
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label visually-hidden">Date To</label>
+                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}" title="Clamped to">
+            </div>
+            <div class="col-12 col-md-auto d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel me-1"></i>Apply
+                </button>
+                @if(request()->hasAny(['search', 'status', 'date_from', 'date_to']))
+                    <a href="{{ route('clamping.index') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                    </a>
+                @endif
+            </div>
+        </form>
+    </div>
 </div>
+
+{{-- Clamping Records Grid --}}
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+    @forelse ($records as $record)
+        <div class="col">
+            <div class="card stat-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                    <div class="min-width-0">
+                        <strong class="small text-truncate d-block">{{ $record->notice_number }}</strong>
+                        <small class="text-muted text-truncate d-block">{{ $record->vehicle_plate }}</small>
+                    </div>
+                    <span class="badge {{ $record->status->badgeClass() }} rounded-pill">{{ $record->status->label() }}</span>
+                </div>
+                <div class="card-body small">
+                    <div class="row g-2">
+                        <div class="col-6"><strong class="text-muted d-block">Officer</strong>{{ $record->officer->name ?? '—' }}</div>
+                        <div class="col-6"><strong class="text-muted d-block">Clamped At</strong>{{ $record->clamped_at?->format('M d, Y') }}</div>
+                        @if ($record->location)
+                            <div class="col-12"><strong class="text-muted d-block">Location</strong><span style="word-break:break-word;">{{ $record->location }}</span></div>
+                        @endif
+                        @if ($record->citation)
+                            <div class="col-12"><strong class="text-muted d-block">Citation</strong>{{ $record->citation->citation_number }}</div>
+                        @endif
+                        <div class="col-6"><strong class="text-muted d-block">Fee</strong>
+                            ₱{{ number_format($record->clamping_fee ?? ($record->citation?->penalty_amount ?? 0), 2) }}
+                        </div>
+                        @if ($record->paid_at)
+                            <div class="col-6"><strong class="text-muted d-block">Paid</strong>{{ $record->paid_at->format('M d, Y') }}</div>
+                        @endif
+                        @if ($record->released_at)
+                            <div class="col-12"><strong class="text-muted d-block">Released</strong>{{ $record->released_at->format('M d, Y h:i A') }}</div>
+                        @endif
+                    </div>
+                </div>
+                <div class="card-footer bg-white">
+                    <div class="d-flex justify-content-end gap-2 flex-wrap">
+                        @can('markPaid', $record)
+                            <form method="POST" action="{{ route('clamping.mark-paid', $record) }}" class="d-inline" onsubmit="return confirm('Record payment for {{ addslashes($record->notice_number) }}?')">
+                                @csrf
+                                <input type="hidden" name="clamping_fee" value="{{ $record->citation?->penalty_amount ?? 0 }}">
+                                <input type="hidden" name="payment_method" value="cash">
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="bi bi-cash-coin me-1"></i>Mark Paid
+                                </button>
+                            </form>
+                        @endcan
+                        @can('markWaitingRelease', $record)
+                            <form method="POST" action="{{ route('clamping.mark-waiting-release', $record) }}" class="d-inline" onsubmit="return confirm('Mark as waiting for release?')">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-warning">
+                                    <i class="bi bi-hourglass-split me-1"></i>Waiting
+                                </button>
+                            </form>
+                        @endcan
+                        @can('processRelease', $record)
+                            <form method="POST" action="{{ route('clamping.process-release', $record) }}" class="d-inline" onsubmit="return confirm('Release this vehicle?')">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-unlock me-1"></i>Release
+                                </button>
+                            </form>
+                        @endcan
+                        <a href="{{ route('clamping.show', $record) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye me-1"></i>View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @empty
+        <div class="col-12">
+            <div class="card stat-card text-center py-5">
+                <div class="card-body">
+                    <i class="bi bi-car-front fs-1 text-muted mb-3 d-block"></i>
+                    <h5 class="text-muted mb-2">No clamping records found.</h5>
+                    <p class="text-muted small mb-0">Try adjusting your search or filters.</p>
+                </div>
+            </div>
+        </div>
+    @endforelse
+</div>
+
+@if ($records->hasPages())
+    <div class="d-flex justify-content-center mt-4">
+        {{ $records->withQueryString()->links() }}
+    </div>
+@endif
 @endsection
-
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('clpForm');
-    const searchInput = document.getElementById('clpSearchInput');
-    if (!form || !searchInput) return;
-
-    let debounce;
-    searchInput.addEventListener('input', () => {
-        clearTimeout(debounce);
-        debounce = setTimeout(() => form.submit(), 300);
-    });
-});
-</script>
-@endpush

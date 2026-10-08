@@ -35,9 +35,20 @@
         </div>
         <hr>
         <div class="row mb-2"><div class="col-5 text-muted">Receipt #</div><div class="col-7 fw-semibold">{{ $payment->receipt_number }}</div></div>
-        <div class="row mb-2"><div class="col-5 text-muted">Citation #</div><div class="col-7">{{ $payment->citation->citation_number }}</div></div>
-        <div class="row mb-2"><div class="col-5 text-muted">Vehicle</div><div class="col-7">{{ $payment->citation->vehicle_plate }}</div></div>
-        <div class="row mb-2"><div class="col-5 text-muted">Violation</div><div class="col-7">{{ $payment->citation->violationType->name }}</div></div>
+        <div class="row mb-2"><div class="col-5 text-muted">Category</div><div class="col-7">{{ $payment->categoryLabel() }}</div></div>
+        @if ($payment->category() === 'citation')
+            <div class="row mb-2"><div class="col-5 text-muted">Citation #</div><div class="col-7">{{ $payment->citation->citation_number }}</div></div>
+            <div class="row mb-2"><div class="col-5 text-muted">Violation</div><div class="col-7">{{ $payment->citation->violationType->name }}</div></div>
+        @else
+            <div class="row mb-2"><div class="col-5 text-muted">Notice #</div><div class="col-7">{{ $payment->payableNoticeNumber() }}</div></div>
+            @if ($payment->citation)
+                <div class="row mb-2"><div class="col-5 text-muted">Related Citation</div><div class="col-7">{{ $payment->citation->citation_number }}</div></div>
+            @endif
+        @endif
+        <div class="row mb-2"><div class="col-5 text-muted">Vehicle</div><div class="col-7">{{ $payment->payableVehicle() }}</div></div>
+        @if ($payment->category() === 'citation')
+            <div class="row mb-2"><div class="col-5 text-muted">Driver</div><div class="col-7">{{ $payment->citation->driver_name }}</div></div>
+        @endif
         <div class="row mb-2"><div class="col-5 text-muted">Amount Paid</div><div class="col-7 fw-semibold">₱{{ number_format($payment->amount, 2) }}</div></div>
         <div class="row mb-2"><div class="col-5 text-muted">Payment Method</div><div class="col-7">{{ $payment->isOnlinePayment() ? ucfirst($payment->online_payment_method ?? 'Online Payment') : $payment->payment_method->label() }}</div></div>
         @if ($payment->reference_number)

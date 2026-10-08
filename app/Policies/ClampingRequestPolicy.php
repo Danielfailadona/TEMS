@@ -10,12 +10,12 @@ class ClampingRequestPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isRole(Role::SuperAdmin, Role::Administrator, Role::ClampingOfficer, Role::Enforcer);
+        return $user->isRole(Role::SuperAdmin, Role::Administrator, Role::Enforcer);
     }
 
     public function view(User $user, ClampingRequest $clampingRequest): bool
     {
-        if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::ClampingOfficer)) {
+        if ($user->isRole(Role::SuperAdmin, Role::Administrator)) {
             return true;
         }
 

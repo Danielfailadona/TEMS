@@ -11,6 +11,7 @@
     <div class="col-auto"><input type="date" name="date_from" class="form-control" value="{{ optional($from)->format('Y-m-d') }}"></div>
     <div class="col-auto"><input type="date" name="date_to" class="form-control" value="{{ optional($to)->format('Y-m-d') }}"></div>
     <div class="col-auto"><button class="btn btn-primary"><i class="bi bi-filter"></i> Filter</button></div>
+    <div class="col-auto"><a href="{{ route('reports.citations') }}" class="btn btn-outline-secondary"><i class="bi bi-x-lg"></i> Clear</a></div>
 </form>
 
 <div class="row g-3 mb-4">

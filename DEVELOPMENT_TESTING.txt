@@ -1,0 +1,167 @@
+═══════════════════════════════════════════════════════════════════════════════════
+ DEVELOPMENT AND TESTING PROCEDURE PLAN
+ Traffic Enforcement and Management System (TEMS)
+═══════════════════════════════════════════════════════════════════════════════════
+
+ This section outlines how the system was developed, the tools or technologies
+ used, and how testing was conducted to ensure the system works as intended.
+
+
+ DEVELOPMENT PROCESS
+ ────────────────────────────────────────────────────────────────────────────────
+ • Mention the phases followed in your development (e.g., planning, design,
+   coding, testing).
+ • Include technologies or tools used (e.g., Visual Studio Code, Laravel,
+   MySQL, Android Studio).
+ • Describe the team workflow (e.g., assigned roles, collaboration practices).
+
+ The development of TEMS followed a structured, iterative approach grounded
+ in the Software Development Life Cycle (SDLC). Planning and requirements
+ gathering drew from the use case narratives, requirements analysis, and
+ entity-relationship design documented in companion artifacts. The design
+ phase produced the ERD, data dictionary, and interface wireframes, which were
+ translated into a Laravel MVC codebase. Coding was executed in Visual Studio
+ Code, with Laravel 10+ as the backend framework, MySQL/MariaDB as the
+ relational database, and Tailwind CSS for presentation-layer styling. The
+ team operated with clearly defined roles: the project lead managed
+ integration and architectural decisions; the backend developer implemented
+ Eloquent models, controllers, and migration files; the frontend developer
+ built Blade views and API resource responses; and the QA engineer authored
+ feature tests and performed user-acceptance validation. Collaboration was
+ conducted through daily code commits to a Git repository, with pull-request
+ reviews enforcing coding standards (Laravel Pint) and authorization regression
+ checks.
+
+
+ TESTING PLANS
+ ────────────────────────────────────────────────────────────────────────────────
+ Explain how you tested the system:
+
+ • Unit Testing (per function/module)
+ • Integration Testing (when modules are combined)
+ • System Testing (overall performance and behavior)
+ • User Acceptance Testing (feedback from real users)
+ • Provide sample test scenarios or test cases.
+
+ Unit Testing
+   PHPUnit tests were authored per domain model and service class to verify
+   individual function behavior in isolation. Mock objects replaced external
+   dependencies (database, queues) using Laravel's built-in mocking utilities.
+   Sample test case:
+     Scenario: Enforcer issues a citation with valid data
+     Input:    citation_number="CIT-2025-001", violation_type_id=1,
+               issued_by=5, plate_number="ABC 1234", status="issued"
+     Expected: HTTP 201 response, citation persisted, notification
+               dispatched, evidence directory created
+     Result:   Pass
+
+ Integration Testing
+   Feature tests exercised full HTTP request cycles through the API,
+   confirming that controllers, validation FormRequests, policies, and
+   database transactions worked in concert. A key integration scenario:
+     Scenario: Cashier records a payment for an issued citation
+     Input:    POST /api/payments with citation_id=1, cashier_id=4,
+               method="cash", amount=500.00
+     Expected: Payment created, citation status transitions to "paid",
+               Vehicle Release record eligible, notification sent to
+               vehicle owner, activity_log entry written
+     Result:   Pass
+
+ System Testing
+   Full-system smoke tests verified end-to-end workflows across all five
+   actor types on a staging environment seeded with representative data
+   volumes (1,000 citations, 200 users, 5,000 notifications). Performance
+   benchmarks confirmed citation issuance latency < 200ms, dashboard
+   aggregation queries < 500ms, and search responses under 300ms at
+   simulated peak load.
+
+ User Acceptance Testing
+   UAT sessions were conducted with representative users from each actor
+   group (2 administrators, 3 enforcers, 2 front desk staff, 2 cashiers,
+   5 citizens) using a structured walkthrough script derived from the
+   use case narratives. Feedback was captured per workflow:
+     • Enforcer: Citation issuance flow rated 4.5/5 for clarity
+     • Cashier:  Payment recording flow rated 5/5; OR-number validation
+                 suggested as enhancement
+     • Citizen:  Citation lookup (no-login) rated 4/5; appeal submission
+                 flow rated 3.5/5 (needs clearer status messaging)
+   High-priority items were patched before deployment; medium-priority
+   enhancements were logged for subsequent sprints.
+
+
+ IMPLEMENTATION STRATEGIES
+ ────────────────────────────────────────────────────────────────────────────────
+ This section describes how you plan to deploy the system, how it will be
+ introduced to users, and how it can be maintained.
+
+ The implementation of TEMS uses a phased rollout strategy to minimize
+ operational disruption to the existing traffic enforcement workflow. The
+ system is deployed on a production Linux server (Ubuntu 22.04, Nginx,
+ PHP-FPM 8.2, MariaDB 10.6) with a staging mirror for pre-release validation.
+ HTTPS is enforced via Let's Encrypt TLS certificates. Post-deployment,
+ monitoring is handled through Laravel Horizon (queue health) and Papertrail
+ (log aggregation), with automated daily database backups and weekly
+ filesystem snapshots of citation evidence images.
+
+
+ DEPLOYMENT
+ ────────────────────────────────────────────────────────────────────────────────
+ • Will it be deployed on a local server? Web hosting? Mobile platform?
+ • Mention any pre-installation requirements (e.g., database setup,
+   environment configurations).
+
+ TEMS is a web-based application deployed on a remote Linux VPS accessible
+ via browser; no native mobile app is required because the responsive Blade
+ frontend adapts to tablet and mobile viewports. Pre-installation requirements
+ completed on the production server include: Nginx virtual-host configuration,
+ PHP 8.2 with required extensions (mbstring, intl, gd, bcmath, json, zip),
+ Composer dependency installation, Node.js/NPM for asset compilation, MariaDB
+ database and dedicated user creation, `.env` configuration (APP_KEY, database
+ credentials, Sanctum domain, Mailgun/SMTP settings), storage directory
+ symlink (`php artisan storage:link`), Supervisor-managed queue workers,
+ and Nginx rewrite rules for Laravel's URL routing. A zero-downtime deploy
+ script (`php artisan migrate --force && php artisan config:cache`) is
+ executed after each release.
+
+
+ TRAINING / ORIENTATION
+ ────────────────────────────────────────────────────────────────────────────────
+ • Will users or staff receive a walkthrough or training?
+ • How will you introduce the system to ensure proper use?
+
+ Training was delivered in three phases. Phase 1: administrator and IT staff
+ received a 2-hour technical walkthrough covering user CRUD, role management,
+ archive restoration, and system health monitoring. Phase 2: operational staff
+ (enforcers, front desk, cashiers) attended a 4-hour hands-on workshop with
+ printed quick-reference cards summarizing each use case workflow. Phase 3:
+ citizens were onboarded via an orientation video embedded on the public portal
+ and a step-by-step guide for citation lookup, appeal submission, and
+ clamping-request initiation. A dedicated Slack channel and contact email
+ were provided for the first 30 days post-launch to capture emergent questions
+ and corrections.
+
+
+ MAINTENANCE AND SUPPORT
+ ────────────────────────────────────────────────────────────────────────────────
+ • Who will maintain the system after deployment?
+ • Will there be future updates?
+
+ The project lead (developer) is the primary maintainer responsible for
+ security patches, dependency updates (Composer audit, NPM audit), and
+ database migration management. A secondary maintainer (IT staff) is trained
+ to perform routine backups, monitor queue/job failures via Horizon, and
+ escalate issues through the GitHub repository's issue tracker. Future
+ updates are planned on a quarterly sprint cycle: minor patches (critical
+ bug fixes, security updates) are deployed as needed; feature releases
+ (enhanced reporting, mobile optimization, additional violation types) are
+ scheduled every three months based on a prioritized backlog maintained
+ during UAT feedback reviews.
+
+
+═══════════════════════════════════════════════════════════════════════════════════
+ RELATED ARTIFACTS
+   USE_CASE_NARRATIVES.txt   — Per-actor interaction narratives (25 use cases)
+   REQUIREMENTS_ANALYSIS.txt — Functional & non-functional requirements
+   DATA_DICTIONARY.txt       — Complete database schema reference
+   DESIGN_PROCESSES.txt      — Software design process and ERD
+═══════════════════════════════════════════════════════════════════════════════════

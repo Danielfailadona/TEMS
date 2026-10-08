@@ -1,0 +1,94 @@
+Requirements Analysis and Documentation
+In this section, the functional and non-functional requirements for the Traffic Enforcement and Management System (TEMS), a web-based application using Laravel 11, would be presented. TEMS is designed to automate and streamline traffic violation enforcement, from citation issuance to vehicle impounding, serving a city or municipality. The application gives transportation enforcers the capability to issue citations with evidence, track vehicle locations, and manage clamping operations. For vehicle owners, it provides a public portal to lookup citations, pay fines online or over-the-counter, request vehicle clamping, and file appeals. Cashiers process payments, front desk officers assist walk-in clients, clamping officers execute approved clamping requests, and administrators manage the entire system including user accounts, reports, and audit logs.
+
+Functional Requirements
+
+All Users
+  Users can register and log in with the appropriate role: Administrator, Enforcer, Clamping Officer, Cashier, Front Desk, or Vehicle Owner.
+  Users receive notifications for relevant events (citations, appeals, payment confirmations, clamping updates, and account status changes).
+  Users can reset their passwords via a secure email link.
+  Users can manage their profile information (name, phone, email, profile photo).
+
+Vehicle Owner (Citizen)
+  Vehicle owners can search for their citations by citation number or plate number via the public citizen portal without logging in.
+  Vehicle owners can view citation details and attached evidence.
+  Vehicle owners can pay citations online through an integrated payment gateway (PayMongo).
+  Vehicle owners can request clamping of illegally parked or obstructing vehicles.
+  Vehicle owners can file appeals for contested citations with supporting reasoning.
+  Vehicle owners can view their payment history and clamping status.
+  Vehicle owners can view their own citations via the owner portal after logging in.
+
+Transportation Enforcer
+  Enforcers can issue new traffic citations with violation type, vehicle and driver details, location, notes, and photo or video evidence.
+  Enforcers can search, view, and manage their issued citations.
+  Enforcers can view their assigned patrol zones and boundaries.
+  Enforcers can update their GPS location in real-time for tracking.
+  Enforcers can refer citations to impounding for further action.
+  Enforcers can access their personal citation archives.
+
+Clamping Officer
+  Clamping officers can view approved clamping requests assigned to them.
+  Clamping officers can record clamping actions with photographic evidence.
+  Clamping officers can view clamping release receipts and print them.
+  Clamping officers can mark requests as resolved when the target vehicle is not found on site.
+  Clamping officers can view their assigned requests pending action.
+
+Cashier
+  Cashiers can process over-the-counter payments via Cash, Card, GCash, or Bank Transfer.
+  Cashiers can generate official payment receipts with citation and transaction details.
+  Cashiers can search and view payment history.
+  Cashiers can verify citation status before accepting payment to prevent duplicate transactions.
+
+Front Desk
+  Front desk officers can quickly search citations, vehicles, and clients via a quick-search interface.
+  Front desk officers can assist walk-in clients with inquiries and payments.
+  Front desk officers can process payments and verify account status.
+  Front desk officers can view reports and archives for client assistance.
+
+Administrator / Super Administrator
+  Admin can approve or reject user registrations and manage account statuses (active, suspended, pending).
+  Admin can manage user accounts including activating, suspending, and forcing device logout.
+  Admin can approve or reject public clamping requests.
+  Admin can create and manage violation types with corresponding penalty amounts.
+  Admin can manage teams and assign patrol zones.
+  Admin can manage system settings and preferences.
+  Admin can view reports including revenue reports, citation statistics, and enforcer performance.
+  Admin can manage system archives and initiate database backups.
+  Admin can view audit logs of all system activities.
+  Admin can release impounded vehicles after verifying payment.
+  Admin can review and resolve submitted appeals.
+  Admin can manage system-wide notifications.
+
+Non-functional Requirements
+
+Performance
+  The system should handle a minimum of 100 concurrent users without significant performance degradation.
+  Response time for common operations should be less than 2 seconds under normal load conditions.
+  Citation search and report generation should complete within 3 seconds.
+  File uploads (citation evidence, clamping photos) should process within 5 seconds on standard connections.
+
+Security
+  Data transmission should be encrypted using HTTPS protocol to prevent unauthorized access.
+  Access controls should be implemented to ensure data privacy and prevent unauthorized actions.
+  Passwords should be hashed using bcrypt or equivalent hashing algorithms.
+  Role-based access control (RBAC) should restrict features to authorized users only.
+  Audit logs should record all critical actions (payment, citation issuance, account changes) for accountability.
+  The online payment webhook should verify signatures to prevent fraudulent transactions.
+
+Usability
+  The user interface should be intuitive and responsive across different devices (desktop, tablet, mobile).
+  The public citizen portal should be accessible without requiring account creation for citation lookup, clamping requests, and online payments.
+  Accessibility standards should be followed to ensure usability for users with disabilities.
+  Officers in the field should be able to issue citations using a mobile-friendly interface.
+
+Reliability
+  The system should have a minimum uptime of 99.9% to ensure availability during business hours.
+  Backup and recovery procedures should be in place to minimize data loss in case of system failures.
+  The online payment gateway should have transaction reliability with proper webhook verification and retry logic.
+  Database transactions should be atomic to maintain data integrity during citation creation and payment processing.
+
+Scalability
+  The architecture should support scaling up to accommodate future growth in user base and data volume.
+  Database and server configurations should be optimized for horizontal and vertical scalability as needed.
+  The system should support multiple enforcement zones and teams without performance degradation.
+  The file storage system should support scalable hosting of citation evidence and clamping photos.

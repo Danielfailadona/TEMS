@@ -56,9 +56,16 @@ Route::middleware('guest')->group(function () {
         Route::get('citation/lookup', [CitizenPortalController::class, 'citationLookup'])->name('citation.lookup');
         Route::get('citation/search', [CitizenPortalController::class, 'citationSearch'])->name('citation.search');
         Route::get('citation/{citation}', [CitizenPortalController::class, 'citationDetail'])->name('citation.detail');
-        Route::get('request-clamping', [CitizenPortalController::class, 'clampingRequest'])->name('clamping.show');
+        Route::get('clamping/lookup', [CitizenPortalController::class, 'clampingLookup'])->name('clamping.lookup');
+        Route::get('clamping/search', [CitizenPortalController::class, 'clampingSearch'])->name('clamping.search');
+        
+        // Clamping Request - Citizen Portal
+        Route::get('request-clamping', [CitizenPortalController::class, 'clampingLanding'])->name('clamping.landing');
+        Route::get('request-clamping/form', [CitizenPortalController::class, 'clampingForm'])->name('clamping.form');
         Route::post('request-clamping', [CitizenPortalController::class, 'storeClampingRequest'])->middleware('throttle:5,5')->name('clamping.store');
-        Route::get('clamping/success', [CitizenPortalController::class, 'clampingSuccess'])->name('clamping.success');
+        Route::get('request-clamping/success', [CitizenPortalController::class, 'clampingSuccess'])->name('clamping.success');
+        Route::get('request-clamping/track', [CitizenPortalController::class, 'clampingTrack'])->name('clamping.track');
+        Route::post('request-clamping/track', [CitizenPortalController::class, 'clampingTrackSearch'])->name('clamping.track.search');
     });
 
     // PayMongo Webhook (public, verified by signature)
@@ -72,6 +79,12 @@ Route::middleware('guest')->group(function () {
             ->middleware('throttle:10,5')
             ->name('checkout');
         Route::get('{id}/{token}/payment/{payment}/success', [PayMongoController::class, 'publicSuccess'])->name('success');
+    });
+
+    // Public clamping ticket (scanned from clamping notice QR code)
+    Route::prefix('clamp')->name('public.clamping.')->group(function () {
+        Route::get('{id}/{token}', [CitizenPortalController::class, 'clampingTicket'])->name('ticket');
+        Route::get('{id}/{token}/print', [CitizenPortalController::class, 'clampingPrint'])->name('print');
     });
 });
 
@@ -104,6 +117,9 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
     Route::resource('payments', PaymentController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
     Route::get('payments/{payment}/print', [PaymentController::class, 'printReceipt'])->name('payments.print');
     Route::resource('clamping', ClampingController::class)->only(['index', 'create', 'store', 'show']);
+    Route::post('clamping/{clamping}/mark-paid', [ClampingController::class, 'markPaid'])->name('clamping.mark-paid');
+    Route::post('clamping/{clamping}/mark-waiting-release', [ClampingController::class, 'markWaitingRelease'])->name('clamping.mark-waiting-release');
+    Route::post('clamping/{clamping}/process-release', [ClampingController::class, 'processRelease'])->name('clamping.process-release');
     Route::prefix('clamping-requests')->name('clamping-requests.')->controller(ClampingRequestController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('{clampingRequest}', 'show')->name('show');
@@ -114,11 +130,13 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
     });
     Route::prefix('impounding')->name('impounding.')->controller(ImpoundingController::class)->group(function () {
         Route::get('/', 'index')->name('index');
-        Route::get('{clamping}/print-release', 'printRelease')->name('print-release');
-        Route::get('{clamping}', 'show')->name('show');
-        Route::post('{clamping}/mark-paid', 'markPaid')->name('mark-paid');
-        Route::post('{clamping}/mark-waiting-release', 'markWaitingRelease')->name('mark-waiting-release');
-        Route::post('{clamping}/process-release', 'processRelease')->name('process-release');
+        Route::get('create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('{impounding}/print-release', 'printRelease')->name('print-release');
+        Route::get('{impounding}', 'show')->name('show');
+        Route::post('{impounding}/mark-paid', 'markPaid')->name('mark-paid');
+        Route::post('{impounding}/mark-waiting-release', 'markWaitingRelease')->name('mark-waiting-release');
+        Route::post('{impounding}/process-release', 'processRelease')->name('process-release');
     });
 
     Route::resource('appeals', AppealController::class)->except(['destroy']);
@@ -192,7 +210,7 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
     Route::post('location', function (Request $request) {
         $request->validate(['latitude' => 'required|numeric', 'longitude' => 'required|numeric', 'accuracy_m' => 'nullable|numeric']);
         $user = auth()->user();
-        if ($user->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::ClampingOfficer)) {
+        if ($user->isRole(\App\Enums\Role::Enforcer)) {
             return \App\Models\EnforcerLocation::updateOrCreate(
                 ['user_id' => $user->id],
                 [

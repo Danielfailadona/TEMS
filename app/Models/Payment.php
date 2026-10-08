@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\PaymentMethod;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -15,6 +16,8 @@ class Payment extends Model
     protected $fillable = [
         'receipt_number',
         'citation_id',
+        'payable_type',
+        'payable_id',
         'cashier_id',
         'amount',
         'payment_method',
@@ -80,5 +83,55 @@ class Payment extends Model
     public function cashier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cashier_id');
+    }
+
+    public function payable(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    public function category(): string
+    {
+        return match ($this->payable_type) {
+            ClampingRecord::class => 'clamping',
+            ImpoundingRecord::class => 'impounding',
+            default => 'citation',
+        };
+    }
+
+    public function categoryLabel(): string
+    {
+        return match ($this->category()) {
+            'clamping' => 'Clamping',
+            'impounding' => 'Impounding',
+            default => 'Citation',
+        };
+    }
+
+    public function payableNoticeNumber(): string
+    {
+        if ($this->category() !== 'citation') {
+            return $this->payable?->notice_number ?? ($this->citation?->citation_number ?? '—');
+        }
+
+        return $this->citation?->citation_number ?? '—';
+    }
+
+    public function payableVehicle(): string
+    {
+        if ($this->payable) {
+            return $this->payable->vehicle_plate;
+        }
+
+        return $this->citation?->vehicle_plate ?? '—';
+    }
+
+    public function payablePerson(): string
+    {
+        if ($this->category() !== 'citation') {
+            return $this->payable?->officer?->name ?? '—';
+        }
+
+        return $this->citation?->driver_name ?? '—';
     }
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Citation Lookup — {{ config('itevcms.app_name') }}</title>
+    <title>Ticket Lookup — {{ config('itevcms.app_name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
@@ -82,7 +82,7 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top" style="z-index: 100;">
+<nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top" style="z-index: 100;">
         <div class="container-fluid px-4 px-lg-5">
             <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ route('welcome') }}">
                 <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" height="32" class="me-2">
@@ -94,7 +94,13 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="{{ route('welcome') }}#features">Features</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('citizen.clamping.show') }}">Report Parking</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('citizen.citation.lookup') }}">Ticket Lookup</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('citizen.clamping.landing') }}">Report Parking</a></li>
+                    <li class="nav-item ms-2">
+                        <a href="{{ route('welcome') }}" class="nav-link" title="Home" data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <i class="bi bi-house-door-fill" style="font-size:1.2rem;"></i>
+                        </a>
+                    </li>
                     <li class="nav-item ms-2">
                         <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">Sign In</a>
                     </li>
@@ -118,85 +124,190 @@
             <div class="col-12 col-lg-7">
                 <div class="mb-4 animate-on-load">
                     <h2 class="fw-bold mb-2">
-                        <i class="bi bi-search me-2"></i>Citation Lookup
+                        <i class="bi bi-search me-2"></i>Ticket Lookup
                     </h2>
-                    <p class="text-muted mb-0">Find your citation and check its status instantly</p>
+                    <p class="text-muted mb-0">Find your citation or clamping ticket and check its status instantly</p>
                 </div>
 
-                <div class="card stat-card mb-4 animate-on-load">
+                <div class="card stat-card animate-on-load">
                     <div class="card-body p-3 p-md-4">
-                        <div class="mb-3">
-                            <small class="text-muted fw-semibold d-block mb-2">SEARCH TYPE</small>
-                            <div class="btn-group w-100" role="group">
-                                <input type="radio" class="btn-check" name="search_type" id="search_type_simple" value="simple" checked>
-                                <label class="btn btn-outline-primary" for="search_type_simple">
-                                    <i class="bi bi-lightning me-1"></i>Quick Search
-                                </label>
-                                <input type="radio" class="btn-check" name="search_type" id="search_type_advanced" value="advanced">
-                                <label class="btn btn-outline-primary" for="search_type_advanced">
-                                    <i class="bi bi-sliders me-1"></i>Advanced
-                                </label>
-                            </div>
+                        <div class="nav nav-pills mb-4" role="tablist">
+                            <button type="button" class="nav-link {{ ! ($clampingTab ?? false) ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-citation" role="tab">
+                                <i class="bi bi-receipt me-1"></i>Citation
+                            </button>
+                            <button type="button" class="nav-link {{ ($clampingTab ?? false) ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tab-clamping" role="tab">
+                                <i class="bi bi-car-front me-1"></i>Clamping
+                            </button>
                         </div>
 
-                        <form action="{{ route('citizen.citation.search') }}" method="GET" id="searchForm">
-                            <div id="simple-search">
-                                <label for="search" class="form-label fw-semibold">
-                                    <i class="bi bi-receipt me-1"></i>Citation or Plate Number
-                                </label>
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                    <input
-                                        type="text"
-                                        class="form-control"
-                                        id="search"
-                                        name="search"
-                                        placeholder="e.g., CIT-2024-001 or ABC-1234"
-                                        value="{{ old('search') }}"
-                                        autocomplete="off"
-                                    >
-                                </div>
-                                <small class="text-muted d-block mt-2">
-                                    <i class="bi bi-info-circle me-1"></i>Minimum 3 characters required
-                                </small>
-                                @error('search')
-                                    <small class="text-danger d-block mt-1">{{ $message }}</small>
-                                @enderror
-                            </div>
-
-                            <div id="advanced-search" style="display: none;">
-                                <div class="row g-3">
-                                    <div class="col-12">
-                                        <label for="adv_citation" class="form-label">Citation Number</label>
-                                        <input type="text" class="form-control" id="adv_citation" name="citation_number" placeholder="e.g., CIT-2024-001">
-                                    </div>
-                                    <div class="col-12">
-                                        <label for="adv_plate" class="form-label">Vehicle Plate</label>
-                                        <input type="text" class="form-control" id="adv_plate" name="plate_number" placeholder="e.g., ABC-1234" style="text-transform: uppercase;">
-                                    </div>
-                                    <div class="col-6">
-                                        <label for="adv_date" class="form-label">Issued Date</label>
-                                        <input type="date" class="form-control" id="adv_date" name="issued_date">
-                                    </div>
-                                    <div class="col-6">
-                                        <label for="adv_status" class="form-label">Status</label>
-                                        <select class="form-select" id="adv_status" name="status">
-                                            <option value="">All Statuses</option>
-                                            <option value="issued">Issued</option>
-                                            <option value="paid">Paid</option>
-                                            <option value="overdue">Overdue</option>
-                                            <option value="appealed">Appealed</option>
-                                        </select>
+                        <div class="tab-content">
+                            <div class="tab-pane fade {{ ! ($clampingTab ?? false) ? 'show active' : '' }}" id="tab-citation" role="tabpanel">
+                                <div class="mb-3">
+                                    <small class="text-muted fw-semibold d-block mb-2">SEARCH TYPE</small>
+                                    <div class="btn-group w-100" role="group">
+                                        <input type="radio" class="btn-check" name="search_type" id="search_type_simple" value="simple" checked>
+                                        <label class="btn btn-outline-primary" for="search_type_simple">
+                                            <i class="bi bi-lightning me-1"></i>Quick Search
+                                        </label>
+                                        <input type="radio" class="btn-check" name="search_type" id="search_type_advanced" value="advanced">
+                                        <label class="btn btn-outline-primary" for="search_type_advanced">
+                                            <i class="bi bi-sliders me-1"></i>Advanced
+                                        </label>
                                     </div>
                                 </div>
+
+                                <form action="{{ route('citizen.citation.search') }}" method="GET" id="searchForm">
+                                    <div id="simple-search">
+                                        <label for="search" class="form-label fw-semibold">
+                                            <i class="bi bi-receipt me-1"></i>Citation or Plate Number
+                                        </label>
+                                        <div class="input-group input-group-lg">
+                                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                id="search"
+                                                name="search"
+                                                placeholder="e.g., CIT-2024-001 or ABC-1234"
+                                                value="{{ old('search') }}"
+                                                autocomplete="off"
+                                            >
+                                        </div>
+                                        <small class="text-muted d-block mt-2">
+                                            <i class="bi bi-info-circle me-1"></i>Minimum 3 characters required
+                                        </small>
+                                        @error('search')
+                                            <small class="text-danger d-block mt-1">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+
+                                    <div id="advanced-search" style="display: none;">
+                                        <div class="row g-3">
+                                            <div class="col-12">
+                                                <label for="adv_citation" class="form-label">Citation Number</label>
+                                                <input type="text" class="form-control" id="adv_citation" name="citation_number" placeholder="e.g., CIT-2024-001">
+                                            </div>
+                                            <div class="col-12">
+                                                <label for="adv_plate" class="form-label">Vehicle Plate</label>
+                                                <input type="text" class="form-control" id="adv_plate" name="plate_number" placeholder="e.g., ABC-1234" style="text-transform: uppercase;">
+                                            </div>
+                                            <div class="col-6">
+                                                <label for="adv_date" class="form-label">Issued Date</label>
+                                                <input type="date" class="form-control" id="adv_date" name="issued_date">
+                                            </div>
+                                            <div class="col-6">
+                                                <label for="adv_status" class="form-label">Status</label>
+                                                <select class="form-select" id="adv_status" name="status">
+                                                    <option value="">All Statuses</option>
+                                                    <option value="issued">Issued</option>
+                                                    <option value="paid">Paid</option>
+                                                    <option value="overdue">Overdue</option>
+                                                    <option value="appealed">Appealed</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-grid mt-4">
+                                        <button type="submit" class="btn btn-primary btn-lg fw-semibold">
+                                            <i class="bi bi-search me-2"></i>Search Citation
+                                        </button>
+                                    </div>
+                                </form>
+
+                                @isset($citationResult)
+                                    <div class="card stat-card border-primary mt-4">
+                                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                            <strong><i class="bi bi-patch-check me-2 text-success"></i>Citation Found</strong>
+                                            <span class="badge {{ $citationResult->status->badgeClass() }}">{{ $citationResult->status->label() }}</span>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-6"><small class="text-muted d-block">Citation #</small><strong>{{ $citationResult->citation_number }}</strong></div>
+                                                <div class="col-6"><small class="text-muted d-block">Plate Number</small><strong>{{ $citationResult->vehicle_plate }}</strong></div>
+                                                <div class="col-6"><small class="text-muted d-block">Violation</small>{{ $citationResult->violationType->name ?? '—' }}</div>
+                                                <div class="col-6"><small class="text-muted d-block">Penalty</small>₱{{ number_format($citationResult->penalty_amount, 2) }}</div>
+                                                <div class="col-6"><small class="text-muted d-block">Driver</small>{{ $citationResult->driver_name ?? '—' }}</div>
+                                                <div class="col-6"><small class="text-muted d-block">Issued</small>{{ $citationResult->issued_at?->format('M d, Y') }}</div>
+                                                @if ($citationResult->payment)
+                                                    <div class="col-12">
+                                                        <small class="text-muted d-block">Payment</small>
+                                                        <strong>
+                                                            @if ($citationResult->payment->paid_at)
+                                                                Paid {{ $citationResult->payment->paid_at->format('M d, Y') }}
+                                                            @else
+                                                                Pending — Receipt {{ $citationResult->payment->receipt_number }}
+                                                            @endif
+                                                        </strong>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <div class="card-footer bg-white d-flex gap-2 justify-content-end flex-wrap">
+                                            <a href="{{ route('citizen.citation.detail', $citationResult) }}" class="btn btn-sm btn-primary"><i class="bi bi-ticket me-1"></i>Open Full Ticket</a>
+                                            <a href="{{ route('public.citation.print', ['id' => $citationResult->id, 'token' => $citationResult->getValidationToken()]) }}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer me-1"></i>Print</a>
+                                        </div>
+                                    </div>
+                                @endisset
                             </div>
 
-                            <div class="d-grid mt-4">
-                                <button type="submit" class="btn btn-primary btn-lg fw-semibold">
-                                    <i class="bi bi-search me-2"></i>Search Citation
-                                </button>
+                            <div class="tab-pane fade {{ ($clampingTab ?? false) ? 'show active' : '' }}" id="tab-clamping" role="tabpanel">
+                                <form action="{{ route('citizen.clamping.search') }}" method="GET">
+                                    <label for="clamping_search" class="form-label fw-semibold">
+                                        <i class="bi bi-car-front me-1"></i>Clamp Notice or Plate Number
+                                    </label>
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            id="clamping_search"
+                                            name="search"
+                                            placeholder="e.g., CLP-2026-XXXXXX or ABC-1234"
+                                            value="{{ old('search') }}"
+                                            autocomplete="off"
+                                        >
+                                    </div>
+                                    <small class="text-muted d-block mt-2">
+                                        <i class="bi bi-info-circle me-1"></i>Search by clamping notice number or vehicle plate
+                                    </small>
+                                    @error('search')
+                                        <small class="text-danger d-block mt-1">{{ $message }}</small>
+                                    @enderror
+
+                                    <div class="d-grid mt-4">
+                                        <button type="submit" class="btn btn-primary btn-lg fw-semibold">
+                                            <i class="bi bi-search me-2"></i>Search Clamping Notice
+                                        </button>
+                                    </div>
+                                </form>
+
+                                @isset($clampingResult)
+                                    <div class="card stat-card border-primary mt-4">
+                                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                            <strong><i class="bi bi-patch-check me-2 text-success"></i>Clamping Notice Found</strong>
+                                            <span class="badge {{ $clampingResult->status->badgeClass() }}">{{ $clampingResult->status->label() }}</span>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                                                <div class="col-6"><small class="text-muted d-block">Notice #</small><strong>{{ $clampingResult->notice_number }}</strong></div>
+                                                <div class="col-6"><small class="text-muted d-block">Plate Number</small><strong>{{ $clampingResult->vehicle_plate }}</strong></div>
+                                                <div class="col-6"><small class="text-muted d-block">Clamped At</small>{{ $clampingResult->clamped_at?->format('M d, Y h:i A') }}</div>
+                                                <div class="col-6"><small class="text-muted d-block">Officer</small>{{ $clampingResult->officer->name ?? '—' }}</div>
+                                                <div class="col-12"><small class="text-muted d-block">Location</small>{{ $clampingResult->location ?? '—' }}</div>
+                                                @if ($clampingResult->paid_at)
+                                                    <div class="col-6"><small class="text-muted d-block">Amount Paid</small>₱{{ number_format($clampingResult->clamping_fee, 2) }}</div>
+                                                    <div class="col-6"><small class="text-muted d-block">Paid At</small>{{ $clampingResult->paid_at->format('M d, Y') }}</div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <div class="card-footer bg-white d-flex gap-2 justify-content-end flex-wrap">
+                                            <a href="{{ route('public.clamping.ticket', ['id' => $clampingResult->id, 'token' => $clampingResult->getValidationToken()]) }}" target="_blank" class="btn btn-sm btn-primary"><i class="bi bi-ticket me-1"></i>Open Ticket</a>
+                                        </div>
+                                    </div>
+                                @endisset
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
 
@@ -214,7 +325,7 @@
                         <i class="bi bi-lightning me-2 text-primary"></i>Quick Actions
                     </h5>
                 </div>
-                <a href="{{ route('citizen.clamping.show') }}" class="action-card animate-on-load" style="animation-delay: 0.1s;">
+                <a href="{{ route('citizen.clamping.landing') }}" class="action-card animate-on-load" style="animation-delay: 0.1s;">
                     <div class="card stat-card mb-3">
                         <div class="card-body d-flex align-items-center gap-3 py-3 px-4">
                             <div style="width: 3rem; height: 3rem; background: rgba(245, 158, 11, 0.12); border-radius: 0.8rem; display: grid; place-items: center; color: #f59e0b; font-size: 1.4rem; flex-shrink: 0;">

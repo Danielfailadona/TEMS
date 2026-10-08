@@ -48,15 +48,15 @@ class NavigationComposer
                 $operations[] = ['label' => 'Payments', 'route' => 'payments.index', 'icon' => 'cash-coin'];
             }
 
-            if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::ClampingOfficer)) {
+            if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::Enforcer)) {
                 $operations[] = ['label' => 'Clamping', 'route' => 'clamping.index', 'icon' => 'car_gear'];
             }
 
-            if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::ClampingOfficer, Role::Cashier, Role::FrontDesk)) {
+            if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::Cashier, Role::FrontDesk, Role::Enforcer)) {
                 $operations[] = ['label' => 'Impounding', 'route' => 'impounding.index', 'icon' => 'auto_towing'];
             }
 
-            if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::ClampingOfficer, Role::Enforcer)) {
+            if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::Enforcer)) {
                 $operations[] = ['label' => 'Clamping Requests', 'route' => 'clamping-requests.index', 'icon' => 'inbox'];
             }
 
@@ -71,7 +71,7 @@ class NavigationComposer
                 $administration[] = ['label' => 'Audit Logs', 'route' => 'audit-logs.index', 'icon' => 'journal-text'];
             }
 
-            if ($user->isRole(Role::Enforcer, Role::ClampingOfficer)) {
+            if ($user->isRole(Role::Enforcer)) {
                 $operations[] = ['label' => 'My Archives', 'route' => 'archives.index', 'icon' => 'archive'];
                 $operations[] = ['label' => 'My Zone', 'route' => 'enforcer.zone', 'icon' => 'geo-alt-fill'];
             }
@@ -92,6 +92,6 @@ class NavigationComposer
         }
 
     $view->with('navGroups', $groups);
-    $view->with('isEnforcerMobile', $user->isRole(Role::Enforcer, Role::ClampingOfficer));
+    $view->with('isEnforcerMobile', $user->isRole(Role::Enforcer));
 }
 }

@@ -271,6 +271,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const PER_PAGE = 5;
     let currentPage = 1;
     let filteredRows = memberRows;
+    let totalPages = 1;
 
     // Search filter
     memberSearch.addEventListener('input', function () {
@@ -281,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function updatePagination() {
-        const totalPages = Math.max(1, Math.ceil(filteredRows.length / PER_PAGE));
+        totalPages = Math.max(1, Math.ceil(filteredRows.length / PER_PAGE));
         if (currentPage > totalPages) currentPage = totalPages;
         memberRows.forEach(row => row.classList.add('d-none'));
         const start = (currentPage - 1) * PER_PAGE;

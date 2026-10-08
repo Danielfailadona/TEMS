@@ -398,8 +398,8 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('citizen.citation.lookup') }}">Citation Lookup</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('citizen.clamping.show') }}">Report Parking</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ route('citizen.citation.lookup') }}">Ticket Lookup</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ route('citizen.clamping.landing') }}">Report Parking</a></li>
                 <li class="nav-item ms-2">
                     <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">Sign In</a>
                 </li>
@@ -543,7 +543,7 @@
             </button>
             <div class="collapse" id="faq2">
                 <div class="faq-answer">
-                    You can use the Citation Lookup feature accessible from the navigation bar. Enter your citation number or vehicle plate number to view details, pay fines, or file an appeal.
+                    You can use the Ticket Lookup feature accessible from the navigation bar. Enter your citation number, clamping notice number, or vehicle plate number to view details and track their status.
                 </div>
             </div>
         </div>

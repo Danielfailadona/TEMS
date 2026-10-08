@@ -10,4 +10,6 @@ return [
 
     'jwt_secret' => env('SUPABASE_JWT_SECRET'),
 
+    'bucket' => env('STORAGE_BUCKET', 'evidence'),
+
 ];

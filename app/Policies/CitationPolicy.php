@@ -39,7 +39,7 @@ class CitationPolicy
         }
 
         return $citation->issued_by === $user->id
-            && $user->isRole(Role::Enforcer, Role::ClampingOfficer);
+            && $user->isRole(Role::Enforcer);
     }
 
     public function printCitation(User $user, Citation $citation): bool

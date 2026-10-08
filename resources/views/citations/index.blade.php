@@ -153,6 +153,7 @@
                     <th scope="col">Amount</th>
                     <th scope="col">Issued</th>
                     <th scope="col">Status</th>
+                    <th scope="col">Evidence</th>
                     <th scope="col"><span class="visually-hidden">Actions</span></th>
                 </tr>
             </thead>
@@ -166,13 +167,20 @@
                         <td>{{ $citation->issued_at->format('M d, Y') }}</td>
                         <td><span class="cit-pill {{ $citation->status->badgeClass() }}">{{ $citation->status->label() }}</span></td>
                         <td>
+                            @if ($citation->evidence->isNotEmpty())
+                                <span class="badge bg-success">Yes</span>
+                            @else
+                                <span class="badge bg-secondary">No</span>
+                            @endif
+                        </td>
+                        <td>
                             <a href="{{ route('citations.show', $citation) }}" class="cit-view-btn" aria-label="View citation {{ $citation->citation_number }}" title="View">
                                 <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>
                             </a>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="cit-empty">No citations found.</td></tr>
+                    <tr><td colspan="8" class="cit-empty">No citations found.</td></tr>
                 @endforelse
             </tbody>
         </table>

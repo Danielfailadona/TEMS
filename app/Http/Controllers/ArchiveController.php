@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Archive;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class ArchiveController extends Controller
 {
-    public function index(Request $request): View
+    private function filteredQuery(Request $request)
     {
         $user = auth()->user();
         $query = Archive::with('archivedBy')->latest('archived_at');
@@ -26,6 +27,16 @@ class ArchiveController extends Controller
             $query->where('archivable_type', $request->type);
         }
 
+        // Date range filters - convert user input (PHT) to UTC for comparison
+        if ($request->filled('date_from')) {
+            $dateFrom = Carbon::parse($request->date_from)->startOfDay()->setTimezone('UTC');
+            $query->where('archived_at', '>=', $dateFrom);
+        }
+        if ($request->filled('date_to')) {
+            $dateTo = Carbon::parse($request->date_to)->endOfDay()->setTimezone('UTC');
+            $query->where('archived_at', '<=', $dateTo);
+        }
+
         // Search across title, type, archived_by name, reason, archived_at date range
         if ($request->filled('search')) {
             $search = $request->search;
@@ -33,13 +44,20 @@ class ArchiveController extends Controller
                 $q->where('reason', 'like', "%{$search}%")
                   ->orWhere('archivable_type', 'like', "%{$search}%")
                   ->orWhereHas('archivedBy', fn ($q) => $q->where('name', 'like', "%{$search}%"));
-                
+
                 // Only apply date filter if search looks like a valid date (YYYY-MM-DD)
                 if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $search)) {
                     $q->orWhereDate('archived_at', '=', $search);
                 }
             });
         }
+
+        return $query;
+    }
+
+    public function index(Request $request): View
+    {
+        $query = $this->filteredQuery($request);
 
         $archives = $query->paginate(20)->withQueryString();
 
@@ -50,7 +68,7 @@ class ArchiveController extends Controller
             ->sort()
             ->values();
 
-        return view('archives.index', compact('archives', 'types', 'user'));
+        return view('archives.index', compact('archives', 'types'));
     }
 
     public function print(Archive $archive): View
@@ -63,22 +81,7 @@ class ArchiveController extends Controller
 
     public function export(Request $request): Response
     {
-        $user = auth()->user();
-        $query = Archive::with('archivedBy')->latest('archived_at');
-
-        if ($user->isAdmin()) {
-            if ($request->filled('user_id')) {
-                $query->where('archived_by', $request->user_id);
-            }
-        } else {
-            $query->where('archived_by', $user->id);
-        }
-
-        if ($request->filled('type')) {
-            $query->where('archivable_type', $request->type);
-        }
-
-        $archives = $query->get();
+        $archives = $this->filteredQuery($request)->get();
 
         $callback = function () use ($archives) {
             $handle = fopen('php://output', 'w');
@@ -183,22 +186,7 @@ class ArchiveController extends Controller
 
     public function backup(Request $request): Response
     {
-        $user = auth()->user();
-        $query = Archive::with('archivedBy')->latest('archived_at');
-
-        if ($user->isAdmin()) {
-            if ($request->filled('user_id')) {
-                $query->where('archived_by', $request->user_id);
-            }
-        } else {
-            $query->where('archived_by', $user->id);
-        }
-
-        if ($request->filled('type')) {
-            $query->where('archivable_type', $request->type);
-        }
-
-        $archives = $query->get();
+        $archives = $this->filteredQuery($request)->get();
 
         $callback = function () use ($archives) {
             $handle = fopen('php://output', 'w');

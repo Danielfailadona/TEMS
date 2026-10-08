@@ -101,11 +101,11 @@
                 </h6>
                 <div class="d-flex flex-wrap gap-2">
                     @foreach ($citation->evidence as $evidence)
-                        <img src="{{ asset('storage/'.$evidence->file_path) }}"
+                        <img src="{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}"
                              alt="Evidence"
                              class="rounded border"
                              style="width: 96px; height: 96px; object-fit: cover; cursor: zoom-in;"
-                             onclick="openModal('{{ asset('storage/'.$evidence->file_path) }}')">
+                             onclick="openModal('{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}')">
                     @endforeach
                 </div>
             </div>

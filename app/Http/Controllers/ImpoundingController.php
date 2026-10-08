@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Enums\CitationStatus;
 use App\Enums\ClampingStatus;
-use App\Enums\PaymentMethod;
+use App\Enums\ImpoundingStatus;
 use App\Models\Archive;
+use App\Models\Citation;
 use App\Models\ClampingRecord;
-use App\Models\Payment;
+use App\Models\ImpoundingRecord;
 use App\Models\VehicleRelease;
 use App\Services\CitationNumberService;
+use App\Services\PaymentRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,17 +21,18 @@ class ImpoundingController extends Controller
 {
     public function index(Request $request): View
     {
-        $this->authorize('viewAny', ClampingRecord::class);
+        $this->authorize('viewAny', ImpoundingRecord::class);
 
-        $query = ClampingRecord::with(['officer', 'citation.violationType']);
+        $query = ImpoundingRecord::with(['officer', 'citation.violationType', 'clampingRecord']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         } else {
             $query->whereIn('status', [
-                ClampingStatus::AwaitingPayment,
-                ClampingStatus::Paid,
-                ClampingStatus::WaitingRelease,
+                ImpoundingStatus::Impounded,
+                ImpoundingStatus::AwaitingPayment,
+                ImpoundingStatus::Paid,
+                ImpoundingStatus::WaitingRelease,
             ]);
         }
 
@@ -43,118 +46,208 @@ class ImpoundingController extends Controller
             });
         }
 
-        $records = $query->latest('clamped_at')->paginate(5)->withQueryString();
+        $records = $query->latest('impounded_at')->paginate(10)->appends($request->query());
 
         return view('impounding.index', compact('records'));
     }
 
-    public function show(ClampingRecord $clamping): View
+    public function create(Request $request): View
     {
-        $this->authorize('view', $clamping);
+        $this->authorize('create', ImpoundingRecord::class);
 
-        $clamping->load([
+        $plate = $request->vehicle_plate;
+        $citation = null;
+        if ($plate) {
+            $citation = Citation::where('vehicle_plate', $plate)
+                ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue])
+                ->whereHas('violationType', fn ($q) => $q->where('is_impoundable', true))
+                ->latest('issued_at')
+                ->first();
+        }
+
+        return view('impounding.create', compact('plate', 'citation'));
+    }
+
+    public function store(Request $request, CitationNumberService $numberService): RedirectResponse
+    {
+        $this->authorize('create', ImpoundingRecord::class);
+
+        $validated = $request->validate([
+            'vehicle_plate' => 'required|string|max:20',
+            'citation_id' => 'nullable|exists:citations,id',
+            'location' => 'nullable|string|max:500',
+            'notes' => 'nullable|string|max:1000',
+            'evidence' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ]);
+
+        $existingImpound = ImpoundingRecord::where('vehicle_plate', $validated['vehicle_plate'])
+            ->whereIn('status', [ImpoundingStatus::Impounded, ImpoundingStatus::AwaitingPayment, ImpoundingStatus::Paid, ImpoundingStatus::WaitingRelease])
+            ->exists();
+
+        if ($existingImpound) {
+            return back()->withErrors(['vehicle_plate' => 'This vehicle is already impounded.']);
+        }
+
+        $citation = Citation::where('vehicle_plate', $validated['vehicle_plate'])
+            ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue])
+            ->whereHas('violationType', fn ($q) => $q->where('is_impoundable', true))
+            ->latest('issued_at')
+            ->first();
+
+        // Determine fees based on violation type
+        $violationCode = $citation?->violationType?->code ?? 'default';
+        $fees = config('itevcms.impounding.violation_fees')[$violationCode] ?? config('itevcms.impounding.violation_fees.default');
+
+        $evidencePath = null;
+        if ($request->hasFile('evidence')) {
+            try {
+                $evidencePath = \App\Services\SupabaseStorage::put('impounding/'.$request->file('evidence')->hashName(), $request->file('evidence'));
+            } catch (\Throwable $e) {
+                report($e);
+                return back()->with('error', 'Failed to upload impounding evidence. Please try again.');
+            }
+        }
+
+        $clampingRecord = null;
+        if ($citation) {
+            $clampingRecord = ClampingRecord::where('citation_id', $citation->id)
+                ->where('status', '!=', ClampingStatus::Released)
+                ->latest('clamped_at')
+                ->first();
+        }
+        if (! $clampingRecord) {
+            $clampingRecord = ClampingRecord::where('vehicle_plate', $validated['vehicle_plate'])
+                ->where('status', '!=', ClampingStatus::Released)
+                ->latest('clamped_at')
+                ->first();
+        }
+
+        $record = ImpoundingRecord::create([
+            'notice_number' => $numberService->noticeNumber(),
+            'vehicle_plate' => $validated['vehicle_plate'],
+            'citation_id' => $citation?->id,
+            'clamping_record_id' => $clampingRecord?->id,
+            'impounded_by' => auth()->id(),
+            'status' => ImpoundingStatus::Impounded,
+            'location' => $validated['location'],
+            'notes' => $validated['notes'],
+            'evidence_path' => $evidencePath,
+            'towing_fee' => $fees['towing_fee'],
+            'storage_fee_per_day' => $fees['storage_fee_per_day'],
+            'admin_fee' => $fees['admin_fee'],
+            'grace_until' => now()->addHours(config('itevcms.impounding.grace_hours', 24)),
+            'impounded_at' => now(),
+        ]);
+
+        Archive::create([
+            'archivable_type' => ImpoundingRecord::class,
+            'archivable_id' => $record->id,
+            'archived_by' => auth()->id(),
+            'archived_at' => now(),
+            'reason' => 'Vehicle impounded',
+            'snapshot' => $record->toArray(),
+        ]);
+
+        if ($citation) {
+            $citation->update(['status' => CitationStatus::Clamped]);
+        }
+
+        return redirect()->route('impounding.show', $record)->with('success', 'Vehicle impounded successfully. Fees will accrue after grace period.');
+    }
+
+    public function show(ImpoundingRecord $impounding): View
+    {
+        $this->authorize('view', $impounding);
+
+        $impounding->load([
             'officer',
             'citation.violationType',
             'citation.payment.cashier',
+            'payments.cashier',
             'release.releasedBy',
+            'clampingRecord',
         ]);
 
-        return view('impounding.show', compact('clamping'));
+        return view('impounding.show', compact('impounding'));
     }
 
-    public function markPaid(Request $request, ClampingRecord $clamping): RedirectResponse
+    public function markPaid(Request $request, ImpoundingRecord $impounding): RedirectResponse
     {
-        $this->authorize('markPaid', $clamping);
+        $this->authorize('markPaid', $impounding);
 
         $validated = $request->validate([
             'payment_method' => 'required|string',
             'reference_number' => 'nullable|string|max:255',
         ]);
 
-        DB::transaction(function () use ($clamping, $validated) {
-            $citation = $clamping->citation;
+        app(PaymentRecorder::class)->recordImpounding($impounding, [
+                'payment_method' => $validated['payment_method'],
+                'reference_number' => $validated['reference_number'],
+            ], auth()->id());
 
-            if ($citation && !$citation->payment) {
-                $numberService = app(CitationNumberService::class);
-
-                Payment::create([
-                    'receipt_number' => $numberService->receiptNumber(),
-                    'citation_id' => $citation->id,
-                    'cashier_id' => auth()->id(),
-                    'amount' => $citation->penalty_amount ?? 0,
-                    'payment_method' => $validated['payment_method'],
-                    'reference_number' => $validated['reference_number'],
-                    'paid_at' => now(),
-                ]);
-
-                $citation->update(['status' => CitationStatus::Paid]);
-            }
-
-            $clamping->update(['status' => ClampingStatus::Paid]);
-        });
-
-        return redirect()->route('impounding.show', $clamping)
-            ->with('success', 'Payment recorded. Vehicle marked as paid.');
+        return redirect()->route('impounding.show', $impounding)
+            ->with('success', 'Payment recorded. Total: ₱' . number_format($impounding->fresh()->getTotalFees(), 2));
     }
 
-    public function markWaitingRelease(ClampingRecord $clamping): RedirectResponse
+    public function markWaitingRelease(ImpoundingRecord $impounding): RedirectResponse
     {
-        $this->authorize('markWaitingRelease', $clamping);
+        $this->authorize('markWaitingRelease', $impounding);
 
-        $clamping->update(['status' => ClampingStatus::WaitingRelease]);
+        $impounding->update(['status' => ImpoundingStatus::WaitingRelease]);
 
-        return redirect()->route('impounding.show', $clamping)
+        return redirect()->route('impounding.show', $impounding)
             ->with('success', 'Vehicle marked as waiting for release.');
     }
 
-    public function printRelease(ClampingRecord $clamping): View
+    public function printRelease(ImpoundingRecord $impounding): View
     {
-        $this->authorize('view', $clamping);
+        $this->authorize('view', $impounding);
 
-        abort_if($clamping->status !== ClampingStatus::Released, 404);
+        abort_if($impounding->status !== ImpoundingStatus::Released, 404);
 
-        $clamping->load([
+        $impounding->load([
             'officer',
             'citation.violationType',
             'citation.payment.cashier',
+            'payments.cashier',
             'release.releasedBy',
         ]);
 
-        return view('impounding.print-release', compact('clamping'));
+        return view('impounding.print-release', compact('impounding'));
     }
 
-    public function processRelease(Request $request, ClampingRecord $clamping): RedirectResponse
+    public function processRelease(Request $request, ImpoundingRecord $impounding): RedirectResponse
     {
-        $this->authorize('processRelease', $clamping);
+        $this->authorize('processRelease', $impounding);
 
         $validated = $request->validate([
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        DB::transaction(function () use ($clamping, $validated) {
+        DB::transaction(function () use ($impounding, $validated) {
             $releaseNumber = 'REL-' . str_pad((VehicleRelease::max('id') ?? 0) + 1, 4, '0', STR_PAD_LEFT);
 
             VehicleRelease::create([
                 'release_number' => $releaseNumber,
-                'clamping_record_id' => $clamping->id,
+                'impounding_record_id' => $impounding->id,
                 'released_by' => auth()->id(),
                 'notes' => $validated['notes'],
                 'released_at' => now(),
             ]);
 
-            $clamping->update(['status' => ClampingStatus::Released]);
+            $impounding->update(['status' => ImpoundingStatus::Released]);
 
-            if ($clamping->citation) {
-                $clamping->citation->update(['status' => CitationStatus::Released]);
+            if ($impounding->citation) {
+                $impounding->citation->update(['status' => CitationStatus::Released]);
             }
 
             Archive::create([
-                'archivable_type' => ClampingRecord::class,
-                'archivable_id' => $clamping->id,
+                'archivable_type' => ImpoundingRecord::class,
+                'archivable_id' => $impounding->id,
                 'archived_by' => auth()->id(),
                 'archived_at' => now(),
-                'reason' => 'Vehicle released (Notice: ' . $clamping->notice_number . ')',
-                'snapshot' => $clamping->toArray(),
+                'reason' => 'Vehicle released (Notice: ' . $impounding->notice_number . ')',
+                'snapshot' => $impounding->toArray(),
             ]);
         });
 

@@ -132,7 +132,7 @@
                 </div>
             </div>
 
-            @if ($user->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::ClampingOfficer))
+            @if ($user->isRole(\App\Enums\Role::Enforcer))
             {{-- GPS Tracking --}}
             <div class="card settings-card settings-section">
                 <div class="card-header">

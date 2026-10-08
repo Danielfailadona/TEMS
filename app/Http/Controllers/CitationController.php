@@ -80,7 +80,7 @@ class CitationController extends Controller
 
             if ($request->hasFile('evidence')) {
                 foreach ($request->file('evidence') as $file) {
-                    $path = $file->store('citations/'.$citation->id, 'public');
+                    $path = \App\Services\SupabaseStorage::put('citations/'.$citation->id.'/'.$file->hashName(), $file);
                     CitationEvidence::create([
                         'citation_id' => $citation->id,
                         'file_path' => $path,
@@ -101,7 +101,7 @@ class CitationController extends Controller
             return $citation;
         });
 
-        if (auth()->user()->isRole(Role::Enforcer, Role::ClampingOfficer)) {
+        if (auth()->user()->isRole(Role::Enforcer)) {
             return redirect()->route('citations.handoff', $citation)
                 ->with('success', 'Citation issued successfully. Show the QR code to the violator.');
         }
@@ -179,7 +179,7 @@ class CitationController extends Controller
             return $clamping;
         });
 
-        return redirect()->route('impounding.show', $clamping)
-            ->with('success', 'Vehicle referred for impounding successfully.');
+        return redirect()->route('clamping.show', $clamping)
+            ->with('success', 'Vehicle clamped successfully. Create the impounding record to continue.');
     }
 }

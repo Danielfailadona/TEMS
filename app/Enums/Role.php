@@ -7,7 +7,6 @@ enum Role: string
     case SuperAdmin = 'super_admin';
     case Administrator = 'administrator';
     case Enforcer = 'enforcer';
-    case ClampingOfficer = 'clamping_officer';
     case Cashier = 'cashier';
     case FrontDesk = 'front_desk';
     case VehicleOwner = 'vehicle_owner';
@@ -18,7 +17,6 @@ enum Role: string
             self::SuperAdmin => 'Super Administrator',
             self::Administrator => 'Administrator',
             self::Enforcer => 'Traffic Enforcement Officer',
-            self::ClampingOfficer => 'Clamping Officer',
             self::Cashier => 'Cashier',
             self::FrontDesk => 'Front Desk',
             self::VehicleOwner => 'Vehicle Owner',

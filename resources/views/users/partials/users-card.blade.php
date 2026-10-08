@@ -1,60 +1,6 @@
 <div id="users-card">
-    {{-- Batch Actions Toolbar (shown when checkboxes selected) --}}
-    <div class="mb-3 d-none" id="batch-actions-toolbar" style="position: sticky; top: 0; z-index: 1020; background: #fff; padding: 0.5rem 0; border-bottom: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
-        <div class="d-flex flex-wrap align-items-center gap-2">
-            <span class="fw-semibold text-muted small" id="batch-selected-count">0 selected</span>
-            <div class="vr d-none d-md-block mx-2" style="height: 1.5rem;"></div>
-            
-            {{-- Group 1: Pending Actions (Approve/Reject) --}}
-            <div class="d-flex align-items-center gap-1" id="batch-pending-group">
-                <span class="text-muted small text-uppercase fw-semibold px-2" style="font-size: 0.65rem;">Pending</span>
-                <div class="vr d-none d-md-block mx-1" style="height: 1.25rem;"></div>
-                
-                {{-- Approve --}}
-                <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-approve-form">
-                    @csrf
-                    <input type="hidden" name="action" value="approve">
-                    <input type="hidden" name="user_ids" id="batch-approve-ids">
-                    <button type="submit" class="btn btn-success btn-sm" disabled id="batch-approve-btn" data-bs-toggle="tooltip" title="Select pending users to enable">
-                        <i class="bi bi-check-lg me-1"></i> Approve
-                    </button>
-                </form>
-    
-                {{-- Reject --}}
-                <button type="button" class="btn btn-danger btn-sm" disabled id="batch-reject-btn" data-bs-toggle="modal" data-bs-target="#batchRejectModal" data-bs-toggle="tooltip" title="Select pending users to enable">
-                    <i class="bi bi-x-lg me-1"></i> Reject
-                </button>
-            </div>
-    
-            <div class="vr d-none d-md-block mx-2" style="height: 1.5rem;"></div>
-    
-            {{-- Group 2: Status Actions (Suspend/Unsuspend) --}}
-            <div class="d-flex align-items-center gap-1" id="batch-status-group">
-                <span class="text-muted small text-uppercase fw-semibold px-2" style="font-size: 0.65rem;">Status</span>
-                <div class="vr d-none d-md-block mx-1" style="height: 1.25rem;"></div>
-                
-                {{-- Suspend --}}
-                <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-suspend-form">
-                    @csrf
-                    <input type="hidden" name="action" value="suspend">
-                    <input type="hidden" name="user_ids" id="batch-suspend-ids">
-                    <button type="submit" class="btn btn-warning btn-sm" disabled id="batch-suspend-btn" data-bs-toggle="tooltip" title="Select approved or pending users to enable">
-                        <i class="bi bi-lock me-1"></i> Suspend
-                    </button>
-                </form>
-                
-                {{-- Unsuspend --}}
-                <form method="POST" action="{{ route('users.batch-action') }}" class="d-inline" id="batch-unsuspend-form">
-                    @csrf
-                    <input type="hidden" name="action" value="unsuspend">
-                    <input type="hidden" name="user_ids" id="batch-unsuspend-ids">
-                    <button type="submit" class="btn btn-success btn-sm" disabled id="batch-unsuspend-btn" data-bs-toggle="tooltip" title="Select suspended users to enable">
-                        <i class="bi bi-unlock me-1"></i> Unsuspend
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
+    @include('users.partials.batch-toolbar')
+
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0" id="users-table">
       <thead class="table-light">
@@ -86,7 +32,6 @@
                             'super_admin' => 'bg-dark',
                             'administrator' => 'bg-danger',
                             'enforcer' => 'bg-primary',
-                            'clamping_officer' => 'bg-warning text-dark',
                             'cashier' => 'bg-success',
                             'front_desk' => 'bg-info',
                             'vehicle_owner' => 'bg-info text-dark',
