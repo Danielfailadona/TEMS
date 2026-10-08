@@ -2,7 +2,7 @@
 
 Documents the `origin/master` → `design-v1.1` merge in two rounds — round 1 from `e6e3192` (the dashboards adopted below), round 2 from `98354df` (12 further commits) — and, specifically, **which master-built dashboard/UI we adopted wholesale versus which we hand-merged into the local redesign**.
 
-Round 1 is committed as `fc1016c`. Round 2 is staged, awaiting approval. `master` was never modified.
+Round 1 is committed as `fc1016c`; round 2 as `6b5a2df`. Neither is pushed yet. `master` was never modified.
 
 ---
 
@@ -239,7 +239,7 @@ Local's `${PORT:-80}` nginx rewrite sits outside the conflict and is untouched.
 1. **`app/Services/SupabaseStorage.php` is misconfigured for Render.** Master-only, and it bypasses Flyystem entirely — it calls Supabase's REST API directly (`{SUPABASE_URL}/storage/v1/object/public/{bucket}/{path}`) with the **service-role key**. It reads `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `STORAGE_BUCKET` (`config/supabase.php`), **none of which are in `render.yaml` / `render.env`.** Consequence: `publicUrl()` silently falls back to `asset('storage/'.$path)` → broken evidence images, and `put()` throws. This affects **21 call sites across 16 views** (citations, citizen portal, clamping, profile, tickets, impounding).
 2. **Backup file not yet created.** Pending confirmation of what the "local save" should contain.
 3. **5 new migrations** from master will run under `migrate --force` on deploy, including `convert_clamping_officer_role_to_enforcer`, which is a role/data migration worth reviewing first.
-4. Round-1 merge committed as `fc1016c`; round-2 merge is **staged, not committed** — awaiting approval.
+4. Both merges are committed (`fc1016c`, `6b5a2df`) but **not pushed** — `origin/design-v1.1` is still at `5db0742`.
 
 ---
 
