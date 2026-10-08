@@ -607,6 +607,20 @@
     <p>&copy; 2026 Traffic Enforcement Management System (TEMs). All rights reserved.</p>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const bs = window.bootstrap;
+    if (!bs) return;
+
+    const navCollapse = document.getElementById('navbarNav');
+    if (navCollapse && !bs.Collapse.getInstance(navCollapse)) {
+        new bs.Collapse(navCollapse, { toggle: false });
+    }
+
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+        new bs.Tooltip(el);
+    });
+});
+</script>
 </body>
 </html>
