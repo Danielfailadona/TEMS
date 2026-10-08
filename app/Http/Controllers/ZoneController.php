@@ -90,8 +90,8 @@ class ZoneController extends Controller
             'description' => ['nullable', 'string'],
             'address' => ['nullable', 'string', 'max:500'],
             'team_id' => ['nullable', 'exists:teams,id'],
-            'center_latitude' => ['required', 'numeric'],
-            'center_longitude' => ['required', 'numeric'],
+            'center_latitude' => ['required', 'numeric', 'between:-90,90'],
+            'center_longitude' => ['required', 'numeric', 'between:-180,180'],
             'radius_m' => ['required', 'numeric'],
             'is_active' => ['boolean'],
         ]);
@@ -120,8 +120,8 @@ class ZoneController extends Controller
             'description' => ['nullable', 'string'],
             'address' => ['nullable', 'string', 'max:500'],
             'team_id' => ['nullable', 'exists:teams,id'],
-            'center_latitude' => ['required', 'numeric'],
-            'center_longitude' => ['required', 'numeric'],
+            'center_latitude' => ['required', 'numeric', 'between:-90,90'],
+            'center_longitude' => ['required', 'numeric', 'between:-180,180'],
             'radius_m' => ['required', 'numeric'],
             'is_active' => ['boolean'],
         ]);

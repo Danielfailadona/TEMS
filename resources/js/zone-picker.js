@@ -436,24 +436,61 @@ export function initZoneViewer(containerId, options = {}) {
         }
     }
 
+    function zoneCoords(zone) {
+        const rawLng = zone.lng ?? zone.center_longitude;
+        const rawLat = zone.lat ?? zone.center_latitude;
+        if (rawLng === null || rawLng === undefined || rawLng === '') return null;
+        if (rawLat === null || rawLat === undefined || rawLat === '') return null;
+        const lng = Number(rawLng);
+        const lat = Number(rawLat);
+        if (!isFinite(lng) || !isFinite(lat)) return null;
+        if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+        return { lng, lat };
+    }
+
+    function geocodeZone(zone) {
+        const query = encodeURIComponent(zone.address || zone.name || '');
+        if (!query) return Promise.resolve(null);
+        return fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${query}&limit=1`)
+            .then(res => res.json())
+            .then(data => {
+                if (!data || !data.length) return null;
+                const lng = Number(data[0].lon);
+                const lat = Number(data[0].lat);
+                if (!isFinite(lng) || !isFinite(lat) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+                zone.lng = lng;
+                zone.lat = lat;
+                return { lng, lat };
+            })
+            .catch(err => {
+                console.error('Geocoding error for zone', zone.id, err);
+                return null;
+            });
+    }
+
     function showCircle(zone) {
         removeActiveCircle();
-        const lng = zone.lng, lat = zone.lat, radius = zone.radius;
+        const coords = zoneCoords(zone);
+        if (!coords) return;
+        const radius = Number(zone.radius);
+        if (!isFinite(radius) || radius <= 0) return;
+        const color = zone.color || '#9ca3af';
+        const lng = coords.lng, lat = coords.lat;
         const radiusDeg = radius / 111320;
         const points = 64;
-        const coords = [];
+        const circleCoords = [];
         for (let i = 0; i <= points; i++) {
             const angle = (i / points) * 2 * Math.PI;
             const dx = radiusDeg * Math.cos(angle) / Math.cos(lat * Math.PI / 180);
             const dy = radiusDeg * Math.sin(angle);
-            coords.push([lng + dx, lat + dy]);
+            circleCoords.push([lng + dx, lat + dy]);
         }
 
         map.addSource('viewer-circle', {
             type: 'geojson',
             data: {
                 type: 'Feature',
-                geometry: { type: 'Polygon', coordinates: [coords] },
+                geometry: { type: 'Polygon', coordinates: [circleCoords] },
             },
         });
 
@@ -461,102 +498,119 @@ export function initZoneViewer(containerId, options = {}) {
             id: 'viewer-circle-fill',
             type: 'fill',
             source: 'viewer-circle',
-            paint: { 'fill-color': zone.color, 'fill-opacity': 0.12 },
+            paint: { 'fill-color': color, 'fill-opacity': 0.12 },
         });
 
         map.addLayer({
             id: 'viewer-circle-outline',
             type: 'line',
             source: 'viewer-circle',
-            paint: { 'line-color': zone.color, 'line-width': 2.5, 'line-dasharray': [4, 3] },
+            paint: { 'line-color': color, 'line-width': 2.5, 'line-dasharray': [4, 3] },
         });
 
         activeCircleLayer = zone.id;
     }
 
+    function focusZone(zone) {
+        const coords = zoneCoords(zone);
+        if (!coords) return;
+        map.flyTo({ center: [coords.lng, coords.lat], zoom: 14, duration: 600 });
+        try {
+            showCircle(zone);
+        } catch (err) {
+            console.warn('showCircle failed for zone', zone.id, err);
+        }
+        if (detailOverlay) detailOverlay.show(zone);
+        if (onZoneClick) onZoneClick(zone);
+    }
+
+    function addMarker(zone) {
+        const coords = zoneCoords(zone);
+        if (!coords) return null;
+
+        const el = document.createElement('div');
+        el.className = 'zone-viewer-marker';
+        el.style.width = '24px';
+        el.style.height = '24px';
+        el.style.cursor = 'pointer';
+
+        const dot = document.createElement('div');
+        dot.style.width = '100%';
+        dot.style.height = '100%';
+        dot.style.borderRadius = '50%';
+        dot.style.background = zone.color || '#9ca3af';
+        dot.style.border = '3px solid white';
+        dot.style.boxShadow = '0 2px 8px rgba(0,0,0,0.25)';
+        dot.style.transition = 'transform 0.15s ease';
+        el.appendChild(dot);
+
+        const marker = new maplibregl.Marker({ element: el })
+            .setLngLat([coords.lng, coords.lat])
+            .addTo(map);
+
+        el.addEventListener('mouseenter', () => {
+            dot.style.transform = 'scale(1.35)';
+            try {
+                showCircle(zone);
+            } catch (err) {
+                console.warn('showCircle failed for zone', zone.id, err);
+            }
+        });
+
+        el.addEventListener('mouseleave', () => {
+            dot.style.transform = 'scale(1)';
+        });
+
+        el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            focusZone(zone);
+        });
+
+        markers.push({ zone, marker, el });
+        return marker;
+    }
+
     map.on('load', () => {
         zones.forEach(zone => {
-            const lng = zone.lng, lat = zone.lat;
-            if (!lng || !lat) return;
-
-            const el = document.createElement('div');
-            el.className = 'zone-viewer-marker';
-            el.style.width = '24px';
-            el.style.height = '24px';
-            el.style.cursor = 'pointer';
-
-            const dot = document.createElement('div');
-            dot.style.width = '100%';
-            dot.style.height = '100%';
-            dot.style.borderRadius = '50%';
-            dot.style.background = zone.color;
-            dot.style.border = '3px solid white';
-            dot.style.boxShadow = '0 2px 8px rgba(0,0,0,0.25)';
-            dot.style.transition = 'transform 0.15s ease';
-            el.appendChild(dot);
-
-            const marker = new maplibregl.Marker({ element: el })
-                .setLngLat([lng, lat])
-                .addTo(map);
-
-            el.addEventListener('mouseenter', () => {
-                dot.style.transform = 'scale(1.35)';
-                showCircle(zone);
-            });
-
-            el.addEventListener('mouseleave', () => {
-                dot.style.transform = 'scale(1)';
-            });
-
-            el.addEventListener('click', (e) => {
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-
-                const flyAndShow = (targetLng, targetLat) => {
-                    map.flyTo({ center: [targetLng, targetLat], zoom: 14, duration: 600 });
-                    showCircle(zone);
-                    if (detailOverlay) detailOverlay.show(zone);
-                    if (onZoneClick) onZoneClick(zone);
-                };
-
-                if (zone.lng && zone.lat) {
-                    flyAndShow(zone.lng, zone.lat);
-                } else {
-                    // Fallback: geocode via Nominatim
-                    const query = encodeURIComponent(zone.address || zone.name || '');
-                    if (!query) {
-                        console.warn('Zone missing address/name for geocoding', zone);
-                        return;
-                    }
-                    fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${query}&limit=1`)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data && data.length > 0) {
-                                const lat = parseFloat(data[0].lat);
-                                const lng = parseFloat(data[0].lon);
-                                if (!isNaN(lat) && !isNaN(lng)) {
-                                    zone.lat = lat;
-                                    zone.lng = lng;
-                                    flyAndShow(lng, lat);
-                                }
-                            } else {
-                                console.warn('Geocoding returned no results for zone', zone);
-                            }
-                        })
-                        .catch(err => console.error('Geocoding error:', err));
-                }
-            });
-
-            markers.push({ zone, marker, el });
+            try {
+                addMarker(zone);
+            } catch (err) {
+                console.warn('Failed to render marker for zone', zone.id, err);
+            }
         });
     });
+
+    function handleZone(zone) {
+        const existing = markers.find(m => m.zone.id === zone.id);
+        if (existing) {
+            focusZone(existing.zone);
+            return;
+        }
+        if (zoneCoords(zone)) {
+            focusZone(zone);
+            return;
+        }
+        geocodeZone(zone).then(resolved => {
+            if (!resolved) {
+                console.warn('Could not resolve coordinates for zone', zone.id, zone.name);
+                return;
+            }
+            try {
+                addMarker(zone);
+            } catch (err) {
+                console.warn('Failed to render marker for zone', zone.id, err);
+            }
+            focusZone(zone);
+        });
+    }
 
     map.on('click', (e) => {
         const features = map.queryRenderedFeatures(e.point);
         if (features.length === 0 && detailOverlay && (detailOverlay._lastShownAt || 0) < Date.now() - 250) detailOverlay.hide();
     });
 
-    return { map, markers, removeActiveCircle };
+    return { map, markers, removeActiveCircle, handleZone };
 }
 
 window.__zonePicker = { initTeamZonePicker, initZoneEditor, initZoneViewer };

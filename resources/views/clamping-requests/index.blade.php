@@ -73,7 +73,7 @@
     </div>
 </div>
 
-<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3 align-items-start">
     @forelse ($requests as $r)
         <div class="col">
             <div class="card stat-card h-100">

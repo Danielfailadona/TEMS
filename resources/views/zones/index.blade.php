@@ -628,9 +628,7 @@
                 if (zone && viewer) {
                     document.querySelectorAll('.zone-card').forEach(el => el.classList.remove('is-highlighted'));
                     this.classList.add('is-highlighted');
-                    // Trigger marker click programmatically
-                    const markerEl = viewer.markers.find(m => m.zone.id === zoneId);
-                    if (markerEl) markerEl.el.click();
+                    viewer.handleZone(zone);
                 }
             });
         });

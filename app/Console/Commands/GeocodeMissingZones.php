@@ -38,7 +38,7 @@ class GeocodeMissingZones extends Command
 
             try {
                 $response = Http::withHeaders([
-                    'User-Agent' => 'TEMS/1.0 (contact@example.com)'
+                    'User-Agent' => 'TEMS (https://transenfo-1.onrender.com)'
                 ])->get('https://nominatim.openstreetmap.org/search', [
                     'format' => 'jsonv2',
                     'q' => $query,
