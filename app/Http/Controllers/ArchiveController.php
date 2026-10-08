@@ -29,14 +29,11 @@ class ArchiveController extends Controller
             $query->where('archivable_type', $request->type);
         }
 
-        // Date range filters - convert user input (PHT) to UTC for comparison
-        if ($request->filled('date_from')) {
+        // Date range filters - apply only when both from and to are provided
+        if ($request->filled('date_from') && $request->filled('date_to')) {
             $dateFrom = Carbon::parse($request->date_from)->startOfDay()->setTimezone('UTC');
-            $query->where('archived_at', '>=', $dateFrom);
-        }
-        if ($request->filled('date_to')) {
-            $dateTo = Carbon::parse($request->date_to)->endOfDay()->setTimezone('UTC');
-            $query->where('archived_at', '<=', $dateTo);
+            $dateTo   = Carbon::parse($request->date_to)->endOfDay()->setTimezone('UTC');
+            $query->whereBetween('archived_at', [$dateFrom, $dateTo]);
         }
 
         // Search across title, type, archived_by name, reason, archived_at date range

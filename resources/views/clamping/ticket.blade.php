@@ -28,7 +28,13 @@
             <div class="text-muted small text-uppercase fw-semibold mb-1">Clamping Ticket</div>
             <h2 class="h3 mb-0 fw-bold">#{{ $clamping->notice_number }}</h2>
         </div>
-        <span class="badge {{ $clamping->status->badgeClass() }} fs-6">{{ $clamping->status->label() }}</span>
+        @php
+            $statusLabel = $clamping->status->label();
+            if ($clamping->status === \App\Enums\ClampingStatus::AwaitingPayment) {
+                $statusLabel = 'Pending';
+            }
+        @endphp
+        <span class="badge {{ $clamping->status->badgeClass() }} fs-6">{{ $statusLabel }}</span>
     </div>
 
     @include('components.alerts')

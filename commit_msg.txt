@@ -1,0 +1,4 @@
+Fix 500 on Record Payment and unify card type badge
+
+- Unwrap suggestion wrapper in create.blade.php so $sugg['record'] is used for property access; fixes "Attempt to read property on array" 500.
+- Replace the right-header badge on the Payments grid with an outlined badge per ticket type (Citation/Clamping/Impounding) for both receipts and pending cards; pending adds a clock icon. Removes the redundant grey type label in the card body and eliminates filled-badge collision with the status pill.

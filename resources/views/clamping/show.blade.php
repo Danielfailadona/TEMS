@@ -5,10 +5,22 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-start mb-4">
     <div>
+        <nav aria-label="breadcrumb" class="mb-1">
+            <ol class="breadcrumb mb-0" style="background: transparent; padding: 0;">
+                <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Operations console</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('clamping.index') }}">Clamping</a></li>
+            </ol>
+        </nav>
         <h1 class="h3 mb-1">Clamp Notice {{ $clamping->notice_number }}</h1>
         <p class="text-muted mb-0">Vehicle: {{ $clamping->vehicle_plate }}</p>
     </div>
-    <span class="badge {{ $clamping->status->badgeClass() }} fs-6">{{ $clamping->status->label() }}</span>
+    @php
+        $clampStatusLabel = $clamping->status->label();
+        if ($clamping->status === \App\Enums\ClampingStatus::AwaitingPayment) {
+            $clampStatusLabel = 'Pending';
+        }
+    @endphp
+    <span class="badge {{ $clamping->status->badgeClass() }} fs-6">{{ $clampStatusLabel }}</span>
 </div>
 
 <div class="row g-4">

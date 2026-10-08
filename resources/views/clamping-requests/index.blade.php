@@ -107,7 +107,7 @@
                                 data-map-id="{{ $r->id }}" aria-expanded="false" aria-controls="map-{{ $r->id }}">
                             <i class="bi bi-map me-1"></i><span class="map-label">Show Map</span>
                         </button>
-                        <div class="mt-2 map-panel" id="map-{{ $r->id }}" hidden>
+                        <div class="mt-2 map-panel" id="map-{{ $r->id }}" style="display:none;">
                             <iframe
                                 src="https://www.openstreetmap.org/export/embed.html?bbox={{ $r->longitude - 0.002 }}%2C{{ $r->latitude - 0.001 }}%2C{{ $r->longitude + 0.002 }}%2C{{ $r->latitude + 0.001 }}&amp;layer=mapnik&amp;marker={{ $r->latitude }}%2C{{ $r->longitude }}"
                                 style="width:100%;height:180px;border:1px solid var(--itevcms-border);border-radius:0.5rem;"
@@ -155,11 +155,13 @@
         var panel = document.getElementById('map-' + id);
         if (!panel) return;
 
-        var willShow = panel.hidden;
+        var willShow = panel.style.display === 'none' || panel.style.display === '';
 
+        // hide all panels
         document.querySelectorAll('.map-panel').forEach(function (p) {
-            p.hidden = true;
+            p.style.display = 'none';
         });
+        // reset all buttons
         document.querySelectorAll('.map-toggle').forEach(function (b) {
             b.setAttribute('aria-expanded', 'false');
             var label = b.querySelector('.map-label');
@@ -167,7 +169,7 @@
         });
 
         if (willShow) {
-            panel.hidden = false;
+            panel.style.display = 'block';
             btn.setAttribute('aria-expanded', 'true');
             var label = btn.querySelector('.map-label');
             if (label) label.textContent = 'Hide Map';

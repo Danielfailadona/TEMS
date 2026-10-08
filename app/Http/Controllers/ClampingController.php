@@ -40,12 +40,10 @@ class ClampingController extends Controller
             $query->where('status', $request->status);
         }
 
-        if ($request->filled('date_from')) {
-            $query->whereDate('clamped_at', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('clamped_at', '<=', $request->date_to);
+        if ($request->filled('date_from') && $request->filled('date_to')) {
+            $dateFrom = Carbon::parse($request->date_from)->startOfDay()->setTimezone('UTC');
+            $dateTo   = Carbon::parse($request->date_to)->endOfDay()->setTimezone('UTC');
+            $query->whereBetween('clamped_at', [$dateFrom, $dateTo]);
         }
 
         $records = $query->latest('clamped_at')->paginate(12)->withQueryString();

@@ -120,49 +120,41 @@
 @endpush
 
 @section('content')
-{{-- Header --}}
-<div class="detail-hero mb-4" style="padding:1.25rem 1.5rem;">
-    <div class="detail-hero-content" style="grid-template-columns:1fr auto;">
-        <div>
-            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-                <span class="info-chip"><i class="bi bi-hash"></i>#{{ $request->id }}</span>
-                <span class="info-chip"><i class="bi bi-person"></i>{{ $request->requester_name }}</span>
-                <span class="info-chip"><i class="bi bi-calendar"></i>{{ $request->created_at->format('M d, Y') }}</span>
-                @if ($request->assignedTo)
-                    <span class="info-chip"><i class="bi bi-person-check"></i>{{ $request->assignedTo->name }}</span>
-                @endif
-                <span class="info-chip"><i class="bi bi-flag"></i>{{ $request->created_at->diffForHumans() }}</span>
-            </div>
-            <h1 class="mb-1" style="font-size:1.5rem;">{{ $request->vehicle_plate }}</h1>
-            <p class="mb-0" style="opacity:0.85;font-size:0.85rem;">
-                <i class="bi bi-geo-alt me-1"></i>{{ $request->location_address }}
-            </p>
-        </div>
-        <div class="text-end d-flex flex-column align-items-end gap-2">
-            <span class="status-badge status-badge-{{ $request->status }}" style="font-size:0.85rem;">
-                <i class="bi bi-{{ $request->status === 'pending' ? 'hourglass-split' : ($request->status === 'approved' ? 'check-circle' : ($request->status === 'rejected' ? 'x-circle' : 'check-all')) }} me-1"></i>
-                {{ $request->getStatusLabel() }}
-            </span>
-            <div class="d-flex gap-2">
-                @can('update', $request)
-                    @if ($request->status === 'approved')
-                        @if ($request->assigned_to)
-                            <button type="button" class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#assignModal">
-                                <i class="bi bi-arrow-repeat me-1"></i>Reassign
-                            </button>
-                        @endif
-                        <form action="{{ route('clamping-requests.resolve', $request) }}" method="POST" class="d-inline">
-                            @csrf
-                            <button type="submit" class="btn btn-info btn-sm">
-                                <i class="bi bi-check-all me-1"></i>Mark Resolved
-                            </button>
-                        </form>
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <nav aria-label="breadcrumb" class="mb-1">
+            <ol class="breadcrumb mb-0" style="background: transparent; padding: 0;">
+                <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Operations console</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('clamping-requests.index') }}">Clamping Requests</a></li>
+            </ol>
+        </nav>
+        <h1 class="h3 mb-1">{{ $request->vehicle_plate }}</h1>
+        <p class="text-muted mb-0">{{ $request->location_address }}</p>
+    </div>
+    <div class="d-flex flex-column align-items-end gap-2">
+        <span class="status-badge status-badge-{{ $request->status }}" style="font-size:0.85rem;">
+            <i class="bi bi-{{ $request->status === 'pending' ? 'hourglass-split' : ($request->status === 'approved' ? 'check-circle' : ($request->status === 'rejected' ? 'x-circle' : 'check-all')) }} me-1"></i>
+            {{ $request->getStatusLabel() }}
+        </span>
+        <div class="d-flex gap-2">
+            @can('update', $request)
+                @if ($request->status === 'approved')
+                    @if ($request->assigned_to)
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#assignModal">
+                            <i class="bi bi-arrow-repeat me-1"></i>Reassign
+                        </button>
                     @endif
-                @endcan
-                <a href="{{ route('clamping-requests.index') }}" class="btn btn-outline-light btn-sm">
-                    <i class="bi bi-arrow-left me-1"></i>Back
-                </a>
-            </div>
+                    <form action="{{ route('clamping-requests.resolve', $request) }}" method="POST" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-info btn-sm">
+                            <i class="bi bi-check-all me-1"></i>Mark Resolved
+                        </button>
+                    </form>
+                @endif
+            @endcan
+            <a href="{{ route('clamping-requests.index') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>Back
+            </a>
         </div>
     </div>
 </div>

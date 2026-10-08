@@ -76,11 +76,11 @@
 
             <div class="col-12 col-md-3">
                 <label class="form-label visually-hidden">Date From</label>
-                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}" placeholder="From" onchange="this.form.submit()">
+                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}" placeholder="From">
             </div>
             <div class="col-12 col-md-3">
                 <label class="form-label visually-hidden">Date To</label>
-                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}" placeholder="To" onchange="this.form.submit()">
+                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}" placeholder="To">
             </div>
             <div class="col-12 col-md-auto d-flex align-items-end">
                 <button type="submit" class="btn btn-primary">
@@ -259,4 +259,22 @@
         {{ $grid->links() }}
     </div>
 @endif
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('form[method="GET"]');
+    if (!form) return;
+    const dateFrom = form.querySelector('[name="date_from"]');
+    const dateTo = form.querySelector('[name="date_to"]');
+    if (dateFrom && dateTo) {
+        [dateFrom, dateTo].forEach(el => {
+            el.addEventListener('change', () => {
+                if (dateFrom.value && dateTo.value) form.submit();
+            });
+        });
+    }
+});
+</script>
+@endpush
 @endsection
