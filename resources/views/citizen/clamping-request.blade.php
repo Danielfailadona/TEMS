@@ -293,7 +293,6 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
 <script>
 const MAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
@@ -434,6 +433,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.addEventListener('load', function () {
         if (map) map.resize();
+    });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const bs = window.bootstrap;
+    if (!bs) return;
+
+    const navCollapse = document.getElementById('navbarNav');
+    if (navCollapse && !bs.Collapse.getInstance(navCollapse)) {
+        new bs.Collapse(navCollapse, { toggle: false });
+    }
+
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+        new bs.Tooltip(el);
     });
 });
 </script>
