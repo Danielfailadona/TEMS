@@ -1,8 +1,8 @@
 # New UI — Dashboards & Views Adopted from `master`
 
-Documents the `origin/master` → `design-v1.1` merge in two rounds — round 1 from `e6e3192` (the dashboards adopted below), round 2 from `98354df` (12 further commits) — and, specifically, **which master-built dashboard/UI we adopted wholesale versus which we hand-merged into the local redesign**.
+Documents the `origin/master` → `design-v1.1` merges in four rounds — round 1 from `e6e3192` (the dashboards adopted below), round 2 from `98354df` (12 further commits), round 3 from `639502d` (welcome navbar toggler), round 4 from `0f0ab2a` (breadcrumbs, both-dates date filters, Pending badge, navbar toggler fixes) — and, specifically, **which master-built dashboard/UI we adopted wholesale versus which we hand-merged into the local redesign**.
 
-Round 1 is committed as `fc1016c`; round 2 as `6b5a2df`. Neither is pushed yet. `master` was never modified.
+Rounds: `fc1016c` (1), `6b5a2df` (2), `34841af` (3), `92c49fd` (4). All are pushed to `origin/design-v1.1` **and** `origin/master`, where they land as a fast-forward — `master`'s history is never rewritten, it only gains our commits. **Do not apply `render.yaml` as a Render Blueprint** (it points at another project); the real config is `render.env`.
 
 ---
 
@@ -301,3 +301,59 @@ Added `league/flysystem-aws-s3-v3 3.35.3`, `aws/aws-sdk-php`, `aws/aws-crt-php`,
 ### Also excluded from master
 
 `debug2.php`, `test_view.php`, `teams_render.html` were staged by the merge and then removed from both index and disk. Besides keeping them out of the repo, this was **required**: leaving them as untracked files would have aborted round 2 with *"untracked working tree files would be overwritten by merge"*. Content remains recoverable with `git show origin/master:<file>`.
+
+---
+
+## Round 3 — merge of `origin/master` (`639502d`)
+
+| | |
+|---|---|
+| Merge commit | `34841af` (parents `b40607c` + `639502d`) |
+| Conflicts | **0** |
+| Files | 1 — `resources/views/welcome.blade.php` (+15 / −1) |
+| Fix adopted | `@vite(...)` at L7; guarded collapse init at L610–617; CDN Bootstrap removed (only the bootstrap-icons CDN remains, L8) |
+
+Guarded init: `DOMContentLoaded` → `if (!bs.Collapse.getInstance(navCollapse)) new bs.Collapse(navCollapse, { toggle: false })`.
+
+Round-3 verification: 0 unmerged, 0 conflict markers, working tree clean apart from the 3 intended untracked files (`documents/ViolationTypesGap.md`, `documents/lesson.md`, `testPages/`).
+
+---
+
+## Round 4 — merge of `origin/master` (`0f0ab2a`)
+
+Master advanced twice while this round was being planned — `48f53da` → `0f0ab2a` — so the fetch brought **3 commits**, not the 2 first analysed: `5f86b5a` (navbar toggler on `citizen/*`), `48f53da` (breadcrumbs, Pending badge, archives clear button, both-dates filter), `0f0ab2a` (same pattern extended globally + detail-page breadcrumbs, duplicate-header removal, clamping-requests map toggle).
+
+| | |
+|---|---|
+| Merge commit | `92c49fd` (parents `34841af` + `0f0ab2a`) |
+| Conflicts | **0** — predicted correctly, master's changes were isolated to files we had not diverged on |
+| Files | 18 modified, 1 added (`commit_msg.txt`) |
+| `php -l` | 4/4 (controllers only; Blade verified by marker scan) |
+
+### What arrived
+
+| File | Change |
+|---|---|
+| `ArchiveController`, `AuditLogController`, `ClampingController`, `PaymentController` | date-range filters require **both** dates (`whereBetween`), plus related controller fixes |
+| `archives/index`, `audit-logs/index` | clear-button sizing; auto-submit **only when both dates present** (`audit-logs` = appended `@push('scripts')` block, +19 lines) |
+| `citations/show`, `appeals/show`, `impounding/show`, `clamping/show` | detail-page breadcrumbs, duplicate-header removal |
+| `citizen/citation-lookup`, `citizen/clamping-request` | drop CDN Bootstrap, guarded collapse/tooltip init |
+| `clamping/ticket` | `AwaitingPayment` → label **"Pending"** |
+| `clamping/index`, `clamping-requests/index`, `clamping-requests/show`, `payments/index` | status/badge/step refinements |
+| `commit_msg.txt` | stray 4-line file committed by master — **kept**; dropping it would delete a file from `master` on push |
+
+### Round-1 decisions survived the auto-merge
+
+- `audit-logs/index` stayed **ours**: master's only contribution was the +19-line `@push('scripts')` block; merged result still differs from master by +498 / −48 in our favour.
+- `AuditLogController` still has our `paginate(10)` (master has `30`).
+- Untouched and still diverged from master: `users/*`, `citations/index`, `impounding/index`, `welcome.blade.php`.
+
+### Round-4 verification
+
+| Check | Result |
+|---|---|
+| Unmerged files | 0 |
+| Conflict markers in tracked files | 0 |
+| `php -l` | 4/4 pass |
+| Behind `origin/master` | 0 |
+| `render.env` staged? | no |
