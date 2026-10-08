@@ -76,7 +76,7 @@
         <header class="topbar px-4 px-lg-5 py-3 border-bottom animate-on-load">
             <div>
                 <div class="text-muted small">Operations console</div>
-                <h2 class="h4 mb-0">@yield('title', 'Dashboard')</h2>
+                <h2 class="h4 mb-0">{{ $pageTitle }}</h2>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <a href="{{ route('notifications.index') }}" class="position-relative text-decoration-none text-dark topbar-icon-btn">

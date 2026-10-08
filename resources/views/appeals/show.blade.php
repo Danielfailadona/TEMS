@@ -5,18 +5,10 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-start mb-4">
     <div>
-        <nav aria-label="breadcrumb" class="mb-1">
-            <ol class="breadcrumb mb-0" style="background: transparent; padding: 0;">
-                <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Operations console</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('appeals.index') }}">Appeals</a></li>
-            </ol>
-        </nav>
         <h1 class="h3 mb-1">Appeal #{{ $appeal->id }}</h1>
         <p class="text-muted mb-0">Appeal Details</p>
     </div>
-    @can('update', $appeal)
-        <a href="{{ route('appeals.edit', $appeal) }}" class="btn btn-outline-primary">Review Appeal</a>
-    @endcan
+    <span class="badge {{ $appeal->status->badgeClass() }} fs-6">{{ $appeal->status->label() }}</span>
 </div>
 
 <div class="row g-4">
