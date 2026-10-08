@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Archive;
+use App\Exports\ArchivesExport;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ArchiveController extends Controller
 {
@@ -79,112 +81,16 @@ class ArchiveController extends Controller
         return view('archives.print', compact('archive', 'type'));
     }
 
-    public function export(Request $request): Response
+    public function export(Request $request): \Symfony\Component\HttpFoundation\BinaryFileResponse
     {
-        $archives = $this->filteredQuery($request)->get();
+        $from = $request->date_from ? Carbon::parse($request->date_from)->format('Y-m-d') : 'all';
+        $to   = $request->date_to ? Carbon::parse($request->date_to)->format('Y-m-d') : 'all';
+        $filename = "archives-report-{$from}-to-{$to}.xlsx";
 
-        $callback = function () use ($archives) {
-            $handle = fopen('php://output', 'w');
-
-            fputcsv($handle, [
-                'ID',
-                'Type',
-                'Reason',
-                'Archived By',
-                'Archived At',
-                'Record Title',
-                'Driver/Vehicle',
-                'Location',
-                'Status',
-                'Penalty',
-                'Notes',
-            ]);
-
-            foreach ($archives as $archive) {
-                $snap = $archive->snapshot ?? [];
-                $type = class_basename($archive->archivable_type);
-
-                match ($type) {
-                    'Citation' => fputcsv($handle, [
-                        $archive->id,
-                        $type,
-                        $archive->reason,
-                        $archive->archivedBy?->name ?? 'System',
-                        $archive->archived_at->format('Y-m-d H:i:s'),
-                        $snap['citation_number'] ?? "CIT-{$archive->archivable_id}",
-                        ($snap['driver_name'] ?? '').' / '.($snap['vehicle_plate'] ?? ''),
-                        $snap['location'] ?? '',
-                        $snap['status'] ?? '',
-                        isset($snap['penalty_amount']) ? number_format($snap['penalty_amount'], 2) : '',
-                        $snap['notes'] ?? '',
-                    ]),
-                    'Appeal' => fputcsv($handle, [
-                        $archive->id,
-                        $type,
-                        $archive->reason,
-                        $archive->archivedBy?->name ?? 'System',
-                        $archive->archived_at->format('Y-m-d H:i:s'),
-                        "Appeal #{$archive->archivable_id}",
-                        'Citation: '.($snap['citation_number'] ?? '#'.$snap['citation_id'] ?? ''),
-                        '',
-                        $snap['status'] ?? '',
-                        '',
-                        $snap['reason'] ?? '',
-                    ]),
-                    'ClampingRecord' => fputcsv($handle, [
-                        $archive->id,
-                        $type,
-                        $archive->reason,
-                        $archive->archivedBy?->name ?? 'System',
-                        $archive->archived_at->format('Y-m-d H:i:s'),
-                        $snap['notice_number'] ?? "CLP-{$archive->archivable_id}",
-                        $snap['vehicle_plate'] ?? '',
-                        $snap['location'] ?? '',
-                        $snap['status'] ?? '',
-                        '',
-                        $snap['notes'] ?? '',
-                    ]),
-                    'ClampingRequest' => fputcsv($handle, [
-                        $archive->id,
-                        $type,
-                        $archive->reason,
-                        $archive->archivedBy?->name ?? 'System',
-                        $archive->archived_at->format('Y-m-d H:i:s'),
-                        $snap['requester_name'] ?? "Request #{$archive->archivable_id}",
-                        $snap['vehicle_plate'] ?? '',
-                        $snap['location_address'] ?? '',
-                        $snap['status'] ?? '',
-                        '',
-                        $snap['additional_notes'] ?? '',
-                    ]),
-                    default => fputcsv($handle, [
-                        $archive->id,
-                        $type,
-                        $archive->reason,
-                        $archive->archivedBy?->name ?? 'System',
-                        $archive->archived_at->format('Y-m-d H:i:s'),
-                        "Record #{$archive->archivable_id}",
-                        '',
-                        '',
-                        $snap['status'] ?? '',
-                        '',
-                        '',
-                    ]),
-                };
-            }
-
-            fclose($handle);
-        };
-
-        $filename = 'archives-export-' . now()->format('Y-m-d') . '.csv';
-
-        return response()->stream($callback, 200, [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ]);
+        return Excel::download(new ArchivesExport($request), $filename);
     }
 
-    public function backup(Request $request): Response
+    public function backup(Request $request): StreamedResponse
     {
         $archives = $this->filteredQuery($request)->get();
 

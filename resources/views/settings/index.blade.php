@@ -112,25 +112,7 @@
                 </div>
             </div>
 
-            {{-- Display Preferences --}}
-            <div class="card settings-card settings-section">
-                <div class="card-header">
-                    <i class="bi bi-layout-three-columns me-2"></i>Display Preferences
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold small">Items Per Page</label>
-                            <select name="pagination_size" class="form-select">
-                                <option value="10" @selected(($user->preferences['pagination_size'] ?? 10) == 10)>10</option>
-                                <option value="25" @selected(($user->preferences['pagination_size'] ?? 10) == 25)>25</option>
-                                <option value="50" @selected(($user->preferences['pagination_size'] ?? 10) == 50)>50</option>
-                            </select>
-                            <div class="form-text">Number of items shown in tables</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            
 
             @if ($user->isRole(\App\Enums\Role::Enforcer))
             {{-- GPS Tracking --}}

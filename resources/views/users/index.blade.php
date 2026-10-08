@@ -381,7 +381,7 @@
     }
     #batch-actions-toolbar #batch-pending-group,
     #batch-actions-toolbar #batch-status-group {
-        background: #f8fafc !important;
+        background: transparent !important;
     }
     @media (max-width: 575.98px) {
         #batch-actions-toolbar .btn-sm {

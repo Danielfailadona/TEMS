@@ -55,7 +55,11 @@
                 </div>
                 @if ($impounding->evidence_path)
                     <hr>
-                    <img src="{{ \App\Services\SupabaseStorage::publicUrl($impounding->evidence_path) }}" alt="Evidence" class="rounded border" style="max-height:200px">
+                    @if (\App\Services\SupabaseStorage::has($impounding->evidence_path))
+                        <img src="{{ \App\Services\SupabaseStorage::publicUrl($impounding->evidence_path) }}" alt="Evidence" class="rounded border" style="max-height:200px">
+                    @else
+                        <div class="text-muted small fst-italic">Evidence file unavailable</div>
+                    @endif
                 @endif
             </div>
         </div>

@@ -388,24 +388,20 @@
 <body>
 <nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top" style="z-index: 100;">
     <div class="container-fluid px-4 px-lg-5">
-        <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
+        <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ route('welcome') }}">
             <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" height="32" class="me-2">
             <span style="background: linear-gradient(135deg, #0f2b4a, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">TEMs</span>
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('citizen.citation.lookup') }}">Ticket Lookup</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('citizen.clamping.landing') }}">Report Parking</a></li>
-                <li class="nav-item ms-2">
-                    <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">Sign In</a>
-                </li>
-                <li class="nav-item ms-2">
-                    <a href="{{ route('register') }}" class="btn btn-primary btn-sm">Sign Up</a>
-                </li>
+            <ul class="navbar-nav ms-auto align-items-center gap-2">
+                <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('welcome') }}#features">Features</a></li>
+                <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('citizen.citation.lookup') }}">Ticket Lookup</a></li>
+                <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('citizen.clamping.landing') }}">Report Parking</a></li>
+                <li class="nav-item"><a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">Sign In</a></li>
+                <li class="nav-item"><a href="{{ route('register') }}" class="btn btn-primary btn-sm">Sign Up</a></li>
             </ul>
         </div>
     </div>
@@ -414,7 +410,7 @@
 <section class="hero">
     <div class="hero-content">
         <div class="hero-text">
-            <h1>Modern Traffic Enforcement Management</h1>
+            <h1>Traffic Enforcement Management System</h1>
             <p>Streamline enforcement operations with real-time tracking, digital citations, and citizen-friendly portals.</p>
 
             <div class="hero-feature">
@@ -611,6 +607,6 @@
     <p>&copy; 2026 Traffic Enforcement Management System (TEMs). All rights reserved.</p>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

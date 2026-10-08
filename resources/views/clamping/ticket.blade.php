@@ -86,11 +86,15 @@
                 <h6 class="card-title text-muted text-uppercase small fw-semibold mb-3">
                     <i class="bi bi-camera me-1"></i>Evidence
                 </h6>
-                <img src="{{ \App\Services\SupabaseStorage::publicUrl($clamping->evidence_path) }}"
-                     alt="Evidence"
-                     class="rounded border w-100"
-                     style="max-height: 300px; object-fit: cover; cursor: zoom-in;"
-                     onclick="openModal('{{ \App\Services\SupabaseStorage::publicUrl($clamping->evidence_path) }}')">
+                @if (\App\Services\SupabaseStorage::has($clamping->evidence_path))
+                    <img src="{{ \App\Services\SupabaseStorage::publicUrl($clamping->evidence_path) }}"
+                         alt="Evidence"
+                         class="rounded border w-100"
+                         style="max-height: 300px; object-fit: cover; cursor: zoom-in;"
+                         onclick="openModal('{{ \App\Services\SupabaseStorage::publicUrl($clamping->evidence_path) }}')">
+                @else
+                    <div class="text-muted small fst-italic">Evidence file unavailable</div>
+                @endif
             </div>
         </div>
     @endif

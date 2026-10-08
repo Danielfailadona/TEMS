@@ -132,8 +132,12 @@
                         <div class="card stat-card mb-4 animate-on-load">
                             <div class="card-header bg-white"><strong>Submitted Evidence</strong></div>
                             <div class="card-body text-center">
-                                <img src="{{ \App\Services\SupabaseStorage::publicUrl($requestInfo->evidence_photo) }}" alt="Evidence" class="rounded border" style="max-height:300px;">
-                                <small class="text-muted d-block mt-2">Submitted photo evidence</small>
+                                @if (\App\Services\SupabaseStorage::has($requestInfo->evidence_photo))
+                                    <img src="{{ \App\Services\SupabaseStorage::publicUrl($requestInfo->evidence_photo) }}" alt="Evidence" class="rounded border" style="max-height:300px;">
+                                    <small class="text-muted d-block mt-2">Submitted photo evidence</small>
+                                @else
+                                    <div class="text-muted small fst-italic">Evidence file unavailable</div>
+                                @endif
                             </div>
                         </div>
                     @endif

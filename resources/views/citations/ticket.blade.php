@@ -101,11 +101,13 @@
                 </h6>
                 <div class="d-flex flex-wrap gap-2">
                     @foreach ($citation->evidence as $evidence)
-                        <img src="{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}"
-                             alt="Evidence"
-                             class="rounded border"
-                             style="width: 96px; height: 96px; object-fit: cover; cursor: zoom-in;"
-                             onclick="openModal('{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}')">
+                        @if (\App\Services\SupabaseStorage::has($evidence->file_path))
+                            <img src="{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}"
+                                 alt="Evidence"
+                                 class="rounded border"
+                                 style="width: 96px; height: 96px; object-fit: cover; cursor: zoom-in;"
+                                 onclick="openModal('{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}')">
+                        @endif
                     @endforeach
                 </div>
             </div>

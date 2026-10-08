@@ -1,8 +1,8 @@
 # New UI — Dashboards & Views Adopted from `master`
 
-Documents the `origin/master` (`e6e3192`) → `design-v1.1` merge and, specifically, **which master-built dashboard/UI we adopted wholesale versus which we hand-merged into the local redesign**.
+Documents the `origin/master` → `design-v1.1` merge in two rounds — round 1 from `e6e3192` (the dashboards adopted below), round 2 from `98354df` (12 further commits) — and, specifically, **which master-built dashboard/UI we adopted wholesale versus which we hand-merged into the local redesign**.
 
-Merge is staged but **not committed**. `master` was never modified.
+Round 1 is committed as `fc1016c`. Round 2 is staged, awaiting approval. `master` was never modified.
 
 ---
 
@@ -239,4 +239,65 @@ Local's `${PORT:-80}` nginx rewrite sits outside the conflict and is untouched.
 1. **`app/Services/SupabaseStorage.php` is misconfigured for Render.** Master-only, and it bypasses Flyystem entirely — it calls Supabase's REST API directly (`{SUPABASE_URL}/storage/v1/object/public/{bucket}/{path}`) with the **service-role key**. It reads `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `STORAGE_BUCKET` (`config/supabase.php`), **none of which are in `render.yaml` / `render.env`.** Consequence: `publicUrl()` silently falls back to `asset('storage/'.$path)` → broken evidence images, and `put()` throws. This affects **21 call sites across 16 views** (citations, citizen portal, clamping, profile, tickets, impounding).
 2. **Backup file not yet created.** Pending confirmation of what the "local save" should contain.
 3. **5 new migrations** from master will run under `migrate --force` on deploy, including `convert_clamping_officer_role_to_enforcer`, which is a role/data migration worth reviewing first.
-4. Merge is **staged, not committed** — awaiting approval.
+4. Round-1 merge committed as `fc1016c`; round-2 merge is **staged, not committed** — awaiting approval.
+
+---
+
+## Round 2 — merge of `origin/master` (`98354df`)
+
+While round 1 was being resolved, master advanced 12 commits. Round 2 merged those. **25 of the 32 affected files auto-advanced with no conflict**, because our side of each was byte-identical to the round-1 merge base (`e6e3192`) — git simply took master's newer content.
+
+### Fixes adopted automatically
+
+| Fix | Where |
+|---|---|
+| Record Payment 500 | `PaymentController` (now byte-identical to master) |
+| Supabase evidence uploads | `SupabaseStorage::put()` switched `PUT` → `POST`, added `apikey` header and a post-upload `exists()` check; new `has()` helper with a per-request cache |
+| Archive streaming 500s + XLSX export | `ArchiveController`, new `app/Exports/ArchivesExport.php` |
+| Payment permissions | `PaymentPolicy`, `ClampingPolicy`, `ImpoundingRecordPolicy` |
+| Batch toolbar compact redesign | `users/partials/batch-toolbar` (byte-identical to master) |
+| Welcome navbar/toggler, Report Parking layout, archive filters | `welcome`, `citizen/citation-detail`, `users/index`, `archives/index` |
+
+`payments/index`, `dashboard/index`, `clamping/index`, `clamping-requests/index`, `impounding/show` and `batch-toolbar` now match `origin/master` exactly.
+
+### Conflicts resolved (3/3)
+
+**1. `render.yaml` — master's version kept verbatim** (blob `8e5eb73`), as directed.
+
+This is **not** your Render blueprint. It still reads `name: tems`, `repo: https://github.com/dhyllrocoedu-ai/transenfo`, `branch: v4.5.0`, `APP_URL: https://transenfo-1.onrender.com`, only 12 env keys, and no `autoDeploy`. Git's auto-merge had instead produced *our* 73-line blueprint with only master's one-line `APP_KEY: sync: false` applied — that result was explicitly overridden.
+
+> ⚠️ **Do not apply `render.yaml` as a Render Blueprint.** Deployment uses the manual flow (`dashboard.render.com/web/new?onboarding=active`) reading **`render.env`**, which still holds all 31 keys, the stable `APP_KEY`, `APP_URL=https://tems-design.onrender.com`, `FILESYSTEM_PUBLIC_S3=true`, PayMongo and S3 credentials. The last known-good blueprint is recoverable with `git show 5db0742:render.yaml`.
+
+**2. `composer.json` — union.** Our `league/flysystem-aws-s3-v3: ^3.35` **and** master's `maatwebsite/excel: *`. The latter is required: `app/Exports/ArchivesExport.php` imports `Maatwebsite\Excel\...`. The `*` constraint is unbounded but matches this repo's existing convention (`spatie/laravel-activitylog` is already `*`).
+
+**3. `composer.lock` — master's lock + flysystem.** Taken from master, then:
+
+```
+composer update league/flysystem-aws-s3-v3 --with-all-dependencies --no-install
+```
+
+Added `league/flysystem-aws-s3-v3 3.35.3`, `aws/aws-sdk-php`, `aws/aws-crt-php`, `mtdowling/jmespath.php`, `symfony/filesystem`, plus 8 bumps (guzzle 7.15.5, flysystem 3.36.0, symfony polyfills/process). `vendor/` was left untouched. `composer audit` now reports **13 advisories / 2 packages** (was 19).
+
+**4. `impounding/index.blade.php` — our `<thead>` + master's `has()` guard.** Master's `<td>` block was body content that git had aligned inside `<thead><tr>`; taking it would have produced `<td>`s in the header row and duplicated the cells already in our `<tbody>`. Master's only real change to this file in the 12 commits was a single line, which was applied to our tbody:
+
+```blade
+@if ($record->evidence_path && \App\Services\SupabaseStorage::has($record->evidence_path))
+```
+
+`has()` is safe even without Supabase credentials: `exists()` falls back to the local `public` disk whenever `enabled()` is false, so it can neither throw nor 500 the page. It is now used at 14 evidence sites.
+
+### Round-2 verification
+
+| Check | Result |
+|---|---|
+| Unmerged files | none (3/3 resolved) |
+| Conflict markers in tracked files | none |
+| `php -l` on changed files | 29/29 pass |
+| `composer validate` | valid |
+| Deletions vs previous commit | none (1 added, 31 modified) |
+| `render.yaml` == `origin/master` | yes, blob `8e5eb73` |
+| `render.env` staged? | no |
+
+### Also excluded from master
+
+`debug2.php`, `test_view.php`, `teams_render.html` were staged by the merge and then removed from both index and disk. Besides keeping them out of the repo, this was **required**: leaving them as untracked files would have aborted round 2 with *"untracked working tree files would be overwritten by merge"*. Content remains recoverable with `git show origin/master:<file>`.
