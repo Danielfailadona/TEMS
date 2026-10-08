@@ -126,7 +126,7 @@
 @if ($isEnforcerMobile ?? false)
 <nav class="enforcer-tab-bar" aria-label="Enforcer quick nav">
   <a href="{{ route('dashboard') }}" class="tab-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-    <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+    <i class="bi bi-grid-3x3-gap-fill"></i><span>Dashboard</span>
   </a>
   <a href="{{ route('citations.index') }}" class="tab-item {{ request()->routeIs('citations.*') ? 'active' : '' }}">
     <i class="bi bi-file-earmark-text"></i><span>Citations</span>

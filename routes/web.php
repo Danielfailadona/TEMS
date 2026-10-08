@@ -226,6 +226,15 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
         return response()->json(['error' => 'Unauthorized'], 403);
     })->name('location.update');
 
+    Route::post('location/offline', function (Request $request) {
+        $user = auth()->user();
+        if ($user->isRole(\App\Enums\Role::Enforcer)) {
+            \App\Models\EnforcerLocation::where('user_id', $user->id)->update(['status' => 'offline']);
+            return response()->json(['status' => 'offline']);
+        }
+        return response()->json(['error' => 'Unauthorized'], 403);
+    })->name('location.offline');
+
     // Owner Portal
     Route::prefix('owner')->name('owner.')->group(function () {
         Route::get('citations', [OwnerPortalController::class, 'citations'])->name('citations');

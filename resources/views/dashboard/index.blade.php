@@ -120,7 +120,7 @@
                 <div id="gps-status" class="mb-2">
                     <span class="badge bg-secondary">Tracking paused</span>
                 </div>
-                <div class="d-flex align-items-center gap-2 mb-2" id="gps-controls" style="display:none !important;">
+                <div class="d-flex align-items-center gap-2 mb-2" id="gps-controls" style="display:none;">
                     <button type="button" id="gps-update-now" class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-geo-alt-fill me-1"></i>Update Now
                     </button>
@@ -416,5 +416,94 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
+(function () {
+    const toggle = document.getElementById('gps-toggle');
+    if (!toggle) return;
+
+    const statusEl = document.getElementById('gps-status');
+    const controls = document.getElementById('gps-controls');
+    const updateBtn = document.getElementById('gps-update-now');
+    const intervalSel = document.getElementById('gps-interval');
+
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const endpoint = @json(route('location.update'));
+    const offlineEndpoint = @json(route('location.offline'));
+    const headers = { 'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/json', 'Accept': 'application/json' };
+
+    let timer = null;
+
+    function setStatus(html) { if (statusEl) statusEl.innerHTML = html; }
+    function activeBadge() { return '<span class="badge bg-success">Tracking &middot; starting&hellip;</span>'; }
+    function pausedBadge() { return '<span class="badge bg-secondary">Tracking paused</span>'; }
+    function warnBadge(msg) { return '<span class="badge bg-warning text-dark">' + msg + '</span>'; }
+
+    function sendPosition(pos) {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const acc = Math.round(pos.coords.accuracy || 0);
+        setStatus('<span class="badge bg-success">Tracking &middot; ' + lat.toFixed(5) + ', ' + lng.toFixed(5) + '</span>');
+
+        fetch(endpoint, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ latitude: lat, longitude: lng, accuracy_m: acc }),
+        })
+        .then(res => res.ok ? res.json() : Promise.reject(new Error('HTTP ' + res.status)))
+        .then(() => {
+            const badge = statusEl.querySelector('span');
+            if (badge) badge.textContent = 'Tracking \u00B7 updated ' + new Date().toLocaleTimeString();
+        })
+        .catch(err => {
+            setStatus(warnBadge('Location update failed'));
+            console.error('GPS send failed:', err);
+        });
+    }
+
+    function locate() {
+        if (!navigator.geolocation) {
+            setStatus(warnBadge('Geolocation not supported on this device'));
+            stop();
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(sendPosition, (err) => {
+            if (err.code === err.PERMISSION_DENIED) {
+                setStatus(warnBadge('GPS permission denied'));
+            } else {
+                setStatus(warnBadge('Unable to get GPS position'));
+            }
+            stop(true);
+        }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 3000 });
+    }
+
+    function start() {
+        const ms = parseInt(intervalSel?.value || '5000', 10);
+        setStatus(activeBadge());
+        locate();
+        timer = setInterval(locate, ms);
+        if (controls) controls.style.display = 'flex';
+    }
+
+    function stop(keepStatus) {
+        if (timer) { clearInterval(timer); timer = null; }
+        if (updateBtn) updateBtn.disabled = false;
+        fetch(offlineEndpoint, { method: 'POST', headers, body: '{}' }).catch(() => {});
+        toggle.checked = false;
+        if (controls) controls.style.display = 'none';
+        if (!keepStatus) setStatus(pausedBadge());
+    }
+
+    toggle.addEventListener('change', () => {
+        if (toggle.checked) start(); else stop();
+    });
+
+    if (updateBtn) updateBtn.addEventListener('click', () => {
+        updateBtn.disabled = true;
+        locate();
+        setTimeout(() => { updateBtn.disabled = false; }, 1500);
+    });
+
+    if (controls) controls.style.display = 'none';
+})();
 </script>
 @endpush
