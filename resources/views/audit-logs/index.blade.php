@@ -91,4 +91,23 @@
         <div class="card-footer bg-white">{{ $activities->links() }}</div>
     @endif
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('form[method="GET"]');
+    if (!form) return;
+    const dateFrom = form.querySelector('[name="date_from"]');
+    const dateTo = form.querySelector('[name="date_to"]');
+    if (dateFrom && dateTo) {
+        [dateFrom, dateTo].forEach(el => {
+            el.addEventListener('change', () => {
+                if (dateFrom.value && dateTo.value) form.submit();
+            });
+        });
+    }
+    // other inputs (selects) can keep existing onchange submit if they have onchange attr
+});
+</script>
+@endpush
 @endsection

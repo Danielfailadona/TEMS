@@ -3,20 +3,6 @@
 @section('title', 'Vehicle Clamping')
 
 @section('content')
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-    <div>
-        <h1 class="h3 mb-1">Vehicle Clamping</h1>
-        <p class="text-muted mb-0">Record and manage clamped vehicles</p>
-    </div>
-    <div class="d-flex gap-2">
-        @can('create', App\Models\ClampingRecord::class)
-            <a href="{{ route('clamping.create') }}" class="btn btn-danger">
-                <i class="bi bi-plus-lg me-1"></i>Record Clamp
-            </a>
-        @endcan
-    </div>
-</div>
-
 @if (isset($overdueCitations) && $overdueCitations->isNotEmpty())
     <div class="card stat-card mb-4">
         <div class="card-header bg-white d-flex justify-content-between align-items-center"
@@ -101,7 +87,13 @@
                         <strong class="small text-truncate d-block">{{ $record->notice_number }}</strong>
                         <small class="text-muted text-truncate d-block">{{ $record->vehicle_plate }}</small>
                     </div>
-                    <span class="badge {{ $record->status->badgeClass() }} rounded-pill">{{ $record->status->label() }}</span>
+                    @php
+    $clampIdxLabel = $record->status->label();
+    if ($record->status === \App\Enums\ClampingStatus::AwaitingPayment) {
+        $clampIdxLabel = 'Pending';
+    }
+@endphp
+<span class="badge {{ $record->status->badgeClass() }} rounded-pill">{{ $clampIdxLabel }}</span>
                 </div>
                 <div class="card-body small">
                     <div class="row g-2">
@@ -177,4 +169,22 @@
         {{ $records->withQueryString()->links() }}
     </div>
 @endif
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('form[method="GET"]');
+    if (!form) return;
+    const dateFrom = form.querySelector('[name="date_from"]');
+    const dateTo = form.querySelector('[name="date_to"]');
+    if (dateFrom && dateTo) {
+        [dateFrom, dateTo].forEach(el => {
+            el.addEventListener('change', () => {
+                if (dateFrom.value && dateTo.value) form.submit();
+            });
+        });
+    }
+});
+</script>
+@endpush
 @endsection

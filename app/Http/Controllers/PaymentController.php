@@ -61,25 +61,15 @@ class PaymentController extends Controller
             $query->where('payment_method', $request->payment_method);
         }
 
-        // Date range filters - use COALESCE(paid_at, created_at) to include pending payments
-        // Convert user input (PHT) to UTC for comparison
-        if ($request->filled('date_from')) {
+        // Date range filters - apply only when both from and to are provided
+        if ($request->filled('date_from') && $request->filled('date_to')) {
             $dateFrom = Carbon::parse($request->date_from)->startOfDay()->setTimezone('UTC');
-            $query->where(function ($q) use ($dateFrom) {
-                $q->where('paid_at', '>=', $dateFrom)
-                  ->orWhere(function ($sub) use ($dateFrom) {
+            $dateTo   = Carbon::parse($request->date_to)->endOfDay()->setTimezone('UTC');
+            $query->where(function ($q) use ($dateFrom, $dateTo) {
+                $q->whereBetween('paid_at', [$dateFrom, $dateTo])
+                  ->orWhere(function ($sub) use ($dateFrom, $dateTo) {
                       $sub->whereNull('paid_at')
-                          ->where('created_at', '>=', $dateFrom);
-                  });
-            });
-        }
-        if ($request->filled('date_to')) {
-            $dateTo = Carbon::parse($request->date_to)->endOfDay()->setTimezone('UTC');
-            $query->where(function ($q) use ($dateTo) {
-                $q->where('paid_at', '<=', $dateTo)
-                  ->orWhere(function ($sub) use ($dateTo) {
-                      $sub->whereNull('paid_at')
-                          ->where('created_at', '<=', $dateTo);
+                          ->whereBetween('created_at', [$dateFrom, $dateTo]);
                   });
             });
         }
