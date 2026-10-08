@@ -38,20 +38,20 @@
     </div>
 </div>
 
-<div class="card stat-card mb-4">
-    <div class="card-body">
+<div class="card stat-card mb-3">
+    <div class="card-body py-2 px-3">
         <form method="GET" action="{{ route('clamping-requests.index') }}">
-            <div class="row g-2 align-items-end">
+            <div class="row g-1 align-items-end">
                 <div class="col-12 col-lg-4">
                     <label class="form-label small mb-1">Search</label>
-                    <div class="input-group">
+                    <div class="input-group input-group-sm">
                         <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                        <input type="text" class="form-control" name="search" placeholder="Search by plate, name, or location..." value="{{ request('search') }}">
+                        <input type="text" class="form-control form-control-sm" name="search" placeholder="Search by plate, name, or location..." value="{{ request('search') }}">
                     </div>
                 </div>
                 <div class="col-12 col-lg-auto">
                     <label class="form-label small mb-1">&nbsp;</label>
-                    <div class="d-flex gap-2 flex-wrap">
+                    <div class="d-flex gap-1 flex-wrap">
                         <a href="{{ route('clamping-requests.index') }}" class="btn btn-outline-secondary btn-sm @if(!request('status') && !request('search')) active @endif">All</a>
                         <a href="{{ route('clamping-requests.index', array_merge(['status' => 'pending'], request()->only('search'))) }}" class="btn btn-outline-warning btn-sm @if(request('status') === 'pending') active @endif">Pending</a>
                         <a href="{{ route('clamping-requests.index', array_merge(['status' => 'approved'], request()->only('search'))) }}" class="btn btn-outline-success btn-sm @if(request('status') === 'approved') active @endif">Approved</a>
@@ -61,7 +61,7 @@
                 </div>
                 <div class="col-12 col-lg-auto">
                     <label class="form-label small mb-1">&nbsp;</label>
-                    <div class="d-flex gap-2">
+                    <div class="d-flex gap-1">
                         <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
                         @if (request('status') || request('search'))
                             <a href="{{ route('clamping-requests.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-lg"></i> Clear</a>
