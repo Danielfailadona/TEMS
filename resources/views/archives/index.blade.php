@@ -74,9 +74,9 @@
                 <label class="form-label small mb-1">To</label>
                 <input type="date" name="date_to" class="form-control form-control-sm" value="{{ request('date_to') }}">
             </div>
-            <div class="col-6 col-md-3 d-flex gap-2">
+            <div class="col-auto">
                 @if (request()->anyFilled(['search', 'type', 'date_from', 'date_to']))
-                    <a href="{{ route('archives.index') }}" class="btn btn-outline-secondary btn-sm flex-grow-1"><i class="bi bi-x-lg"></i> Clear</a>
+                    <a href="{{ route('archives.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-lg"></i> Clear</a>
                 @endif
             </div>
         </form>
@@ -280,10 +280,20 @@ function toggleArchive(el) {
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('form[method="GET"]');
     if (form) {
+        const dateFrom = form.querySelector('[name="date_from"]');
+        const dateTo = form.querySelector('[name="date_to"]');
         const inputs = form.querySelectorAll('input, select');
         inputs.forEach(input => {
-            // For date inputs, submit on change
-            if (input.type === 'date' || input.tagName === 'SELECT') {
+            // For date inputs, submit only when both dates are filled
+            if (input.type === 'date') {
+                input.addEventListener('change', () => {
+                    if (dateFrom.value && dateTo.value) {
+                        form.submit();
+                    }
+                });
+            }
+            // For select, submit on change
+            if (input.tagName === 'SELECT') {
                 input.addEventListener('change', () => form.submit());
             }
             // For search input, debounce
