@@ -26,7 +26,7 @@ return new class extends Migration
             $table->decimal('storage_fee_per_day', 10, 2)->default(0);
             $table->decimal('admin_fee', 10, 2)->default(0);
             $table->timestamp('grace_until')->nullable();
-            $table->timestamp('impounded_at');
+            $table->timestamp('impounded_at')->useCurrent();
             $table->timestamp('paid_at')->nullable();
             $table->timestamp('released_at')->nullable();
             $table->timestamps();
