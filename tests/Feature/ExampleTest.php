@@ -10,11 +10,12 @@ class ExampleTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_home_redirects_to_login(): void
+    public function test_home_shows_public_landing_page(): void
     {
         $response = $this->get('/');
 
-        $response->assertRedirect(route('account.procedure'));
+        $response->assertOk();
+        $response->assertSee('Traffic Enforcement Management System');
     }
 
     public function test_staff_can_login_and_view_dashboard(): void

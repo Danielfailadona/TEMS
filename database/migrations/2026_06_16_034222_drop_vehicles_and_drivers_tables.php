@@ -11,11 +11,13 @@ return new class extends Migration
         Schema::table('citations', function (Blueprint $table) {
             $table->dropForeign(['vehicle_id']);
             $table->dropForeign(['driver_id']);
+            $table->dropIndex(['status', 'vehicle_id']);
             $table->dropColumn(['vehicle_id', 'driver_id']);
         });
 
         Schema::table('clamping_records', function (Blueprint $table) {
             $table->dropForeign(['vehicle_id']);
+            $table->dropIndex(['status', 'vehicle_id']);
             $table->dropColumn('vehicle_id');
         });
 

@@ -21,7 +21,7 @@ class DashboardPolishTest extends TestCase
         $response = $this->actingAs($user)->get('/dashboard');
 
         $response->assertOk();
-        $response->assertSee('Quick actions');
-        $response->assertSee('Recent activity');
+        $response->assertSee('Quick Actions');
+        $response->assertSee('Recent Activity');
     }
 }
