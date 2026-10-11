@@ -9,17 +9,7 @@
     .trend-up { background: rgba(22, 163, 74, 0.15); color: #16a34a; }
     .trend-down { background: rgba(220, 38, 38, 0.15); color: #dc2626; }
     .trend-flat { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
-    .pending-card {
-        display:flex; align-items:center; gap:0.75rem;
-        padding:0.75rem 1rem; border-radius:0.5rem;
-        background:var(--itevcms-surface); border:1px solid var(--itevcms-border);
-        font-size:0.85rem;
-    }
-    .pending-count {
-        width:2rem; height:2rem; border-radius:0.4rem;
-        display:flex; align-items:center; justify-content:center;
-        font-weight:700; font-size:0.9rem; flex-shrink:0;
-    }
+    .state-text { margin-left:auto; font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; opacity:0.85; }
     .chart-box { height:200px; }
     .chart-box-sm { height:150px; }
     .dash-map { width:100%; height:220px; border-radius:0.5rem; overflow:hidden; }
@@ -55,42 +45,88 @@
     </div>
 </div>
 
-{{-- KPI Cards (5) --}}
-<div class="row g-3 mb-4 animate-on-load row-cols-2 row-cols-md-3 row-cols-xl-5">
+{{-- Needs attention --}}
+<div class="section-label">Needs attention</div>
+<div class="tier1-row animate-on-load">
     @php
-        $kpis = [
-            ['icon' => 'bi-receipt', 'label' => 'Total Citations', 'value' => number_format($stats['total_citations']), 'tone' => 'primary', 'key' => 'total_citations'],
-            ['icon' => 'bi-exclamation-circle', 'label' => 'Unpaid Citations', 'value' => number_format($stats['unpaid_citations']), 'tone' => 'warning', 'key' => 'unpaid_citations'],
-            ['icon' => 'bi-cash-stack', 'label' => 'Payments Today', 'value' => '₱'.number_format($stats['revenue_today'], 2), 'tone' => 'success', 'key' => 'revenue_today'],
-            ['icon' => 'bi-lock', 'label' => 'Active Clamps', 'value' => number_format($stats['active_clamps']), 'tone' => 'danger', 'key' => 'active_clamps'],
-            ['icon' => 'bi-chat-square-text', 'label' => 'Pending Appeals', 'value' => number_format($stats['pending_appeals']), 'tone' => 'info', 'key' => 'pending_appeals'],
+        $attention = [
+            ['icon' => 'bi-lock', 'label' => 'Active Clamps', 'value' => $stats['active_clamps'], 'key' => 'active_clamps', 'red' => 4],
+            ['icon' => 'bi-chat-square-text', 'label' => 'Pending Appeals', 'value' => $stats['pending_appeals'], 'key' => 'pending_appeals', 'red' => 10],
+            ['icon' => 'bi-exclamation-circle', 'label' => 'Unpaid Citations', 'value' => $stats['unpaid_citations'], 'key' => 'unpaid_citations', 'red' => 50],
         ];
     @endphp
-    @foreach ($kpis as $k)
-        @php $t = $trends[$k['key']] ?? ['direction' => 'flat', 'percent' => 0]; @endphp
-        <div class="col">
-            <div class="card stat-card border-0 h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center gap-2 text-muted small mb-1">
-                        <i class="bi {{ $k['icon'] }} text-{{ $k['tone'] }}"></i>
-                        <span>{{ $k['label'] }}</span>
-                    </div>
-                    <div class="h3 mb-0 text-{{ $k['tone'] }}">{{ $k['value'] }}</div>
-                    <div class="small mt-1">
-                        @if ($t['direction'] === 'up')
-                            <span class="trend-badge trend-up"><i class="bi bi-arrow-up-short"></i>{{ $t['percent'] }}%</span>
-                        @elseif ($t['direction'] === 'down')
-                            <span class="trend-badge trend-down"><i class="bi bi-arrow-down-short"></i>{{ $t['percent'] }}%</span>
-                        @else
-                            <span class="trend-badge trend-flat"><i class="bi bi-dash"></i>0%</span>
-                        @endif
-                        <span class="text-muted ms-1">vs last week</span>
-                    </div>
-                </div>
+    @foreach ($attention as $a)
+        @php
+            $state = $a['value'] === 0
+                ? 'state-green'
+                : ($a['value'] >= $a['red'] ? 'state-red' : 'state-amber');
+            $stateText = ['state-green' => 'Clear', 'state-amber' => 'Monitor', 'state-red' => 'Action needed'][$state];
+            $t = $trends[$a['key']] ?? ['direction' => 'flat', 'percent' => 0];
+        @endphp
+        <div class="stat-card {{ $state }}">
+            <div class="stat-label">
+                <span class="state-dot" aria-hidden="true"></span>
+                <i class="bi {{ $a['icon'] }}"></i>
+                {{ $a['label'] }}
+                <span class="state-text">{{ $stateText }}</span>
+            </div>
+            <div class="stat-value">{{ number_format($a['value']) }}</div>
+            <div class="stat-trend">
+                @if ($t['direction'] === 'up')
+                    <span class="trend-badge trend-up"><i class="bi bi-arrow-up-short"></i>{{ $t['percent'] }}%</span>
+                @elseif ($t['direction'] === 'down')
+                    <span class="trend-badge trend-down"><i class="bi bi-arrow-down-short"></i>{{ $t['percent'] }}%</span>
+                @else
+                    <span class="trend-badge trend-flat"><i class="bi bi-dash"></i>0%</span>
+                @endif
+                <span class="text-muted ms-1">vs last week</span>
             </div>
         </div>
     @endforeach
 </div>
+
+{{-- Pending work --}}
+@if (!auth()->user()->isRole(\App\Enums\Role::Cashier))
+<div class="section-label">Pending work</div>
+<div class="queue-section mb-4 animate-on-load">
+    <div class="queue-header">
+        <h2>Pending Work Queue</h2>
+        <span>Needs attention</span>
+    </div>
+    <div class="queue-row">
+        <div class="queue-left">
+            <div class="queue-count {{ $pendingQueue['appeals'] > 0 ? 'some' : 'zero' }}">{{ $pendingQueue['appeals'] }}</div>
+            <div>
+                <div class="queue-title">Pending Appeals</div>
+                <div class="queue-sub">Awaiting review decision</div>
+            </div>
+        </div>
+        <a href="{{ route('appeals.index') }}" class="queue-btn">View</a>
+    </div>
+    <div class="queue-row">
+        <div class="queue-left">
+            <div class="queue-count {{ $pendingQueue['clamping_requests'] > 0 ? 'some' : 'zero' }}">{{ $pendingQueue['clamping_requests'] }}</div>
+            <div>
+                <div class="queue-title">Clamping Requests</div>
+                <div class="queue-sub">Citizen requests to review</div>
+            </div>
+        </div>
+        <a href="{{ route('clamping-requests.index') }}" class="queue-btn">View</a>
+    </div>
+    @if (!auth()->user()->isRole(\App\Enums\Role::Enforcer))
+    <div class="queue-row">
+        <div class="queue-left">
+            <div class="queue-count {{ $pendingQueue['account_approvals'] > 0 ? 'some' : 'zero' }}">{{ $pendingQueue['account_approvals'] }}</div>
+            <div>
+                <div class="queue-title">Account Approvals</div>
+                <div class="queue-sub">New users awaiting approval</div>
+            </div>
+        </div>
+        <a href="{{ route('users.index') }}" class="queue-btn">View</a>
+    </div>
+    @endif
+</div>
+@endif
 
 {{-- Enforcer GPS Location --}}
 @if (auth()->user()->isRole(\App\Enums\Role::Enforcer))
@@ -137,71 +173,110 @@
 </div>
 @endif
 
-{{-- Analytics 2x2 Grid --}}
-<div class="row g-4 mb-4 animate-on-load">
+{{-- Overview --}}
+<div class="section-label">Overview</div>
+<div class="tier3-row animate-on-load">
+    <div class="stat-card--quiet">
+        <div class="stat-label">Total Citations</div>
+        <div class="stat-value">{{ number_format($stats['total_citations']) }}</div>
+    </div>
+    <div class="stat-card--quiet">
+        <div class="stat-label">Payments Today</div>
+        <div class="stat-value">₱{{ number_format($stats['revenue_today'], 2) }}</div>
+    </div>
+</div>
+
+{{-- Trends --}}
+<div class="section-label">Trends</div>
+<div class="two-col animate-on-load">
     {{-- Citations by Month --}}
-    <div class="col-md-6">
-        <div class="card stat-card h-100">
-            <div class="card-header bg-white"><strong>Citations by Month</strong></div>
-            <div class="card-body chart-box">
-                <canvas id="citationsChart"></canvas>
+    <div class="panel">
+        <h3 class="h6 mb-3">Citations by Month</h3>
+        @if ($citationsByMonth->count() >= 2)
+            <div class="chart-box"><canvas id="citationsChart"></canvas></div>
+        @elseif ($citationsByMonth->count() === 1)
+            <div class="stat-with-caption">
+                <div class="big">{{ number_format($citationsByMonth->values()->first()) }}</div>
+                <div class="caption">{{ $citationsByMonth->keys()->first() }}</div>
             </div>
-        </div>
+        @else
+            <div class="chart-empty">
+                <span class="icon"><i class="bi bi-bar-chart"></i></span>
+                <span class="msg">No citations recorded yet.</span>
+            </div>
+        @endif
     </div>
     {{-- Payments Trend --}}
     @if (!auth()->user()->isRole(\App\Enums\Role::Enforcer))
-    <div class="col-md-6">
-        <div class="card stat-card h-100">
-            <div class="card-header bg-white"><strong>Payments Trend</strong></div>
-            <div class="card-body chart-box">
-                <canvas id="revenueChart"></canvas>
+    <div class="panel">
+        <h3 class="h6 mb-3">Payments Trend</h3>
+        @if ($revenueByMonth->count() >= 2)
+            <div class="chart-box"><canvas id="revenueChart"></canvas></div>
+        @elseif ($revenueByMonth->count() === 1)
+            <div class="stat-with-caption">
+                <div class="big">₱{{ number_format($revenueByMonth->values()->first(), 2) }}</div>
+                <div class="caption">{{ $revenueByMonth->keys()->first() }}</div>
             </div>
-        </div>
+        @else
+            <div class="chart-empty">
+                <span class="icon"><i class="bi bi-cash-stack"></i></span>
+                <span class="msg">No payments recorded yet.</span>
+            </div>
+        @endif
     </div>
     @endif
+</div>
+
+<div class="two-col animate-on-load">
     {{-- Top Violations --}}
-    <div class="col-md-6">
-        <div class="card stat-card h-100">
-            <div class="card-header bg-white"><strong>Top Violation Types</strong></div>
-            <div class="card-body">
-                @if ($topViolations->isEmpty())
-                    <div class="text-muted text-center py-4 small">No data for the last 3 months.</div>
-                @else
-                    @php $maxCount = $topViolations->max('count'); @endphp
-                    @foreach ($topViolations as $v)
-                        <div class="violation-item">
-                            <span>{{ $v['name'] }}</span>
-                            <div class="d-flex align-items-center gap-2">
-                                <div style="width:80px;">
-                                    <div class="violation-bar" style="width:{{ $maxCount > 0 ? ($v['count']/$maxCount)*100 : 0 }}%;"></div>
-                                </div>
-                                <span class="fw-semibold small">{{ $v['count'] }}</span>
-                            </div>
-                        </div>
-                    @endforeach
-                @endif
+    <div class="panel">
+        <h3 class="h6 mb-3">Top Violation Types</h3>
+        @if ($topViolations->isEmpty())
+            <div class="chart-empty">
+                <span class="icon"><i class="bi bi-bar-chart"></i></span>
+                <span class="msg">No data for the last 3 months.</span>
             </div>
-        </div>
+        @else
+            @php $maxCount = $topViolations->max('count'); @endphp
+            @foreach ($topViolations as $v)
+                <div class="violation-item">
+                    <span>{{ $v['name'] }}</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="width:80px;">
+                            <div class="violation-bar" style="width:{{ $maxCount > 0 ? ($v['count']/$maxCount)*100 : 0 }}%;"></div>
+                        </div>
+                        <span class="fw-semibold small">{{ $v['count'] }}</span>
+                    </div>
+                </div>
+            @endforeach
+        @endif
     </div>
     {{-- Appeals Trend --}}
-    <div class="col-md-6">
-        <div class="card stat-card h-100">
-            <div class="card-header bg-white"><strong>Appeals Trend</strong></div>
-            <div class="card-body chart-box">
-                <canvas id="appealsChart"></canvas>
+    <div class="panel">
+        <h3 class="h6 mb-3">Appeals Trend</h3>
+        @if ($appealsByMonth->count() >= 2)
+            <div class="chart-box"><canvas id="appealsChart"></canvas></div>
+        @elseif ($appealsByMonth->count() === 1)
+            <div class="stat-with-caption">
+                <div class="big">{{ number_format($appealsByMonth->values()->first()) }}</div>
+                <div class="caption">{{ $appealsByMonth->keys()->first() }}</div>
             </div>
-        </div>
+        @else
+            <div class="chart-empty">
+                <span class="icon"><i class="bi bi-chat-square-text"></i></span>
+                <span class="msg">No appeals filed yet.</span>
+            </div>
+        @endif
     </div>
 </div>
 
 {{-- Recent Activity (full width) — admin only --}}
 @if (!auth()->user()->isRole(\App\Enums\Role::Enforcer, \App\Enums\Role::Cashier))
-<div class="card stat-card mb-4 animate-on-load">
-    <div class="card-header bg-white">
-        <strong>Recent Activity</strong>
-        <p class="text-muted small mb-0">Latest enforcement events across the office</p>
-    </div>
-    <div class="card-body">
+<div class="section-label">Activity</div>
+<div class="panel mb-4 animate-on-load">
+    <h3 class="h6 mb-1">Recent Activity</h3>
+    <div class="text-muted small mb-3">Latest enforcement events across the office</div>
+    <div>
         @forelse ($recentActivity as $item)
             <div class="d-flex align-items-start justify-content-between gap-3 border-bottom py-3">
                 <div class="d-flex gap-3 min-width-0 flex-grow-1">
@@ -224,90 +299,37 @@
 @endif
 
  @if (!auth()->user()->isRole(\App\Enums\Role::Cashier))
-{{-- Pending Work Queue + Quick Actions + Zone Map --}}
-<div class="row g-4 mb-4 animate-on-load">
-    <div class="col-xl-4">
-        <div class="card stat-card h-100">
-            <div class="card-header bg-white">
-                <strong>Pending Work Queue</strong>
-                <span class="text-muted small">Needs attention</span>
-            </div>
-            <div class="card-body d-flex flex-column gap-3">
-                <div class="pending-card">
-                    <div class="pending-count" style="color:#7c3aed;background:#7c3aed15;">
-                        {{ $pendingQueue['appeals'] }}
-                    </div>
-                    <div class="flex-grow-1">
-                        <div class="fw-semibold small">Pending Appeals</div>
-                        <div class="text-muted" style="font-size:0.7rem;">Awaiting review decision</div>
-                    </div>
-                    <a href="{{ route('appeals.index') }}" class="btn btn-sm btn-outline-primary" style="font-size:0.7rem;">View</a>
-                </div>
-
-                <div class="pending-card">
-                    <div class="pending-count" style="color:#0891b2;background:#0891b215;">
-                        {{ $pendingQueue['clamping_requests'] }}
-                    </div>
-                    <div class="flex-grow-1">
-                        <div class="fw-semibold small">Clamping Requests</div>
-                        <div class="text-muted" style="font-size:0.7rem;">Citizen requests to review</div>
-                    </div>
-                    <a href="{{ route('clamping-requests.index') }}" class="btn btn-sm btn-outline-primary" style="font-size:0.7rem;">View</a>
-                </div>
-
-@if (!auth()->user()->isRole(\App\Enums\Role::Enforcer))
-                <div class="pending-card">
-                    <div class="pending-count" style="color:#d97706;background:#d9770615;">
-                        {{ $pendingQueue['account_approvals'] }}
-                    </div>
-                    <div class="flex-grow-1">
-                        <div class="fw-semibold small">Account Approvals</div>
-                        <div class="text-muted" style="font-size:0.7rem;">New users awaiting approval</div>
-                    </div>
-                    <a href="{{ route('users.index') }}" class="btn btn-sm btn-outline-primary" style="font-size:0.7rem;">View</a>
-                </div>
-                @endif
-            </div>
+{{-- Tools --}}
+<div class="section-label">Tools</div>
+<div class="two-col animate-on-load">
+    <div class="panel">
+        <h3 class="h6 mb-3">Quick Actions</h3>
+        <div class="qa-row">
+            @can('create', App\Models\Citation::class)
+                <a href="{{ route('citations.create') }}" class="qa-btn blue"><i class="bi bi-receipt"></i>Issue Citation</a>
+            @endcan
+            @can('create', App\Models\Payment::class)
+                <a href="{{ route('payments.create') }}" class="qa-btn green"><i class="bi bi-cash-stack"></i>Process Payment</a>
+            @endcan
+            @can('create', App\Models\ClampingRecord::class)
+                <a href="{{ route('clamping.create') }}" class="qa-btn red"><i class="bi bi-lock"></i>Record Clamp</a>
+            @endcan
+            @can('viewAny', App\Models\Appeal::class)
+                <a href="{{ route('appeals.index') }}" class="qa-btn gray"><i class="bi bi-chat-square-text"></i>Review Appeals</a>
+            @endcan
         </div>
     </div>
-
-    <div class="col-xl-4">
-        <div class="card stat-card h-100">
-            <div class="card-header bg-white">
-                <strong>Quick Actions</strong>
-            </div>
-            <div class="card-body d-grid gap-2">
-                @can('create', App\Models\Citation::class)
-                    <a href="{{ route('citations.create') }}" class="btn btn-outline-primary text-start"><i class="bi bi-receipt me-2"></i>Issue Citation</a>
-                @endcan
-                @can('create', App\Models\Payment::class)
-                    <a href="{{ route('payments.create') }}" class="btn btn-outline-success text-start"><i class="bi bi-cash-stack me-2"></i>Process Payment</a>
-                @endcan
-                @can('create', App\Models\ClampingRecord::class)
-                    <a href="{{ route('clamping.create') }}" class="btn btn-outline-danger text-start"><i class="bi bi-lock me-2"></i>Record Clamp</a>
-                @endcan
-                @can('viewAny', App\Models\Appeal::class)
-                    <a href="{{ route('appeals.index') }}" class="btn btn-outline-secondary text-start"><i class="bi bi-chat-square-text me-2"></i>Review Appeals</a>
-                @endcan
-            </div>
-        </div>
-    </div>
-
     @if (!auth()->user()->isRole(\App\Enums\Role::Enforcer))
-    <div class="col-xl-4">
-        <div class="card stat-card h-100">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <strong>Zone Coverage</strong>
-                <a href="{{ route('zones.index') }}" class="btn btn-sm btn-outline-primary" style="font-size:0.75rem;">Manage</a>
-            </div>
-            <div class="card-body p-0">
-                @if ($zoneMapData->isEmpty())
-                    <div class="text-center text-muted py-5 small">No active zones configured.</div>
-                @else
-                    <div id="dashboard-zone-map" class="dash-map"></div>
-                @endif
-            </div>
+    <div class="panel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="h6 mb-0">Zone Coverage</h3>
+            <a href="{{ route('zones.index') }}" class="btn btn-sm btn-outline-primary" style="font-size:0.75rem;">Manage</a>
         </div>
+        @if ($zoneMapData->isEmpty())
+            <div class="text-center text-muted py-5 small">No active zones configured.</div>
+        @else
+            <div id="dashboard-zone-map" class="dash-map"></div>
+        @endif
     </div>
     @endif
 </div>
