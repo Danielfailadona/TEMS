@@ -21,6 +21,23 @@ body {
     color: #0f172a;
 }
 
+/* Non-interactive display text: prevent highlight/selection (titles, labels, badges) */
+h1, h2, h3, h4, h5, h6,
+.topbar,
+.section-label,
+.card-header,
+.detail-hero,
+.form-label,
+.badge,
+.status-badge,
+.cit-pill {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    cursor: default;
+}
+
 /* Section labels */
 .section-label {
     font-size: 0.75rem;
