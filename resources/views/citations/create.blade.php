@@ -114,7 +114,7 @@
                 <textarea name="notes" class="form-control" rows="3">{{ old('notes') }}</textarea>
             </div>
             <div class="col-12">
-                <label class="form-label">Evidence Photos</label>
+                <label class="form-label">Evidence Photos <span class="text-danger">*</span></label>
                 <div class="evidence-capture" id="evidenceCapture">
                     <input type="file" name="evidence[]" id="evidenceCamera" accept="image/*" capture="environment" class="d-none" multiple>
                     <input type="file" name="evidence[]" id="evidenceGallery" accept="image/*" class="d-none" multiple>
@@ -126,8 +126,9 @@
                             <i class="bi bi-folder2-open me-1"></i>Choose File
                         </button>
                     </div>
-                    <small class="form-text text-muted d-block mt-2">You may attach multiple photos.</small>
+                    <small class="form-text text-muted d-block mt-2">At least one photo is required. You may attach multiple photos.</small>
                     <div class="evidence-preview row g-2 mt-2" id="evidencePreview"></div>
+                    @error('evidence')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
                 </div>
             </div>
         </div>

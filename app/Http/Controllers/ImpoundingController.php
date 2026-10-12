@@ -77,7 +77,12 @@ class ImpoundingController extends Controller
             'citation_id' => 'nullable|exists:citations,id',
             'location' => 'nullable|string|max:500',
             'notes' => 'nullable|string|max:1000',
-            'evidence' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'evidence' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ], [
+            'evidence.required' => 'An evidence photo is required.',
+            'evidence.image' => 'The evidence file must be an image.',
+            'evidence.mimes' => 'The evidence photo must be a JPEG, PNG, or WebP.',
+            'evidence.max' => 'The evidence photo must be 5 MB or smaller.',
         ]);
 
         $existingImpound = ImpoundingRecord::where('vehicle_plate', $validated['vehicle_plate'])

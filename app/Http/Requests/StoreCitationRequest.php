@@ -30,8 +30,20 @@ class StoreCitationRequest extends FormRequest
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'notes' => ['nullable', 'string'],
-            'evidence' => ['nullable', 'array', 'max:10'],
+            'evidence' => ['required', 'array', 'min:1', 'max:10'],
             'evidence.*' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'evidence.required' => 'At least one evidence photo is required.',
+            'evidence.min' => 'At least one evidence photo is required.',
+            'evidence.max' => 'You may upload up to 10 evidence photos.',
+            'evidence.*.image' => 'Each evidence file must be an image.',
+            'evidence.*.mimes' => 'Evidence photos must be JPEG, PNG, or WebP.',
+            'evidence.*.max' => 'Each evidence photo must be 5 MB or smaller.',
         ];
     }
 }

@@ -22,8 +22,9 @@
                 <textarea name="notes" class="form-control" rows="3">{{ old('notes') }}</textarea>
             </div>
             <div class="col-12">
-                <label class="form-label">Evidence Photo</label>
-                <input type="file" name="evidence" class="form-control" accept="image/*">
+                <label class="form-label">Evidence Photo <span class="text-danger">*</span></label>
+                <input type="file" name="evidence" class="form-control @error('evidence') is-invalid @enderror" accept="image/*" required>
+                @error('evidence')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
             </div>
         </div>
         <button type="submit" class="btn btn-danger mt-3">Record Clamp</button>
