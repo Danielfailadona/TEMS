@@ -66,12 +66,12 @@
     .cit-dash .cit-table tbody tr { height: 78px; border-bottom: 2px solid #e8edf2; }
     .cit-dash .cit-table tbody tr:last-child { border-bottom: 0; }
     .cit-dash .cit-table td { padding: 0 16px; white-space: nowrap; font-size: 14px; color: var(--cit-ink); }
-    .cit-dash .cit-table th:nth-child(1), .cit-dash .cit-table td:nth-child(1) { width: 21.5%; }
-    .cit-dash .cit-table th:nth-child(2), .cit-dash .cit-table td:nth-child(2) { width: 19.5%; }
-    .cit-dash .cit-table th:nth-child(3), .cit-dash .cit-table td:nth-child(3) { width: 10%; }
-    .cit-dash .cit-table th:nth-child(4), .cit-dash .cit-table td:nth-child(4) { width: 11%; }
-    .cit-dash .cit-table th:nth-child(5), .cit-dash .cit-table td:nth-child(5) { width: 13.5%; }
-    .cit-dash .cit-table th:nth-child(6), .cit-dash .cit-table td:nth-child(6) { width: 10%; }
+    .cit-dash .cit-table th:nth-child(1), .cit-dash .cit-table td:nth-child(1) { width: 24%; }
+    .cit-dash .cit-table th:nth-child(2), .cit-dash .cit-table td:nth-child(2) { width: 22%; }
+    .cit-dash .cit-table th:nth-child(3), .cit-dash .cit-table td:nth-child(3) { width: 11%; }
+    .cit-dash .cit-table th:nth-child(4), .cit-dash .cit-table td:nth-child(4) { width: 12%; }
+    .cit-dash .cit-table th:nth-child(5), .cit-dash .cit-table td:nth-child(5) { width: 14%; }
+    .cit-dash .cit-table th:nth-child(6), .cit-dash .cit-table td:nth-child(6) { width: 9%; }
     .cit-dash .cit-table th:last-child, .cit-dash .cit-table td:last-child { width: 8%; text-align: center; }
     .cit-dash .cit-pill {
         display: inline-block; font-size: 11px; font-weight: 700; line-height: 24px; padding: 0 10px;
@@ -153,7 +153,6 @@
                     <th scope="col">Amount</th>
                     <th scope="col">Issued</th>
                     <th scope="col">Status</th>
-                    <th scope="col">Evidence</th>
                     <th scope="col"><span class="visually-hidden">Actions</span></th>
                 </tr>
             </thead>
@@ -167,20 +166,13 @@
                         <td>{{ $citation->issued_at->format('M d, Y') }}</td>
                         <td><span class="cit-pill {{ $citation->status->badgeClass() }}">{{ $citation->status->label() }}</span></td>
                         <td>
-                            @if ($citation->evidence->isNotEmpty())
-                                <span class="badge bg-success">Yes</span>
-                            @else
-                                <span class="badge bg-secondary">No</span>
-                            @endif
-                        </td>
-                        <td>
                             <a href="{{ route('citations.show', $citation) }}" class="cit-view-btn" aria-label="View citation {{ $citation->citation_number }}" title="View">
                                 <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>
                             </a>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="cit-empty">No citations found.</td></tr>
+                    <tr><td colspan="7" class="cit-empty">No citations found.</td></tr>
                 @endforelse
             </tbody>
         </table>
