@@ -91,7 +91,7 @@ class PaymentController extends Controller
 
         $all = $receipts->concat($pending)->sortByDesc('date')->values();
 
-        $perPage = 9;
+        $perPage = 5;
         $page = max(1, (int) $request->input('page', 1));
         $items = $all->forPage($page, $perPage)->values();
 
@@ -114,8 +114,21 @@ class PaymentController extends Controller
      */
     protected function pendingRows(Request $request): Collection
     {
+        // Unpaid rows have no payment method and are never online payments, so
+        // those filters can never match them.
+        if ($request->filled('payment_method') || $request->filled('online')) {
+            return collect();
+        }
+
         $category = $request->input('category');
         $search = trim((string) $request->input('search', ''));
+
+        $dateFrom = $request->filled('date_from') && $request->filled('date_to')
+            ? Carbon::parse($request->date_from)->startOfDay()->setTimezone('UTC')
+            : null;
+        $dateTo = $request->filled('date_from') && $request->filled('date_to')
+            ? Carbon::parse($request->date_to)->endOfDay()->setTimezone('UTC')
+            : null;
 
         $rows = collect();
 
@@ -162,6 +175,11 @@ class PaymentController extends Controller
                 'payment' => null,
                 'payable' => $m,
             ]));
+        }
+
+        // Apply the date range to the pending rows' own date (issued/clamped/impounded)
+        if ($dateFrom !== null && $dateTo !== null) {
+            $rows = $rows->filter(fn ($row) => $row['date'] !== null && $row['date']->between($dateFrom, $dateTo));
         }
 
         return $rows;
