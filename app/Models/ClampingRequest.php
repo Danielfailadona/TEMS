@@ -56,11 +56,31 @@ class ClampingRequest extends Model
     public function getStatusBadgeClass(): string
     {
         return match ($this->status) {
-            'pending' => 'warning',
-            'approved' => 'success',
-            'rejected' => 'danger',
-            'resolved' => 'success',
-            default => 'secondary',
+            'pending' => 'tag-amber',
+            'approved' => 'tag-green',
+            'rejected' => 'tag-red',
+            'resolved' => 'tag-green',
+            default => 'tag-gray',
+        };
+    }
+
+    public function getStatusColor(): string
+    {
+        return match ($this->status) {
+            'pending' => '#f59e0b',
+            'approved', 'resolved' => '#10B981',
+            'rejected' => '#EF4444',
+            default => '#69757F',
+        };
+    }
+
+    public function getStatusSubtleColor(): string
+    {
+        return match ($this->status) {
+            'pending' => 'rgba(245, 158, 11, 0.15)',
+            'approved', 'resolved' => 'rgba(16, 185, 129, 0.15)',
+            'rejected' => 'rgba(239, 68, 68, 0.15)',
+            default => 'rgba(105, 117, 127, 0.15)',
         };
     }
 

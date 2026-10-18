@@ -46,7 +46,7 @@
                 <h6 class="card-title"><i class="bi bi-info-circle"></i> Account Info</h6>
                 <hr>
                 @if ($user)
-                    <div class="mb-2"><small class="text-muted d-block">Account Status</small> <span class="badge rounded-pill bg-{{ match($user->account_status) { 'approved' => 'success', 'pending' => 'warning text-dark', 'rejected' => 'danger', 'suspended' => 'secondary', default => 'info' } }}">{{ ucfirst($user->account_status) }}</span></div>
+                    <div class="mb-2"><small class="text-muted d-block">Account Status</small> <span class="badge rounded-pill {{ match($user->account_status) { 'approved' => 'tag-green', 'pending' => 'tag-amber', 'rejected' => 'tag-red', 'suspended' => 'tag-gray', default => 'tag-gray' } }}">{{ ucfirst($user->account_status) }}</span></div>
                     <div class="mb-2"><small class="text-muted d-block">Created</small> {{ $user->created_at->format('M d, Y') }}</div>
                     <div class="mb-2"><small class="text-muted d-block">Last Updated</small> {{ $user->updated_at->format('M d, Y') }}</div>
                     @if ($user->last_login_at)

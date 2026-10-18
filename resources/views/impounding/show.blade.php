@@ -72,7 +72,7 @@
                         <div class="col-md-6"><div class="text-muted small d-block">Citation #</div>{{ $impounding->citation->citation_number }}</div>
                         <div class="col-md-6"><div class="text-muted small d-block">Violation</div>{{ $impounding->citation->violationType->name }}</div>
                         <div class="col-md-6"><div class="text-muted small d-block">Penalty Amount</div>₱{{ number_format($impounding->citation->penalty_amount, 2) }}</div>
-                        <div class="col-md-6"><div class="text-muted small d-block">Status</div><span class="badge bg-{{ $impounding->citation->status->label() === 'Paid' ? 'success' : 'warning' }}">{{ $impounding->citation->status->label() }}</span></div>
+                        <div class="col-md-6"><div class="text-muted small d-block">Status</div><span class="badge {{ $impounding->citation->status->badgeClass() }}">{{ $impounding->citation->status->label() }}</span></div>
                         <div class="col-md-6"><div class="text-muted small d-block">Driver</div>{{ $impounding->citation->driver_name ?? '—' }}</div>
                         <div class="col-md-6"><div class="text-muted small d-block">Due Date</div>{{ $impounding->citation->due_date?->format('M d, Y') ?? '—' }}</div>
                     </div>

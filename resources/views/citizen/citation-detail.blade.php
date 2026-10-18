@@ -95,9 +95,9 @@
                 <span class="detail-row-label">Days Remaining:</span>
                 <span class="detail-row-value">
                     @if ($citation->isPaid())
-                        <span class="badge bg-success">Paid</span>
+                        <span class="badge tag-green">Paid</span>
                     @elseif ($citation->due_date->isPast())
-                        <span class="badge bg-danger">Overdue</span>
+                        <span class="badge tag-amber">Overdue</span>
                     @else
                         {{ $citation->due_date->diffInDays() }} days
                     @endif
@@ -296,7 +296,7 @@ function openModal(imageSrc) {
                             {{ $citation->citation_number }}
                             <span class="badge bg-white text-dark ms-2">{{ $citation->status->label() }}</span>
                         </h4>
-                        <span class="text-white-50">{{ $citation->issued_at?->format('M d, Y h:i A') }}</span>
+                        <span class="{{ str_contains($citation->status->badgeClass(), 'tag-amber') ? 'text-dark' : 'text-white-50' }}">{{ $citation->issued_at?->format('M d, Y h:i A') }}</span>
                     </div>
                 </div>
                 <div class="card-body">

@@ -312,3 +312,192 @@ rebuild required.
 - `php artisan view:cache` / `view:clear`.
 - Manual QA (hard refresh): `/impounding` "Awaiting Payment" badge is amber,
   "Paid" and "Released" green, "Waiting to Release" amber.
+
+---
+
+## Remaining Status Sources Migrated to the Rule Palette + Semantic Corrections
+
+### Date Edited / Applied `(required)`
+
+- Edited and applied: 2026-10-13
+
+### Type of Change `(required)`
+
+- Refactor / bug fix (status tag colors; complete rule compliance)
+
+### Requested By / Source `(optional)`
+
+- Requested by the repository owner after an audit of status tags against the
+  color-coding rule:
+  - `#10B981` Green: Paid, Money, Resolved
+  - `#1473F9` Blue: Security, Links, Interactive
+  - `#EF4444` Red: Destructive, Anomalous
+  - `#f59e0b` Amber: Warning, Action Required Soon
+  - `#69757F` Gray: Neutral, Informational, Inert
+
+### Problem `(required)`
+
+- The first color-coding pass migrated only `CitationStatus`, `ClampingStatus`,
+  and `AppealStatus` to `tag-*`. Several status sources still returned Bootstrap
+  `bg-*` classes (which use Bootstrap's own hexes, not the rule's palette), so
+  colors were inconsistent across pages:
+  - `ImpoundingStatus::badgeClass()` returned `bg-danger` / `bg-warning text-dark`
+    / `bg-primary` / `bg-success`. Critically, `Paid` was **blue** (`bg-primary`),
+    directly contradicting "Green: Paid, Money, Resolved".
+  - `Payment::getStatusBadgeClass()` returned `bg-success` / `bg-warning text-dark`
+    / `bg-secondary` — Bootstrap hexes, not the palette.
+  - `ClampingRequest::getStatusBadgeClass()` returned bare tokens (`warning`,
+    `success`, …) consumed as `bg-warning` / `var(--bs-warning)`.
+- Several views hardcoded status colors instead of using the enum:
+  `impounding/show.blade.php` (citation status ternary), `citizen/citation-detail`
+  (Paid/Overdue), `citizen/clamping-track(.blade.php)` + partial, `reports/citations`,
+  and account-status badges in `users/*` and `profile/edit`.
+- Semantic deviations: `CitationStatus::Issued` was `tag-blue` (blue is reserved
+  for Security/Links/Interactive; Issued is informational), and
+  `AppealStatus::UnderReview` / `ClampingStatus::WaitingRelease` /
+  `ImpoundingStatus::WaitingRelease` were `tag-amber` (Amber = "Action Required
+  Soon"; these are in-progress/neutral).
+
+### Root Cause `(required)`
+
+- The initial palette migration covered only the three enums named above; the
+  other status sources and a set of hardcoded view ternaries were never converted.
+
+### Files Changed `(required)`
+
+- `app/Enums/ImpoundingStatus.php`
+- `app/Enums/CitationStatus.php`
+- `app/Enums/AppealStatus.php`
+- `app/Enums/ClampingStatus.php`
+- `app/Models/Payment.php`
+- `app/Models/ClampingRequest.php`
+- `resources/views/clamping-requests/index.blade.php`
+- `resources/views/clamping-requests/show.blade.php`
+- `resources/views/citizen/citation-detail.blade.php`
+- `resources/views/citizen/clamping-track.blade.php`
+- `resources/views/citizen/partials/clamping-track-panel.blade.php`
+- `resources/views/profile/edit.blade.php`
+- `resources/views/users/index.blade.php`
+- `resources/views/users/partials/users-card.blade.php`
+- `resources/views/users/_form.blade.php`
+- `resources/views/impounding/show.blade.php`
+- `resources/views/reports/citations.blade.php`
+- `documents/StatusTagColorCoding.md` (this log)
+
+### What Parts Changed `(required)`
+
+#### `app/Enums/ImpoundingStatus.php` — `badgeClass()`
+
+**Before → After:**
+
+```php
+self::Impounded => 'bg-danger',            // → 'tag-red'
+self::AwaitingPayment => 'bg-warning text-dark', // → 'tag-amber'
+self::Paid => 'bg-primary',                // → 'tag-green'   (was blue!)
+self::WaitingRelease => 'bg-warning text-dark',  // → 'tag-gray'
+self::Released => 'bg-success',            // → 'tag-green'
+```
+
+#### `app/Enums/CitationStatus.php` — `badgeClass()`
+
+`self::Issued` changed `tag-blue` → `tag-gray` (informational). Other cases
+unchanged.
+
+#### `app/Enums/AppealStatus.php` — `badgeClass()`
+
+`self::UnderReview` changed `tag-amber` → `tag-gray`. Other cases unchanged.
+
+#### `app/Enums/ClampingStatus.php` — `badgeClass()`
+
+`self::WaitingRelease` changed `tag-amber` → `tag-gray`. Other cases unchanged.
+
+#### `app/Models/Payment.php` — `getStatusBadgeClass()`
+
+```php
+if ($this->paid_at) return 'tag-green';                                 // was bg-success
+return $this->isOnlinePayment() ? 'tag-amber' : 'tag-gray';             // was bg-warning/bg-secondary
+```
+
+#### `app/Models/ClampingRequest.php`
+
+- `getStatusBadgeClass()` now returns full `tag-*` classes:
+  `pending → tag-amber`, `approved/resolved → tag-green`, `rejected → tag-red`,
+  default → `tag-gray`.
+- Added `getStatusColor()` (hex) and `getStatusSubtleColor()` (rgba tint) so the
+  two call sites that previously used `var(--bs-*)` can keep working without
+  Bootstrap variables.
+
+#### View call sites
+
+- `clamping-requests/index.blade.php`: `badge bg-{{ … }}` → `badge {{ … }}`.
+- `clamping-requests/show.blade.php`: `var(--bs-{{ getStatusBadgeClass() }})` and
+  `var(--bs-…-subtle)` → `{{ getStatusColor() }}` / `{{ getStatusSubtleColor() }}`.
+- `citizen/citation-detail.blade.php`: Paid `bg-success` → `tag-green`; Overdue
+  `bg-danger` → `tag-amber`; date text on the status card header now switches to
+  `text-dark` when the header is amber (contrast).
+- `citizen/clamping-track.blade.php` and
+  `citizen/partials/clamping-track-panel.blade.php`: hardcoded ternary
+  (`bg-warning`/`bg-success`/`bg-danger`/`bg-info`) → `getStatusBadgeClass()` +
+  `getStatusLabel()`.
+- `impounding/show.blade.php`: citation-status ternary (`bg-success`/`bg-warning`)
+  → `$impounding->citation->status->badgeClass()`.
+- `reports/citations.blade.php`: status-distribution badge ternary → `tag-*` by
+  status label (`Paid/Released → green`, `Overdue → amber`, `Clamped → red`,
+  else gray).
+- Account-status badges (`profile/edit`, `users/index`, `users-card`,
+  `users/_form`): Bootstrap *token* matches replaced with `tag-*`
+  (`approved → tag-green`, `pending → tag-amber`, `rejected → tag-red`,
+  `suspended → tag-gray`).
+
+### Behavior of the New Changes `(required)`
+
+| Scenario | Before | After |
+|---|---|---|
+| Impounding "Paid" badge | blue `bg-primary` `#0d6efd` | green `tag-green` `#10B981` |
+| Impounding Impounded/AwaitingPayment/Released | Bootstrap danger/warning/success | `tag-red` / `tag-amber` / `tag-green` |
+| Payment Paid / Pending / Unpaid | `bg-success` / `bg-warning` / `bg-secondary` | `tag-green` / `tag-amber` / `tag-gray` |
+| Clamping request pending/approved/rejected | `bg-warning`/`bg-success`/`bg-danger` | `tag-amber`/`tag-green`/`tag-red` |
+| Citation "Issued" | blue `tag-blue` | gray `tag-gray` |
+| Appeal "Under Review" | amber `tag-amber` | gray `tag-gray` |
+| Clamping/Impounding "Waiting Release" | amber `tag-amber` | gray `tag-gray` |
+| Account status approved/pending/rejected/suspended | Bootstrap `bg-*` | `tag-green`/`tag-amber`/`tag-red`/`tag-gray` |
+| Citizen citation-detail Paid / Overdue | `bg-success` / `bg-danger` | `tag-green` / `tag-amber` |
+
+### Impact & Risk `(required)`
+
+- Affects: status badges on impounding show, clamping-requests index/show,
+  payments index, reports/citations, users index/card/form, profile edit,
+  citizen citation-detail and clamping-track.
+- Risk: low. Values/labels unchanged; only CSS class names and two new helper
+  methods were added. `tag-*` classes are already defined in `app.css`, so **no
+  Vite rebuild is required**.
+- `tag-blue` is now unused by any status (kept in `app.css` for the rule's
+  Security/Links/Interactive uses).
+
+### Database / Migration Impact `(optional)`
+
+- None
+
+### Untouched `(optional)`
+
+- Status labels/enum values, controllers, routes, policies, migrations, seeders.
+- Non-status badges intentionally left as-is: role badges (`users/*`),
+  avatar color hashes, search result *type* badge (`search/index`),
+  live-tracking status text (`dashboard/index`), device active badge
+  (`users/devices`), and decorative card headers/timeline dots.
+- `ClampingRequest::getStatusLabel()` (labels unchanged).
+
+### Known Issues / Follow-ups `(optional)`
+
+- Bootstrap `--bs-*` variables remain at Bootstrap defaults; only status tags use
+  the rule palette.
+- `search/index.blade.php` uses `bg-primary`/`bg-info` for result *type*, which is
+  not a status and was left unchanged.
+
+### Testing / Verification `(required)`
+
+- `php -l` clean on all 17 edited PHP/Blade files.
+- `php artisan view:cache` → cached successfully; `php artisan view:clear`.
+- Full suite:
+  `php -d extension_dir="C:\php-8.3\ext" -d extension=mbstring -d extension=pdo_sqlite -d extension=sqlite3 vendor/phpunit/phpunit/phpunit`
+  → 14 tests / 34 assertions, all passed.

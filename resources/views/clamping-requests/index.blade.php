@@ -82,7 +82,7 @@
                         <strong class="small text-truncate d-block">{{ $r->vehicle_plate }}</strong>
                         <small class="text-muted text-truncate d-block">{{ $r->requester_name ?? '—' }}</small>
                     </div>
-                    <span class="badge bg-{{ $r->getStatusBadgeClass() }} rounded-pill">{{ $r->getStatusLabel() }}</span>
+                    <span class="badge {{ $r->getStatusBadgeClass() }} rounded-pill">{{ $r->getStatusLabel() }}</span>
                 </div>
                 <div class="card-body small">
                     <div class="row g-2">

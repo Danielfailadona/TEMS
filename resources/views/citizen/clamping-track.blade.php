@@ -38,7 +38,7 @@
                     <div class="card stat-card mb-4 animate-on-load">
                         <div class="card-header bg-white d-flex justify-content-between align-items-center">
                             <strong>Request Details</strong>
-                            <span class="badge {{ $requestInfo->status === 'pending' ? 'bg-warning text-dark' : ($requestInfo->status === 'approved' ? 'bg-success' : ($requestInfo->status === 'rejected' ? 'bg-danger' : 'bg-info')) }} fs-6">{{ ucfirst($requestInfo->status) }}</span>
+                            <span class="badge {{ $requestInfo->getStatusBadgeClass() }} fs-6">{{ $requestInfo->getStatusLabel() }}</span>
                         </div>
                         <div class="card-body">
                             <div class="row g-3">

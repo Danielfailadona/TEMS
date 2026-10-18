@@ -23,7 +23,7 @@ enum AppealStatus: string
     {
         return match ($this) {
             self::Submitted => 'tag-gray',
-            self::UnderReview => 'tag-amber',
+            self::UnderReview => 'tag-gray',
             self::Approved => 'tag-green',
             self::Rejected => 'tag-red',
         };

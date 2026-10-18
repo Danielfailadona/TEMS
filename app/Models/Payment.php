@@ -54,9 +54,9 @@ class Payment extends Model
     public function getStatusBadgeClass(): string
     {
         if ($this->paid_at) {
-            return 'bg-success';
+            return 'tag-green';
         }
-        return $this->isOnlinePayment() ? 'bg-warning text-dark' : 'bg-secondary';
+        return $this->isOnlinePayment() ? 'tag-amber' : 'tag-gray';
     }
 
     public function getStatusLabel(): string

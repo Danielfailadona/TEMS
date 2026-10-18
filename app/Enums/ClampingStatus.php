@@ -24,7 +24,7 @@ enum ClampingStatus: string
         return match ($this) {
             self::AwaitingPayment => 'tag-amber',
             self::Paid => 'tag-green',
-            self::WaitingRelease => 'tag-amber',
+            self::WaitingRelease => 'tag-gray',
             self::Released => 'tag-green',
         };
     }

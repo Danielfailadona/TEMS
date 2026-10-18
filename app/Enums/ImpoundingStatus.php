@@ -24,11 +24,11 @@ enum ImpoundingStatus: string
     public function badgeClass(): string
     {
         return match ($this) {
-            self::Impounded => 'bg-danger',
-            self::AwaitingPayment => 'bg-warning text-dark',
-            self::Paid => 'bg-primary',
-            self::WaitingRelease => 'bg-warning text-dark',
-            self::Released => 'bg-success',
+            self::Impounded => 'tag-red',
+            self::AwaitingPayment => 'tag-amber',
+            self::Paid => 'tag-green',
+            self::WaitingRelease => 'tag-gray',
+            self::Released => 'tag-green',
         };
     }
 }

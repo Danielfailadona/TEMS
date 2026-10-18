@@ -40,14 +40,14 @@
                         <span class="text-muted">Status</span>
                         @php
                             $statusClass = match($user->account_status) {
-                                'approved' => 'success',
-                                'pending' => 'warning',
-                                'rejected' => 'danger',
-                                'suspended' => 'secondary',
-                                default => 'secondary'
+                                'approved' => 'tag-green',
+                                'pending' => 'tag-amber',
+                                'rejected' => 'tag-red',
+                                'suspended' => 'tag-gray',
+                                default => 'tag-gray'
                             };
                         @endphp
-                        <span class="badge bg-{{ $statusClass }} rounded-pill">{{ ucfirst($user->account_status) }}</span>
+                        <span class="badge {{ $statusClass }} rounded-pill">{{ ucfirst($user->account_status) }}</span>
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted">Phone</span>

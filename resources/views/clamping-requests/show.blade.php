@@ -203,12 +203,12 @@
 
     <div class="col-lg-5">
         <div class="card stat-card merged-sidebar h-100 overflow-hidden"
-             style="border-left:4px solid var(--bs-{{ $request->getStatusBadgeClass() }});">
+             style="border-left:4px solid {{ $request->getStatusColor() }};">
             <div class="card-body d-flex flex-column gap-2">
                 {{-- Status row --}}
                 <div class="d-flex align-items-center gap-3">
                     <div class="status-icon-wrap"
-                         style="background:var(--bs-{{ $request->getStatusBadgeClass() }}-subtle);color:var(--bs-{{ $request->getStatusBadgeClass() }});">
+                         style="background:{{ $request->getStatusSubtleColor() }};color:{{ $request->getStatusColor() }};">
                         <i class="bi bi-{{ $request->status === 'pending' ? 'hourglass-split' : ($request->status === 'approved' ? 'check-circle' : ($request->status === 'rejected' ? 'x-circle' : 'check-all')) }}"></i>
                     </div>
                     <div>

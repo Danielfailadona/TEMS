@@ -22,11 +22,11 @@
                         $colorIndex = crc32($user->email) % count($colors);
                         $avatarColor = $colors[$colorIndex];
                         $statusBadge = match ($user->account_status) {
-                            'approved' => ['bg-success', 'Approved'],
-                            'pending' => ['bg-warning text-dark', 'Pending'],
-                            'rejected' => ['bg-danger', 'Rejected'],
-                            'suspended' => ['bg-secondary', 'Suspended'],
-                            default => ['bg-info', ucfirst($user->account_status ?? 'Unknown')],
+                            'approved' => ['tag-green', 'Approved'],
+                            'pending' => ['tag-amber', 'Pending'],
+                            'rejected' => ['tag-red', 'Rejected'],
+                            'suspended' => ['tag-gray', 'Suspended'],
+                            default => ['tag-gray', ucfirst($user->account_status ?? 'Unknown')],
                         };
                         $roleBadge = match ($user->role->value) {
                             'super_admin' => 'bg-dark',

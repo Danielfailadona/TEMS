@@ -16,7 +16,7 @@
 
 <div class="row g-3 mb-4">
     <div class="col-md-4"><div class="card stat-card"><div class="card-body"><div class="text-muted small">Total Citations</div><div class="h3 mb-0">{{ $totalCount }}</div></div></div></div>
-    <div class="col-md-4"><div class="card stat-card"><div class="card-body"><div class="text-muted small">Status Distribution</div>@foreach ($byStatus as $status => $count) <span class="badge bg-{{ $status === 'Paid' ? 'success' : ($status === 'Overdue' ? 'warning' : ($status === 'Clamped' ? 'danger' : 'primary')) }} me-1">{{ $status }}: {{ $count }}</span> @endforeach</div></div></div>
+    <div class="col-md-4"><div class="card stat-card"><div class="card-body"><div class="text-muted small">Status Distribution</div>@foreach ($byStatus as $status => $count) <span class="badge {{ match($status) { 'Paid', 'Released' => 'tag-green', 'Overdue' => 'tag-amber', 'Clamped' => 'tag-red', default => 'tag-gray' } }} me-1">{{ $status }}: {{ $count }}</span> @endforeach</div></div></div>
 </div>
 
 <div class="row g-4">

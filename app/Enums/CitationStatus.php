@@ -24,7 +24,7 @@ enum CitationStatus: string
     public function badgeClass(): string
     {
         return match ($this) {
-            self::Issued => 'tag-blue',
+            self::Issued => 'tag-gray',
             self::Paid => 'tag-green',
             self::Overdue => 'tag-amber',
             self::Clamped => 'tag-red',
