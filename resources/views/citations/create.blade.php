@@ -86,7 +86,7 @@
                 <select name="violation_type_id" id="violationTypeSelect" class="form-select" required>
                     <option value="">Select violation...</option>
                     @foreach ($violationTypes as $type)
-                        <option value="{{ $type->id }}" data-is-impoundable="{{ $type->is_impoundable ? '1' : '0' }}" @selected(old('violation_type_id') == $type->id)>
+                        <option value="{{ $type->id }}" data-is-impoundable="{{ $type->is_impoundable ? '1' : '0' }}" data-is-clampable="{{ $type->is_clampable ? '1' : '0' }}" @selected(old('violation_type_id') == $type->id)>
                             {{ $type->name }} — ₱{{ number_format($type->penalty_amount, 2) }}
                         </option>
                     @endforeach
@@ -109,8 +109,34 @@
                                             <li>Fake Driver's Licenses or Documents: Presenting fraudulent licenses, fake OR/CR, or tampered franchising documents.</li>
                                             <li>Major Driving &amp; Crime Violations: Using vehicle in commission of crime or severe offenses upon court conviction.</li>
                                         </ul>
+</div>
+            </div>
+            <div class="col-md-6">
+                <div class="mt-2" id="clampableInfoPanel" style="display:none;">
+                    <div class="card border-primary bg-primary-subtle">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <small class="fw-semibold">This violation is eligible for clamping.</small>
+                                    <div class="small mt-1">
+                                        <strong>Core Violations Eligible for Clamping:</strong>
+                                        <ul class="mb-0 mt-1 ps-3">
+                                            <li>Posted "No Parking" or "Tow-Away" Zones: Any road, street, or Mabuhay lane designated with official no-parking signs.</li>
+                                            <li>Sidewalks and Paths: Parked on sidewalks, walking paths, pedestrian crosswalks, or alleys.</li>
+                                            <li>Vital Entrances & Driveways: Blocking an authorized driveway or parked within four meters of a hospital, clinic, or fire station entrance.</li>
+                                            <li>Intersections & Curves: Parked within six meters of any curved lane or street intersection.</li>
+                                            <li>Fire Hydrants: Stopped or parked within four meters of a fire hydrant.</li>
+                                            <li>Bicycle Lanes: Straddling or completely obstructing a designated active transport lane.</li>
+                                            <li>Double Parking: Parked on the roadside of any legally parked vehicle.</li>
+                                            <li>Bridges: Parked at the foot or directly on top of a bridge.</li>
+                                        </ul>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
                             </div>
                         </div>
                     </div>
@@ -228,12 +254,15 @@
     const violationSelect = document.getElementById('violationTypeSelect');
     const impoundingSection = document.getElementById('impoundingSection');
     const impoundableInfo = document.getElementById('impoundableInfoPanel');
+    const clampableInfo = document.getElementById('clampableInfoPanel');
     function toggleImpounding() {
         if (!violationSelect) return;
         const option = violationSelect.options[violationSelect.selectedIndex];
         const isImpoundable = option && option.dataset.isImpoundable === '1';
+        const isClampable = option && option.dataset.isClampable === '1';
         if (impoundingSection) impoundingSection.style.display = isImpoundable ? '' : 'none';
         if (impoundableInfo) impoundableInfo.style.display = isImpoundable ? '' : 'none';
+        if (clampableInfo) clampableInfo.style.display = (!isImpoundable && isClampable) ? '' : 'none';
     }
     if (violationSelect) {
         violationSelect.addEventListener('change', toggleImpounding);

@@ -123,6 +123,8 @@ class CitationController extends Controller
                     'snapshot' => $impounding->toArray(),
                 ]);
 
+                $citation->update(['status' => CitationStatus::Impounded]);
+            } elseif ($violationType->is_clampable) {
                 $citation->update(['status' => CitationStatus::Clamped]);
             }
 
@@ -139,13 +141,14 @@ class CitationController extends Controller
         });
 
         $impoundSuffix = $violationType->is_impoundable ? ' An impounding record was created for this violation.' : '';
+        $clampSuffix = (!$violationType->is_impoundable && $violationType->is_clampable) ? ' Vehicle is clamped.' : '';
 
         if (auth()->user()->isRole(Role::Enforcer)) {
             return redirect()->route('citations.handoff', $citation)
-                ->with('success', 'Citation issued successfully. Show the QR code to the violator.'.$impoundSuffix);
+                ->with('success', 'Citation issued successfully. Show the QR code to the violator.'.$impoundSuffix.$clampSuffix);
         }
 
-        return redirect()->route('citations.show', $citation)->with('success', 'Citation issued successfully.'.$impoundSuffix);
+        return redirect()->route('citations.show', $citation)->with('success', 'Citation issued successfully.'.$impoundSuffix.$clampSuffix);
     }
 
     public function handoff(Citation $citation): View

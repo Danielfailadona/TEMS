@@ -37,6 +37,7 @@ class DashboardController extends Controller
                 CitationStatus::Issued,
                 CitationStatus::Overdue,
                 CitationStatus::Clamped,
+                CitationStatus::Impounded,
             ])->count(),
             'revenue_today' => Payment::whereDate('paid_at', today())->sum('amount'),
             'active_clamps' => ClampingRecord::where('status', ClampingStatus::AwaitingPayment)->count(),
@@ -50,9 +51,9 @@ class DashboardController extends Controller
                 fn () => Citation::whereBetween('created_at', [now()->subWeeks(2), now()->subWeek()])->count(),
             ),
             'unpaid_citations' => $this->trend(
-                fn () => Citation::whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped])
+                fn () => Citation::whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped, CitationStatus::Impounded\])
                     ->whereBetween('created_at', [now()->subWeek(), now()])->count(),
-                fn () => Citation::whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped])
+                fn () => Citation::whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped, CitationStatus::Impounded\])
                     ->whereBetween('created_at', [now()->subWeeks(2), now()->subWeek()])->count(),
             ),
             'revenue_today' => $this->trend(
@@ -191,7 +192,7 @@ class DashboardController extends Controller
         $stats = [
             'my_citations' => Citation::where('issued_by', $user->id)->count(),
             'unpaid' => Citation::where('issued_by', $user->id)
-                ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped])
+                ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped, CitationStatus::Impounded])
                 ->count(),
             'active_clamps' => ClampingRecord::where('clamped_by', $user->id)
                 ->where('status', ClampingStatus::AwaitingPayment)
@@ -245,9 +246,9 @@ class DashboardController extends Controller
                 fn () => Citation::whereBetween('created_at', [now()->subWeeks(2), now()->subWeek()])->count(),
             ),
             'unpaid_citations' => $this->trend(
-                fn () => Citation::whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped])
+                fn () => Citation::whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped, CitationStatus::Impounded\])
                     ->whereBetween('created_at', [now()->subWeek(), now()])->count(),
-                fn () => Citation::whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped])
+                fn () => Citation::whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped, CitationStatus::Impounded\])
                     ->whereBetween('created_at', [now()->subWeeks(2), now()->subWeek()])->count(),
             ),
             'revenue_today' => $this->trend(

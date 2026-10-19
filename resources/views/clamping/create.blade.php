@@ -5,6 +5,30 @@
 @section('content')
 <div class="card stat-card"><div class="card-body">
     <form method="POST" action="{{ route('clamping.store') }}" enctype="multipart/form-data">@csrf
+        <div class="mb-3">
+            <div class="card border-primary bg-primary-subtle">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <small class="fw-semibold">Clamping Eligibility Reference</small>
+                            <div class="small mt-1">
+                                <strong>Core Violations Eligible for Clamping:</strong>
+                                <ul class="mb-0 mt-1 ps-3">
+                                    <li>Posted "No Parking" or "Tow-Away" Zones: Any road, street, or Mabuhay lane designated with official no-parking signs.</li>
+                                    <li>Sidewalks and Paths: Parked on sidewalks, walking paths, pedestrian crosswalks, or alleys.</li>
+                                    <li>Vital Entrances & Driveways: Blocking an authorized driveway or parked within four meters of a hospital, clinic, or fire station entrance.</li>
+                                    <li>Intersections & Curves: Parked within six meters of any curved lane or street intersection.</li>
+                                    <li>Fire Hydrants: Stopped or parked within four meters of a fire hydrant.</li>
+                                    <li>Bicycle Lanes: Straddling or completely obstructing a designated active transport lane.</li>
+                                    <li>Double Parking: Parked on the roadside of any legally parked vehicle.</li>
+                                    <li>Bridges: Parked at the foot or directly on top of a bridge.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="row g-3">
             <div class="col-md-6">
                 <label class="form-label">Vehicle Plate</label>

@@ -209,7 +209,7 @@ class PaymentController extends Controller
     protected function awaitingCitationsQuery()
     {
         return Citation::query()
-            ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped])
+            ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped, CitationStatus::Impounded])
             ->whereDoesntHave('payment', fn ($q) => $q->whereNotNull('paid_at'));
     }
 

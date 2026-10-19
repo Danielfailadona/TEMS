@@ -174,7 +174,7 @@ if (! \App\Enums\ImpoundingStatus::tryFrom($activeStatus)) {
                             <td>{{ $record->notice_number }}</td>
                             <td class="{{ $record->citation?->violationType ? '' : 'imp-muted-dash' }}">
                                 @if ($record->citation)
-                                    <a href="{{ route('citations.show', $record->citation) }}" title="View citation {{ $record->citation->citation_number }}">{{ $record->citation->violationType?->name ?? '—' }}</a>
+                                    <a href="{{ route('citations.show', $record->citation) }}" title="View citation {{ $record->citation->citation_number }}">{{ $record->citation->violationType?->code ?? '—' }}</a>
                                 @else
                                     —
                                 @endif

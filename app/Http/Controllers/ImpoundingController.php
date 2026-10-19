@@ -156,7 +156,7 @@ class ImpoundingController extends Controller
         ]);
 
         if ($citation) {
-            $citation->update(['status' => CitationStatus::Clamped]);
+            $citation->update(['status' => CitationStatus::Impounded]);
         }
 
         return redirect()->route('impounding.show', $record)->with('success', 'Vehicle impounded successfully. Fees will accrue after grace period.');

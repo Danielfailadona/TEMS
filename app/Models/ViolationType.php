@@ -14,6 +14,7 @@ class ViolationType extends Model
         'penalty_amount',
         'is_active',
         'is_impoundable',
+        'is_clampable',
     ];
 
     protected function casts(): array
@@ -22,6 +23,7 @@ class ViolationType extends Model
             'penalty_amount' => 'decimal:2',
             'is_active' => 'boolean',
             'is_impoundable' => 'boolean',
+            'is_clampable' => 'boolean',
         ];
     }
 

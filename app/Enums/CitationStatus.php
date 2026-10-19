@@ -8,6 +8,7 @@ enum CitationStatus: string
     case Paid = 'paid';
     case Overdue = 'overdue';
     case Clamped = 'clamped';
+    case Impounded = 'impounded';
     case Released = 'released';
 
     public function label(): string
@@ -17,6 +18,7 @@ enum CitationStatus: string
             self::Paid => 'Paid',
             self::Overdue => 'Overdue',
             self::Clamped => 'Clamped',
+            self::Impounded => 'Impounded',
             self::Released => 'Released',
         };
     }
@@ -28,6 +30,7 @@ enum CitationStatus: string
             self::Paid => 'tag-green',
             self::Overdue => 'tag-amber',
             self::Clamped => 'tag-red',
+            self::Impounded => 'tag-red',
             self::Released => 'tag-green',
         };
     }

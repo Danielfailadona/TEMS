@@ -167,7 +167,7 @@
                                 </a>
                             @endif
                         </td>
-                        <td>{{ $citation->violationType->name }}</td>
+                        <td>{{ $citation->violationType->code }}</td>
                         <td>{{ $citation->vehicle_plate }}</td>
                         <td>₱{{ number_format($citation->penalty_amount, 2) }}</td>
                         <td>{{ $citation->issued_at->format('M d, Y') }}</td>

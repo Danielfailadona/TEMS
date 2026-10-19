@@ -103,7 +103,7 @@ class EvidenceRequiredTest extends TestCase
         $citation = \App\Models\Citation::firstOrFail();
         $impounding = \App\Models\ImpoundingRecord::firstOrFail();
 
-        $this->assertSame(\App\Enums\CitationStatus::Clamped, $citation->status);
+        $this->assertSame(\App\Enums\CitationStatus::Impounded, $citation->status);
         $this->assertSame($citation->id, $impounding->citation_id);
         $this->assertSame('Parked on sidewalk', $impounding->notes);
         $this->assertSame($citation->evidence()->first()->file_path, $impounding->evidence_path);

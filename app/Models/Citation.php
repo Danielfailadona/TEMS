@@ -87,6 +87,7 @@ class Citation extends Model
             CitationStatus::Issued,
             CitationStatus::Overdue,
             CitationStatus::Clamped,
+            CitationStatus::Impounded,
         ], true);
     }
 
