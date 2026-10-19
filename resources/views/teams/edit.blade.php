@@ -178,12 +178,9 @@
                         <div class="fw-semibold">Delete this team</div>
                         <div class="text-muted small">Assigned zones will be released and members detached. This cannot be undone.</div>
                     </div>
-                    <form action="{{ route('teams.destroy', $team) }}" method="POST"
-                          onsubmit="return confirm('Delete team {{ $team->name }}?\n\nAssigned zones will be released and members detached.');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash me-1"></i>Delete</button>
-                    </form>
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteTeamModal">
+                        <i class="bi bi-trash me-1"></i>Delete
+                    </button>
                 </div>
             </div>
         </div>
@@ -233,6 +230,31 @@
       <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check-lg me-1"></i>Update Team</button>
     </div>
   </div>
+
+<!-- Delete Team Modal -->
+<div class="modal fade" id="deleteTeamModal" tabindex="-1" aria-labelledby="deleteTeamModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteTeamModalLabel"><i class="bi bi-exclamation-octagon me-2"></i>Delete Team</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong>{{ $team->name }}</strong>?</p>
+                <p class="text-muted small">Assigned zones will be released and members detached. This cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ route('teams.destroy', $team) }}" method="POST" class="d-inline">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger">Delete Team</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 </form>
 @endsection
 
