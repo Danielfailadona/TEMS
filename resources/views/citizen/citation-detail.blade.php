@@ -1,6 +1,55 @@
-@extends('layouts.app')
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Citation #{{ $citation->citation_number }} â€” {{ config('itevcms.app_name') }}</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background: #f8fbff;
+            min-height: 100vh;
+        }
+        .animate-on-load {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.55s ease, transform 0.55s ease;
+        }
+        .animate-on-load.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top" style="z-index: 100;">
+    <div class="container-fluid px-4 px-lg-5">
+        <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ route('welcome') }}">
+            <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" height="32" class="me-2">
+            <span style="background: linear-gradient(135deg, #0f2b4a, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">TEMs</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-center gap-2">
+                <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('welcome') }}#features">Features</a></li>
+                <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('citizen.citation.lookup') }}">Ticket Lookup</a></li>
+                <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('citizen.clamping.landing') }}">Report Parking</a></li>
+                <li class="nav-item">
+                    <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">Sign In</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('register') }}" class="btn btn-primary btn-sm">Sign Up</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
 
-@section('content')
+@include('components.alerts')
+
 <div class="container py-4" style="max-width: 1000px;">
     <!-- HERO HEADER -->
     <div class="detail-hero animate-on-load mb-4">
@@ -42,7 +91,7 @@
             </div>
             <div class="detail-row">
                 <span class="detail-row-label">Penalty Amount:</span>
-                <span class="detail-row-value fw-bold text-success fs-5">₱{{ number_format($citation->penalty_amount, 2) }}</span>
+                <span class="detail-row-value fw-bold text-success fs-5">â‚±{{ number_format($citation->penalty_amount, 2) }}</span>
             </div>
             <div class="detail-row">
                 <span class="detail-row-label">Issued By:</span>
@@ -65,11 +114,11 @@
             </div>
             <div class="detail-row">
                 <span class="detail-row-label">Type/Year:</span>
-                <span class="detail-row-value">{{ $citation->vehicle_type ?? '—' }}</span>
+                <span class="detail-row-value">{{ $citation->vehicle_type ?? 'â€”' }}</span>
             </div>
             <div class="detail-row">
                 <span class="detail-row-label">Color:</span>
-                <span class="detail-row-value">{{ $citation->vehicle_color ?? '—' }}</span>
+                <span class="detail-row-value">{{ $citation->vehicle_color ?? 'â€”' }}</span>
             </div>
         </div>
 
@@ -120,7 +169,7 @@
             </div>
             <div class="detail-row">
                 <span class="detail-row-label">Phone:</span>
-                <span class="detail-row-value">{{ '—' }}</span>
+                <span class="detail-row-value">{{ 'â€”' }}</span>
             </div>
         </div>
     </div>
@@ -193,7 +242,7 @@
                     </div>
                     <div class="col-md-6">
                         <small class="text-muted d-block">Amount Paid</small>
-                        <strong>₱{{ number_format($citation->payment->amount, 2) }}</strong>
+                        <strong>â‚±{{ number_format($citation->payment->amount, 2) }}</strong>
                     </div>
                     <div class="col-md-6">
                         <small class="text-muted d-block">Payment Method</small>
@@ -266,6 +315,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }, { threshold: 0.1 });
 
     document.querySelectorAll('.animate-on-load').forEach(el => observer.observe(el));
+
+    const navCollapse = document.getElementById('navbarNav');
+    document.addEventListener('click', function(e) {
+        if (navCollapse.classList.contains('show') && !navCollapse.contains(e.target) && !e.target.closest('.navbar-toggler')) {
+            new bootstrap.Collapse(navCollapse).hide();
+        }
+    });
 });
 
 function openModal(imageSrc) {
@@ -274,266 +330,5 @@ function openModal(imageSrc) {
     modal.show();
 }
 </script>
-
-@endsection
-
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="mb-0">
-                    <i class="bi bi-receipt me-2"></i>Citation Details
-                </h2>
-                <a href="{{ route('citizen.citation.lookup') }}" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-1"></i>New Search
-                </a>
-            </div>
-
-            <div class="card shadow-sm mb-4">
-                <div class="card-header {{ $citation->status->badgeClass() }}">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0">
-                            {{ $citation->citation_number }}
-                            <span class="badge bg-white text-dark ms-2">{{ $citation->status->label() }}</span>
-                        </h4>
-                        <span class="{{ str_contains($citation->status->badgeClass(), 'tag-amber') ? 'text-dark' : 'text-white-50' }}">{{ $citation->issued_at?->format('M d, Y h:i A') }}</span>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <h6 class="text-muted mb-2">Violation Information</h6>
-                            <table class="table table-borderless mb-0">
-                                <tbody>
-                                    <tr>
-                                        <th class="text-muted fw-normal w-30">Violation:</th>
-                                        <td class="fw-semibold">{{ $citation->violationType->name }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-muted fw-normal">Code:</th>
-                                        <td>{{ $citation->violationType->code }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-muted fw-normal">Description:</th>
-                                        <td class="text-muted">{{ $citation->violationType->description ?? 'N/A' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-muted fw-normal">Penalty Amount:</th>
-                                        <td class="fw-bold text-primary fs-5">&#8369;{{ number_format($citation->penalty_amount, 2) }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-muted mb-2">Location & Time</h6>
-                            <table class="table table-borderless mb-0">
-                                <tbody>
-                                    <tr>
-                                        <th class="text-muted fw-normal w-30">Location:</th>
-                                        <td>{{ $citation->location }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-muted fw-normal">Date/Time:</th>
-                                        <td>{{ $citation->issued_at?->format('F d, Y \a\t h:i A') }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-muted fw-normal">Due Date:</th>
-                                        <td>
-                                            <span class="{{ $citation->due_date->isPast() && !$citation->isPaid() ? 'text-danger fw-bold' : '' }}">
-                                                {{ $citation->due_date->format('F d, Y') }}
-                                                @if ($citation->due_date->isPast() && !$citation->isPaid())
-                                                    <i class="bi bi-exclamation-triangle ms-1"></i> Overdue
-                                                @endif
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-muted fw-normal">Enforcer:</th>
-                                        <td>{{ $citation->enforcer->name ?? 'N/A' }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <hr class="my-4">
-
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <h6 class="text-muted mb-2">Vehicle Information</h6>
-                            <table class="table table-borderless mb-0">
-                                <tbody>
-                                    <tr>
-                                        <th class="text-muted fw-normal w-30">Plate Number:</th>
-                                        <td class="fw-bold fs-5">{{ $citation->vehicle_plate }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-muted fw-normal">Type:</th>
-                                        <td>{{ $citation->vehicle_type ?? '—' }} - {{ $citation->vehicle_make }} {{ $citation->vehicle_model }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-muted fw-normal">Color/Year:</th>
-                                        <td>{{ $citation->vehicle_color ?? '—' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-muted fw-normal">Driver:</th>
-                                        <td>{{ $citation->driver_name ?? 'N/A' }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-muted mb-2">Notes</h6>
-                            <p class="mb-0">{{ $citation->notes ?? 'No additional notes.' }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            @if ($citation->evidence->count() > 0)
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="bi bi-images me-2"></i>Evidence ({{ $citation->evidence->count() }})
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            @foreach ($citation->evidence as $evidence)
-                                <div class="col-md-4">
-                                    <div class="card">
-                                        @if (\App\Services\SupabaseStorage::has($evidence->file_path))
-                                            <img src="{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}"
-                                                 class="card-img-top"
-                                                 alt="{{ $evidence->original_name }}"
-                                                 style="height: 200px; object-fit: cover; cursor: zoom-in;"
-                                                 onclick="openModal('{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}')">
-                                        @else
-                                            <div class="d-flex align-items-center justify-content-center bg-light fst-italic" style="height: 200px;">
-                                                <span class="text-muted small">Evidence file unavailable</span>
-                                            </div>
-                                        @endif
-                                        <div class="card-body p-2">
-                                            <p class="card-text small text-truncate mb-0">{{ $evidence->original_name }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            @if ($citation->payment)
-                <div class="card shadow-sm mb-4 border-success">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0">
-                            <i class="bi bi-check-circle me-2"></i>Payment Confirmed
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <strong>Receipt Number:</strong><br>
-                                {{ $citation->payment->receipt_number }}
-                            </div>
-                            <div class="col-md-4">
-                                <strong>Amount Paid:</strong><br>
-                                &#8369;{{ number_format($citation->payment->amount, 2) }}
-                            </div>
-                            <div class="col-md-4">
-                                <strong>Date:</strong><br>
-                                {{ $citation->payment->paid_at?->format('F d, Y h:i A') }}
-                            </div>
-                            <div class="col-md-6">
-                                <strong>Cashier:</strong><br>
-                                {{ $citation->payment->cashier->name ?? 'N/A' }}
-                            </div>
-                            <div class="col-md-6">
-                                <strong>Payment Method:</strong><br>
-                                {{ $citation->payment->payment_method->label() }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @else
-                <div class="card shadow-sm mb-4 border-warning">
-                    <div class="card-header bg-warning text-dark">
-                        <h5 class="mb-0">
-                            <i class="bi bi-clock-history me-2"></i>Payment Pending
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="mb-3">This citation has not been paid yet. The due date is <strong>{{ $citation->due_date->format('F d, Y') }}</strong>.</p>
-                        <div class="d-flex gap-2 flex-wrap">
-                            <a href="#" class="btn btn-primary">
-                                <i class="bi bi-credit-card me-1"></i>Pay Online
-                            </a>
-                            <a href="#" class="btn btn-outline-secondary">
-                                <i class="bi bi-bank me-1"></i>Payment Centers
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            @if ($citation->appeal)
-                <div class="card shadow-sm mb-4 border-info">
-                    <div class="card-header bg-info text-white">
-                        <h5 class="mb-0">
-                            <i class="bi bi-chat-square-text me-2"></i>Appeal Submitted
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <strong>Status:</strong><br>
-                                <span class="badge {{ $citation->appeal->status->badgeClass() }}">{{ $citation->appeal->status->label() }}</span>
-                            </div>
-                            <div class="col-md-6">
-                                <strong>Submitted:</strong><br>
-                                {{ $citation->appeal->submitted_at?->format('F d, Y h:i A') }}
-                            </div>
-                            <div class="col-12">
-                                <strong>Reason:</strong>
-                                <p class="mb-0 mt-1">{{ $citation->appeal->reason }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @else
-                @if ($citation->isPayable())
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-body">
-                            <h6 class="mb-3"><i class="bi bi-chat-square-text me-2"></i>Want to Contest This Citation?</h6>
-                            <a href="#" class="btn btn-outline-primary">
-                                <i class="bi bi-plus-circle me-1"></i>File an Appeal
-                            </a>
-                        </div>
-                    </div>
-                @endif
-            @endif
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Evidence Preview</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center p-0">
-                <img id="modalImage" src="" alt="Evidence" class="img-fluid" style="max-height: 80vh;">
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    function openModal(src) {
-        document.getElementById('modalImage').src = src;
-        new bootstrap.Modal(document.getElementById('imageModal')).show();
-    }
-</script>
+</body>
+</html>
