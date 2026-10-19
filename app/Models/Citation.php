@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -34,8 +35,6 @@ class Citation extends Model
         'driver_name',
         'driver_license',
     ];
-
-
 
     protected function casts(): array
     {
@@ -70,6 +69,11 @@ class Citation extends Model
     public function clampingRecords(): HasMany
     {
         return $this->hasMany(ClampingRecord::class);
+    }
+
+    public function impoundingRecord(): HasOne
+    {
+        return $this->hasOne(ImpoundingRecord::class);
     }
 
     public function appeal(): HasOne
@@ -111,7 +115,7 @@ class Citation extends Model
 
     public function getQRCodeSvg(int $size = 280): string
     {
-        return \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+        return QrCode::format('svg')
             ->size($size)
             ->errorCorrection('M')
             ->margin(1)

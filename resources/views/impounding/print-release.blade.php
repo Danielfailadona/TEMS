@@ -126,7 +126,7 @@
         @if ($ownPayment)
             <tr><td class="label">Payment Paid</td><td class="value">Yes (₱{{ number_format($ownPayment->amount, 2) }})</td></tr>
             <tr><td class="label">Receipt #</td><td class="value">{{ $ownPayment->receipt_number }}</td></tr>
-        @elseif ($impounding->citation?->payment && $impounding->citation->paid_at)
+        @elseif ($impounding->citation?->payment?->paid_at)
             <tr><td class="label">Citation Paid</td><td class="value">Yes (₱{{ number_format($impounding->citation->payment->amount, 2) }})</td></tr>
             <tr><td class="label">Citation Receipt</td><td class="value">{{ $impounding->citation->payment->receipt_number }}</td></tr>
         @endif

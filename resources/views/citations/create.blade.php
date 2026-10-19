@@ -83,14 +83,38 @@
             </div>
             <div class="col-md-6">
                 <label class="form-label">Violation Type</label>
-                <select name="violation_type_id" class="form-select" required>
+                <select name="violation_type_id" id="violationTypeSelect" class="form-select" required>
                     <option value="">Select violation...</option>
                     @foreach ($violationTypes as $type)
-                        <option value="{{ $type->id }}" @selected(old('violation_type_id') == $type->id)>
+                        <option value="{{ $type->id }}" data-is-impoundable="{{ $type->is_impoundable ? '1' : '0' }}" @selected(old('violation_type_id') == $type->id)>
                             {{ $type->name }} — ₱{{ number_format($type->penalty_amount, 2) }}
                         </option>
                     @endforeach
                 </select>
+                <div class="mt-2" id="impoundableInfoPanel" style="display:none;">
+                    <div class="card border-warning bg-warning-subtle">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <small class="fw-semibold">This violation is eligible for impounding.</small>
+                                    <div class="small mt-1">
+                                        <strong>Violations Eligible for Impounding:</strong>
+                                        <ul class="mb-0 mt-1 ps-3">
+                                            <li>Unregistered or Delinquent Vehicles: Driving with expired, invalid, or missing registration (₱10,000 fine plus impoundment until properly registered and inspected).</li>
+                                            <li>Unauthorized Modifications: Changing color, body, engine/chassis without prior LTO approval and registration update.</li>
+                                            <li>Tampered or Improvised Plates: Using unauthorized, fake, or improperly attached plates, or illegal transfer of plates/stickers.</li>
+                                            <li>Suspended or Revoked CR/OR: Operating while CR/OR is suspended or revoked.</li>
+                                            <li>Defective or Missing Parts: Operating with missing/unsafe required parts that pose public safety hazard.</li>
+                                            <li>Colorum Operations: Operating PUVs without valid CPC or franchise.</li>
+                                            <li>Fake Driver's Licenses or Documents: Presenting fraudulent licenses, fake OR/CR, or tampered franchising documents.</li>
+                                            <li>Major Driving &amp; Crime Violations: Using vehicle in commission of crime or severe offenses upon court conviction.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="col-12">
                 <label class="form-label">Location <span class="text-danger">*</span></label>
@@ -129,6 +153,21 @@
                     <small class="form-text text-muted d-block mt-2">At least one photo is required. You may attach multiple photos.</small>
                     <div class="evidence-preview row g-2 mt-2" id="evidencePreview"></div>
                     @error('evidence')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                </div>
+            </div>
+            <div class="col-12" id="impoundingSection" style="display:none;">
+                <div class="card border-danger">
+                    <div class="card-header bg-danger-subtle">
+                        <strong><i class="bi bi-truck-front me-2"></i>Impounding Details</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Impounding Notes (optional)</label>
+                            <textarea name="impounding_notes" rows="3" class="form-control" placeholder="e.g. Vehicle parked obstructing traffic">{{ old('impounding_notes') }}</textarea>
+                            @error('impounding_notes')<small class="text-danger">{{ $message }}</small>@enderror
+                        </div>
+                        <small class="form-text text-muted">Impounding evidence will reuse the citation evidence photos submitted above.</small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -185,6 +224,21 @@
     [cameraInput, galleryInput].forEach(input => input.addEventListener('change', renderPreview));
     document.getElementById('btnCamera').addEventListener('click', () => cameraInput.click());
     document.getElementById('btnGallery').addEventListener('click', () => galleryInput.click());
+
+    const violationSelect = document.getElementById('violationTypeSelect');
+    const impoundingSection = document.getElementById('impoundingSection');
+    const impoundableInfo = document.getElementById('impoundableInfoPanel');
+    function toggleImpounding() {
+        if (!violationSelect) return;
+        const option = violationSelect.options[violationSelect.selectedIndex];
+        const isImpoundable = option && option.dataset.isImpoundable === '1';
+        if (impoundingSection) impoundingSection.style.display = isImpoundable ? '' : 'none';
+        if (impoundableInfo) impoundableInfo.style.display = isImpoundable ? '' : 'none';
+    }
+    if (violationSelect) {
+        violationSelect.addEventListener('change', toggleImpounding);
+        toggleImpounding();
+    }
 
     const currentLocationBtn = document.getElementById('btnCurrentLocation');
     const latInput = document.getElementById('latitude');

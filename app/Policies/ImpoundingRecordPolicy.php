@@ -33,6 +33,7 @@ class ImpoundingRecordPolicy
         if (! $user->isRole(Role::SuperAdmin, Role::Cashier)) {
             return false;
         }
+
         return $impoundingRecord->status === ImpoundingStatus::Impounded || $impoundingRecord->status === ImpoundingStatus::AwaitingPayment;
     }
 
@@ -41,6 +42,7 @@ class ImpoundingRecordPolicy
         if (! $user->isRole(Role::SuperAdmin, Role::Administrator, Role::Cashier)) {
             return false;
         }
+
         return $impoundingRecord->status === ImpoundingStatus::Paid;
     }
 
@@ -49,6 +51,16 @@ class ImpoundingRecordPolicy
         if (! $user->isRole(Role::SuperAdmin, Role::Administrator, Role::FrontDesk)) {
             return false;
         }
-        return $impoundingRecord->status === ImpoundingStatus::WaitingRelease;
+
+        if ($impoundingRecord->status !== ImpoundingStatus::WaitingRelease) {
+            return false;
+        }
+
+        $citation = $impoundingRecord->citation;
+        if ($citation && $citation->isPayable()) {
+            return false;
+        }
+
+        return true;
     }
 }

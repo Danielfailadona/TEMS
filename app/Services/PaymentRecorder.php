@@ -51,7 +51,7 @@ class PaymentRecorder
                         $enforcer,
                         'payment_received',
                         'Citation Payment Received',
-                        "Citation {$citation->citation_number} has been paid (₱".number_format((float) $payment->amount, 2).").",
+                        "Citation {$citation->citation_number} has been paid (₱".number_format((float) $payment->amount, 2).').',
                         ['citation_number' => $citation->citation_number, 'payment_id' => $payment->id]
                     );
                 }
@@ -115,12 +115,10 @@ class PaymentRecorder
                 return $existing;
             }
 
-            $citation = $impounding->citation;
             $amount = $data['amount'] ?? $impounding->getTotalFees();
 
             $payment = Payment::create([
                 'receipt_number' => $this->numbers->receiptNumber(),
-                'citation_id' => ($citation && ! $citation->payment) ? $citation->id : null,
                 'payable_type' => ImpoundingRecord::class,
                 'payable_id' => $impounding->id,
                 'cashier_id' => $cashierId,
@@ -130,10 +128,6 @@ class PaymentRecorder
                 'notes' => $data['notes'] ?? null,
                 'paid_at' => now(),
             ]);
-
-            if ($citation && ! $citation->payment) {
-                $citation->update(['status' => CitationStatus::Paid]);
-            }
 
             $impounding->update([
                 'status' => ImpoundingStatus::Paid,

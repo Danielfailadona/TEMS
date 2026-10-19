@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\ViolationType;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreCitationRequest extends FormRequest
@@ -15,7 +16,7 @@ class StoreCitationRequest extends FormRequest
     {
         return [
             'violation_type_id' => ['required', 'exists:violation_types,id', function ($attribute, $value, $fail) {
-                if (! \App\Models\ViolationType::where('id', $value)->where('is_active', true)->exists()) {
+                if (! ViolationType::where('id', $value)->where('is_active', true)->exists()) {
                     $fail('The selected violation type is not available.');
                 }
             }],
@@ -32,6 +33,7 @@ class StoreCitationRequest extends FormRequest
             'notes' => ['nullable', 'string'],
             'evidence' => ['required', 'array', 'min:1', 'max:10'],
             'evidence.*' => ['file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'impounding_notes' => ['nullable', 'string'],
         ];
     }
 

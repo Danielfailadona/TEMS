@@ -76,6 +76,56 @@ class EvidenceRequiredTest extends TestCase
         $this->assertDatabaseCount('citation_evidence', 1);
     }
 
+    public function test_impoundable_violation_creates_linked_impounding_record(): void
+    {
+        $this->fakeStorage();
+
+        $violationType = ViolationType::create([
+            'code' => 'unregistered',
+            'name' => 'Unregistered Vehicle',
+            'penalty_amount' => 10000,
+            'is_active' => true,
+            'is_impoundable' => true,
+        ]);
+
+        $this->actingAs($this->admin())
+            ->post('/citations', [
+                'violation_type_id' => $violationType->id,
+                'vehicle_plate' => 'IMP-1234',
+                'location' => 'Test Street',
+                'impounding_notes' => 'Parked on sidewalk',
+                'evidence' => [UploadedFile::fake()->image('evidence.jpg')],
+            ]);
+
+        $this->assertDatabaseCount('citations', 1);
+        $this->assertDatabaseCount('impounding_records', 1);
+
+        $citation = \App\Models\Citation::firstOrFail();
+        $impounding = \App\Models\ImpoundingRecord::firstOrFail();
+
+        $this->assertSame(\App\Enums\CitationStatus::Clamped, $citation->status);
+        $this->assertSame($citation->id, $impounding->citation_id);
+        $this->assertSame('Parked on sidewalk', $impounding->notes);
+        $this->assertSame($citation->evidence()->first()->file_path, $impounding->evidence_path);
+    }
+
+    public function test_non_impoundable_violation_does_not_create_impounding_record(): void
+    {
+        $this->fakeStorage();
+        $violationType = $this->violationType();
+
+        $this->actingAs($this->admin())
+            ->post('/citations', [
+                'violation_type_id' => $violationType->id,
+                'vehicle_plate' => 'ABC-1234',
+                'location' => 'Test Street',
+                'evidence' => [UploadedFile::fake()->image('evidence.jpg')],
+            ]);
+
+        $this->assertDatabaseCount('citations', 1);
+        $this->assertDatabaseCount('impounding_records', 0);
+    }
+
     public function test_clamping_requires_evidence_photo(): void
     {
         $response = $this->actingAs($this->admin())
@@ -102,8 +152,7 @@ class EvidenceRequiredTest extends TestCase
         $this->assertDatabaseCount('clamping_records', 1);
     }
 
-    public function test_impounding_requires_evidence_photo(): void
-    {
+    public function test_impounding_requires_evidence_photo(): void    {
         $response = $this->actingAs($this->admin())
             ->from('/impounding/create')
             ->post('/impounding', [

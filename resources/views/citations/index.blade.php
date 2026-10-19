@@ -159,7 +159,14 @@
             <tbody>
                 @forelse ($citations as $citation)
                     <tr>
-                        <td>{{ $citation->citation_number }}</td>
+                        <td>
+                            {{ $citation->citation_number }}
+                            @if ($citation->impoundingRecord)
+                                <a href="{{ route('impounding.show', $citation->impoundingRecord) }}" class="text-danger ms-1" title="Impounded — Notice {{ $citation->impoundingRecord->notice_number }}" aria-label="View impounding record">
+                                    <i class="bi bi-truck-front"></i>
+                                </a>
+                            @endif
+                        </td>
                         <td>{{ $citation->violationType->name }}</td>
                         <td>{{ $citation->vehicle_plate }}</td>
                         <td>₱{{ number_format($citation->penalty_amount, 2) }}</td>

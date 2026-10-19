@@ -32,8 +32,16 @@
                     <dd class="col-sm-8">{{ $appeal->description ?? '—' }}</dd>
                     <dt class="col-sm-4">Status</dt>
                     <dd class="col-sm-8"><span class="badge {{ $appeal->status->badgeClass() }}">{{ $appeal->status->label() }}</span></dd>
+                    @php
+                        $original = $appeal->original_amount ?? ($appeal->citation?->penalty_amount ?? 0);
+                        $final = $appeal->adjusted_amount ?? ($appeal->citation?->penalty_amount ?? $original);
+                    @endphp
                     <dt class="col-sm-4">Original Amount</dt>
-                    <dd class="col-sm-8">₱{{ number_format($appeal->citation->penalty_amount, 2) }}</dd>
+                    <dd class="col-sm-8">₱{{ number_format($original, 2) }}</dd>
+                    @if ($appeal->status->value === 'approved')
+                        <dt class="col-sm-4">Final Amount</dt>
+                        <dd class="col-sm-8">₱{{ number_format($final, 2) }}</dd>
+                    @endif
                     <dt class="col-sm-4">Decision Notes</dt>
                     <dd class="col-sm-8">{{ $appeal->decision_notes ?? '—' }}</dd>
                 </dl>

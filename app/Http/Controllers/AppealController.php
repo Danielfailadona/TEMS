@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\AppealStatus;
+use App\Enums\CitationStatus;
 use App\Http\Requests\StoreAppealRequest;
 use App\Http\Requests\UpdateAppealRequest;
 use App\Models\Appeal;
@@ -37,7 +38,7 @@ class AppealController extends Controller
         $this->authorize('create', Appeal::class);
 
         $citations = Citation::with(['violationType'])
-            ->whereIn('status', [\App\Enums\CitationStatus::Issued, \App\Enums\CitationStatus::Overdue])
+            ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue])
             ->latest('issued_at')
             ->get();
 
@@ -95,17 +96,61 @@ class AppealController extends Controller
         $this->authorize('update', $appeal);
 
         DB::transaction(function () use ($request, $appeal) {
+            $wasApproved = $appeal->status === AppealStatus::Approved;
+            $isNowApproved = $request->status === 'approved';
+
+            $statusEnum = $isNowApproved ? AppealStatus::Approved : ($request->status === 'rejected' ? AppealStatus::Rejected : AppealStatus::UnderReview);
+
             $appeal->update([
-                'status' => $request->status,
+                'status' => $statusEnum,
                 'reviewed_by' => auth()->id(),
                 'decision_notes' => $request->decision_notes,
                 'reviewed_at' => now(),
             ]);
 
-            if ($request->status === 'approved' && $request->filled('adjusted_amount')) {
-                $appeal->citation->update([
-                    'penalty_amount' => $request->adjusted_amount,
-                ]);
+            if ($isNowApproved && ! $wasApproved) {
+                $citation = $appeal->citation;
+                if ($citation && ! $citation->isPaid()) {
+                    $originalAmount = $citation->penalty_amount;
+                    $adjustedAmount = $request->filled('adjusted_amount')
+                        ? (float) $request->adjusted_amount
+                        : round((float) $originalAmount * (1 - Appeal::APPROVED_DISCOUNT_PERCENT / 100), 2);
+
+                    if ($adjustedAmount < 0) {
+                        $adjustedAmount = 0;
+                    }
+
+                    $appeal->update([
+                        'original_amount' => $originalAmount,
+                        'adjusted_amount' => $adjustedAmount,
+                    ]);
+
+                    $citation->update([
+                        'penalty_amount' => $adjustedAmount,
+                    ]);
+                } elseif ($citation) {
+                    $appeal->update([
+                        'original_amount' => $appeal->original_amount ?? $citation->penalty_amount,
+                        'adjusted_amount' => $appeal->adjusted_amount ?? $citation->penalty_amount,
+                    ]);
+                }
+            } elseif ($isNowApproved && $wasApproved) {
+                $citation = $appeal->citation;
+                if ($citation && ! $citation->isPaid() && $request->filled('adjusted_amount')) {
+                    $adjustedAmount = (float) $request->adjusted_amount;
+                    if ($adjustedAmount < 0) {
+                        $adjustedAmount = 0;
+                    }
+
+                    $appeal->update([
+                        'original_amount' => $appeal->original_amount ?? $citation->penalty_amount,
+                        'adjusted_amount' => $adjustedAmount,
+                    ]);
+
+                    $citation->update([
+                        'penalty_amount' => $adjustedAmount,
+                    ]);
+                }
             }
 
             if (in_array($request->status, ['approved', 'rejected'], true)) {

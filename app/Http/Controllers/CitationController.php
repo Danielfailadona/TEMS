@@ -4,14 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Enums\CitationStatus;
 use App\Enums\ClampingStatus;
+use App\Enums\ImpoundingStatus;
 use App\Enums\Role;
 use App\Http\Requests\StoreCitationRequest;
 use App\Models\Archive;
 use App\Models\Citation;
 use App\Models\CitationEvidence;
 use App\Models\ClampingRecord;
+use App\Models\ImpoundingRecord;
 use App\Models\ViolationType;
 use App\Services\CitationNumberService;
+use App\Services\SupabaseStorage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +26,7 @@ class CitationController extends Controller
     {
         $this->authorize('viewAny', Citation::class);
 
-        $query = Citation::with(['violationType', 'enforcer']);
+        $query = Citation::with(['violationType', 'enforcer', 'impoundingRecord']);
 
         $citations = $query
             ->when($request->search, function ($q, $search) {
@@ -78,15 +81,49 @@ class CitationController extends Controller
                 'due_date' => $numberService->dueDate(),
             ]);
 
+            $evidencePaths = [];
             if ($request->hasFile('evidence')) {
                 foreach ($request->file('evidence') as $file) {
-                    $path = \App\Services\SupabaseStorage::put('citations/'.$citation->id.'/'.$file->hashName(), $file);
+                    $path = SupabaseStorage::put('citations/'.$citation->id.'/'.$file->hashName(), $file);
                     CitationEvidence::create([
                         'citation_id' => $citation->id,
                         'file_path' => $path,
                         'original_name' => $file->getClientOriginalName(),
                     ]);
+                    $evidencePaths[] = $path;
                 }
+            }
+
+            if ($violationType->is_impoundable) {
+                $violationCode = $violationType->code ?? 'default';
+                $fees = config('itevcms.impounding.violation_fees')[$violationCode] ?? config('itevcms.impounding.violation_fees.default');
+
+                $impounding = ImpoundingRecord::create([
+                    'notice_number' => $numberService->noticeNumber(),
+                    'vehicle_plate' => $citation->vehicle_plate,
+                    'citation_id' => $citation->id,
+                    'impounded_by' => auth()->id(),
+                    'status' => ImpoundingStatus::Impounded,
+                    'location' => $citation->location,
+                    'notes' => $request->input('impounding_notes'),
+                    'evidence_path' => $evidencePaths[0] ?? null,
+                    'towing_fee' => $fees['towing_fee'],
+                    'storage_fee_per_day' => $fees['storage_fee_per_day'],
+                    'admin_fee' => $fees['admin_fee'],
+                    'grace_until' => now()->addHours(config('itevcms.impounding.grace_hours', 24)),
+                    'impounded_at' => now(),
+                ]);
+
+                Archive::create([
+                    'archivable_type' => ImpoundingRecord::class,
+                    'archivable_id' => $impounding->id,
+                    'archived_by' => auth()->id(),
+                    'archived_at' => now(),
+                    'reason' => 'Vehicle impounded (auto-created from citation)',
+                    'snapshot' => $impounding->toArray(),
+                ]);
+
+                $citation->update(['status' => CitationStatus::Clamped]);
             }
 
             Archive::create([
@@ -101,12 +138,14 @@ class CitationController extends Controller
             return $citation;
         });
 
+        $impoundSuffix = $violationType->is_impoundable ? ' An impounding record was created for this violation.' : '';
+
         if (auth()->user()->isRole(Role::Enforcer)) {
             return redirect()->route('citations.handoff', $citation)
-                ->with('success', 'Citation issued successfully. Show the QR code to the violator.');
+                ->with('success', 'Citation issued successfully. Show the QR code to the violator.'.$impoundSuffix);
         }
 
-        return redirect()->route('citations.show', $citation)->with('success', 'Citation issued successfully.');
+        return redirect()->route('citations.show', $citation)->with('success', 'Citation issued successfully.'.$impoundSuffix);
     }
 
     public function handoff(Citation $citation): View
@@ -132,7 +171,7 @@ class CitationController extends Controller
     {
         $this->authorize('view', $citation);
 
-        $citation->load(['violationType', 'enforcer', 'evidence', 'payment.cashier', 'clampingRecords']);
+        $citation->load(['violationType', 'enforcer', 'evidence', 'payment.cashier', 'clampingRecords', 'impoundingRecord']);
 
         return view('citations.show', compact('citation'));
     }
@@ -161,7 +200,7 @@ class CitationController extends Controller
                 'clamped_by' => auth()->id(),
                 'status' => ClampingStatus::AwaitingPayment,
                 'location' => $citation->location,
-                'notes' => 'Referred for impounding by ' . auth()->user()->name,
+                'notes' => 'Referred for impounding by '.auth()->user()->name,
                 'clamped_at' => now(),
             ]);
 

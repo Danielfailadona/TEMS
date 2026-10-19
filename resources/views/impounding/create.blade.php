@@ -28,7 +28,26 @@
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4 animate-on-load">
-    <p class="text-muted mb-0 small">Impound vehicles for eligible violations (unregistered, expired plate, etc.).</p>
+    <div class="text-muted mb-0 small">
+        <strong>Impound vehicles for eligible violations.</strong>
+        <div class="mt-1">
+            <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="collapse" data-bs-target="#impEligibleList">Show eligible violations</button>
+        </div>
+        <div class="collapse mt-2" id="impEligibleList">
+            <div class="card card-body p-2">
+                <ul class="mb-0 small ps-3">
+                    <li>Unregistered or Delinquent Vehicles: Driving with expired, invalid, or missing registration (₱10,000 fine plus impoundment until properly registered and inspected).</li>
+                    <li>Unauthorized Modifications: Changing color, body, engine/chassis without prior LTO approval and registration update.</li>
+                    <li>Tampered or Improvised Plates: Using unauthorized, fake, or improperly attached plates, or illegal transfer of plates/stickers.</li>
+                    <li>Suspended or Revoked CR/OR: Operating while CR/OR is suspended or revoked.</li>
+                    <li>Defective or Missing Parts: Operating with missing/unsafe required parts that pose public safety hazard.</li>
+                    <li>Colorum Operations: Operating PUVs without valid CPC or franchise.</li>
+                    <li>Fake Driver's Licenses or Documents: Presenting fraudulent licenses, fake OR/CR, or tampered franchising documents.</li>
+                    <li>Major Driving &amp; Crime Violations: Using vehicle in commission of crime or severe offenses upon court conviction.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
     <a href="{{ route('impounding.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back to Impounding</a>
 </div>
 

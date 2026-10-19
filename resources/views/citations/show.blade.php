@@ -89,7 +89,18 @@
             </div>
         </div>
 
-        @if ($citation->violationType->is_impoundable && $citation->clampingRecords->isEmpty() && auth()->user()->isRole(App\Enums\Role::SuperAdmin, App\Enums\Role::Administrator, App\Enums\Role::Enforcer))
+        @if ($citation->impoundingRecord)
+            <div class="card stat-card mb-3 border-danger">
+                <div class="card-body text-center">
+                    <a href="{{ route('impounding.show', $citation->impoundingRecord) }}" class="btn btn-danger w-100 fw-semibold">
+                        <i class="bi bi-truck-front me-2"></i>View Impounding Record
+                    </a>
+                    <small class="text-muted d-block mt-2">
+                        Notice {{ $citation->impoundingRecord->notice_number }} — this vehicle was impounded with this citation.
+                    </small>
+                </div>
+            </div>
+        @elseif ($citation->violationType->is_impoundable && $citation->clampingRecords->isEmpty() && auth()->user()->isRole(App\Enums\Role::SuperAdmin, App\Enums\Role::Administrator, App\Enums\Role::Enforcer))
             <div class="card stat-card mb-3 border-warning">
                 <div class="card-body text-center">
                     <form method="POST" action="{{ route('citations.refer-impounding', $citation) }}">

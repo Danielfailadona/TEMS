@@ -28,6 +28,13 @@
     </div>
 </div>
 
+@if ($impounding->status === App\Enums\ImpoundingStatus::WaitingRelease && $impounding->citation?->isPayable())
+    <div class="alert alert-warning d-flex align-items-center gap-2 py-2 mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span class="small">Release is blocked: the linked citation fine of <strong>₱{{ number_format($impounding->citation->penalty_amount, 2) }}</strong> ({{ $impounding->citation->citation_number }}) is still unpaid.@can('create', App\Models\Payment::class) <a href="{{ route('payments.create', ['citation_id' => $impounding->citation->id]) }}">Record citation payment</a>@endcan</span>
+    </div>
+@endif
+
 <div class="row g-4">
     <div class="col-lg-8">
         <div class="card stat-card mb-4">

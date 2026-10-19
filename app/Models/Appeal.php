@@ -11,6 +11,9 @@ use Spatie\Activitylog\Traits\LogsActivity;
 class Appeal extends Model
 {
     use LogsActivity;
+
+    public const APPROVED_DISCOUNT_PERCENT = 15;
+
     protected $fillable = [
         'citation_id',
         'submitted_by',
@@ -21,6 +24,8 @@ class Appeal extends Model
         'description',
         'status',
         'decision_notes',
+        'original_amount',
+        'adjusted_amount',
         'submitted_at',
         'reviewed_at',
     ];
@@ -29,6 +34,8 @@ class Appeal extends Model
     {
         return [
             'status' => AppealStatus::class,
+            'original_amount' => 'decimal:2',
+            'adjusted_amount' => 'decimal:2',
             'submitted_at' => 'datetime',
             'reviewed_at' => 'datetime',
         ];

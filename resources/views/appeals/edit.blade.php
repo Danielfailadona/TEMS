@@ -18,9 +18,18 @@
                     <option value="rejected" @selected($appeal->status->value === 'rejected')>Rejected</option>
                 </select>
             </div>
+            @php
+                $prefillAdjusted = old('adjusted_amount');
+                if ($prefillAdjusted === null) {
+                    $original = $appeal->citation?->penalty_amount ?? 0;
+                    $discounted = round((float) $original * (1 - \App\Models\Appeal::APPROVED_DISCOUNT_PERCENT / 100), 2);
+                    $prefillAdjusted = $discounted;
+                }
+            @endphp
             <div class="mb-3">
                 <label class="form-label">Adjusted Fine Amount (optional)</label>
-                <input type="number" name="adjusted_amount" class="form-control" value="{{ old('adjusted_amount', $appeal->citation?->penalty_amount ?? '') }}" step="0.01" min="0" placeholder="Leave blank if no adjustment">
+                <input type="number" name="adjusted_amount" class="form-control" value="{{ $prefillAdjusted }}" step="0.01" min="0" placeholder="Leave blank if no adjustment">
+                <small class="form-text text-muted">Defaults to {{ \App\Models\Appeal::APPROVED_DISCOUNT_PERCENT }}% discount (₱{{ number_format(round((float) ($appeal->citation?->penalty_amount ?? 0) * (1 - \App\Models\Appeal::APPROVED_DISCOUNT_PERCENT / 100), 2), 2) }}) when left as-is on approval. Editable to override if needed.</small>
             </div>
             <div class="mb-3">
                 <label class="form-label">Decision Notes</label>

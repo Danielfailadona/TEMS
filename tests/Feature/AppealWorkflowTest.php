@@ -114,4 +114,115 @@ class AppealWorkflowTest extends TestCase
             'reviewed_by' => $staff->id,
         ]);
     }
+
+    public function test_approving_appeal_applies_default_discount_to_citation(): void
+    {
+        $owner = User::create([
+            'name' => 'Owner User',
+            'email' => 'owner3@example.com',
+            'password' => 'secret123',
+            'role' => Role::VehicleOwner->value,
+            'is_active' => true,
+        ]);
+
+        $staff = User::create([
+            'name' => 'Staff User',
+            'email' => 'staff3@example.com',
+            'password' => 'secret123',
+            'role' => Role::Administrator->value,
+            'is_active' => true,
+        ]);
+
+        $violationType = ViolationType::create([
+            'code' => 'OVR-003',
+            'name' => 'Reckless Driving',
+            'penalty_amount' => 2000,
+            'is_active' => true,
+        ]);
+
+        $citation = Citation::create([
+            'citation_number' => 'CIT-1003',
+            'violation_type_id' => $violationType->id,
+            'vehicle_plate' => 'DSC111',
+            'issued_by' => $staff->id,
+            'penalty_amount' => 2000,
+            'status' => CitationStatus::Issued,
+            'issued_at' => now(),
+            'due_date' => now()->addDays(15),
+        ]);
+
+        $appeal = \App\Models\Appeal::create([
+            'citation_id' => $citation->id,
+            'submitted_by' => $owner->id,
+            'reason' => 'Incorrect violation details',
+            'description' => 'Please review.',
+            'status' => 'submitted',
+        ]);
+
+        $this->actingAs($staff)
+            ->patch(route('appeals.update', $appeal), [
+                'status' => 'approved',
+                'decision_notes' => 'Approved.',
+            ]);
+
+        $this->assertEquals(2000.0, (float) $appeal->fresh()->original_amount);
+        $this->assertEquals(1700.0, (float) $appeal->fresh()->adjusted_amount);
+        $this->assertEquals(1700.0, (float) $citation->fresh()->penalty_amount);
+    }
+
+    public function test_approving_appeal_uses_explicit_adjusted_amount(): void
+    {
+        $owner = User::create([
+            'name' => 'Owner User',
+            'email' => 'owner4@example.com',
+            'password' => 'secret123',
+            'role' => Role::VehicleOwner->value,
+            'is_active' => true,
+        ]);
+
+        $staff = User::create([
+            'name' => 'Staff User',
+            'email' => 'staff4@example.com',
+            'password' => 'secret123',
+            'role' => Role::Administrator->value,
+            'is_active' => true,
+        ]);
+
+        $violationType = ViolationType::create([
+            'code' => 'OVR-004',
+            'name' => 'Overspeeding',
+            'penalty_amount' => 1000,
+            'is_active' => true,
+        ]);
+
+        $citation = Citation::create([
+            'citation_number' => 'CIT-1004',
+            'violation_type_id' => $violationType->id,
+            'vehicle_plate' => 'ADJ222',
+            'issued_by' => $staff->id,
+            'penalty_amount' => 1000,
+            'status' => CitationStatus::Issued,
+            'issued_at' => now(),
+            'due_date' => now()->addDays(15),
+        ]);
+
+        $appeal = \App\Models\Appeal::create([
+            'citation_id' => $citation->id,
+            'submitted_by' => $owner->id,
+            'reason' => 'Incorrect violation details',
+            'description' => 'Please review.',
+            'status' => 'submitted',
+        ]);
+
+        $this->actingAs($staff)
+            ->patch(route('appeals.update', $appeal), [
+                'status' => 'approved',
+                'adjusted_amount' => 250,
+                'decision_notes' => 'Partial waiver granted.',
+            ]);
+
+        $this->assertEquals(1000.0, (float) $appeal->fresh()->original_amount);
+        $this->assertEquals(250.0, (float) $appeal->fresh()->adjusted_amount);
+        $this->assertEquals(250.0, (float) $citation->fresh()->penalty_amount);
+    }
 }

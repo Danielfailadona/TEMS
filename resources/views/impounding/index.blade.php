@@ -161,7 +161,7 @@ if (! \App\Enums\ImpoundingStatus::tryFrom($activeStatus)) {
                         <th scope="col">Notice #</th>
                         <th scope="col">Violation</th>
                         <th scope="col">Officer</th>
-                        <th scope="col">Clamped At</th>
+                        <th scope="col">Impounded At</th>
                         <th scope="col">Status</th>
                         <th scope="col">Evidence</th>
                         <th scope="col"><span class="visually-hidden">Actions</span></th>
@@ -172,9 +172,15 @@ if (! \App\Enums\ImpoundingStatus::tryFrom($activeStatus)) {
                         <tr>
                             <td class="imp-plate">{{ $record->vehicle_plate }}</td>
                             <td>{{ $record->notice_number }}</td>
-                            <td class="{{ $record->citation?->violationType ? '' : 'imp-muted-dash' }}">{{ $record->citation?->violationType?->name ?? '—' }}</td>
+                            <td class="{{ $record->citation?->violationType ? '' : 'imp-muted-dash' }}">
+                                @if ($record->citation)
+                                    <a href="{{ route('citations.show', $record->citation) }}" title="View citation {{ $record->citation->citation_number }}">{{ $record->citation->violationType?->name ?? '—' }}</a>
+                                @else
+                                    —
+                                @endif
+                            </td>
                             <td>{{ $record->officer->name }}</td>
-                            <td>{{ $record->clamped_at->format('M d, Y') }}</td>
+                            <td>{{ $record->impounded_at?->format('M d, Y') ?? '—' }}</td>
                             <td><span class="imp-status {{ $record->status->badgeClass() }}">{{ $record->status->label() }}</span></td>
                             <td>
                                 @if ($record->evidence_path && \App\Services\SupabaseStorage::has($record->evidence_path))
@@ -233,7 +239,10 @@ if (! \App\Enums\ImpoundingStatus::tryFrom($activeStatus)) {
                             <button class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <p class="mb-3">Amount due: <strong>₱{{ number_format($record->citation?->penalty_amount ?? 0, 2) }}</strong></p>
+                            <p class="mb-3">Amount due: <strong>₱{{ number_format($record->getTotalFees(), 2) }}</strong></p>
+                            @if ($record->citation)
+                                <p class="mb-3 small text-muted">Citation fine of ₱{{ number_format($record->citation->penalty_amount, 2) }} ({{ $record->citation->citation_number }}) is collected separately and is required before release.</p>
+                            @endif
                             <div class="mb-3">
                                 <label class="form-label">Payment Method</label>
                                 <select name="payment_method" class="form-select" required>
