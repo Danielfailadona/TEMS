@@ -1063,11 +1063,20 @@ body::before {
     border-top: 1px solid #e5e7eb;
     box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.18);
     transform: translateY(110%);
-    transition: transform 0.3s ease;
+    visibility: hidden;
+    transition: transform 0.3s ease, visibility 0.3s;
     padding: 0.5rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
 }
 .enforcer-more-sheet.is-open {
     transform: translateY(0);
+    visibility: visible;
+}
+
+@media (min-width: 992px) {
+    .enforcer-more-sheet,
+    .enforcer-more-backdrop {
+        display: none !important;
+    }
 }
 
 .enforcer-more-header {
