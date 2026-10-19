@@ -13,6 +13,8 @@
     .chart-box { height:200px; }
     .chart-box-sm { height:150px; }
     .dash-map { width:100%; height:220px; border-radius:0.5rem; overflow:hidden; }
+    .two-col { align-items: stretch; }
+    .tier3-row > .stat-card--quiet { flex: 1 1 0; min-width: 0; }
 
     .violation-item {
         display:flex; justify-content:space-between; align-items:center;
