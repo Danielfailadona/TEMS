@@ -99,7 +99,7 @@ class CitationController extends Controller
                 $fees = config('itevcms.impounding.violation_fees')[$violationCode] ?? config('itevcms.impounding.violation_fees.default');
 
                 $impounding = ImpoundingRecord::create([
-                    'notice_number' => $numberService->noticeNumber(),
+                    'notice_number' => $numberService->impoundNumber(),
                     'vehicle_plate' => $citation->vehicle_plate,
                     'citation_id' => $citation->id,
                     'impounded_by' => auth()->id(),

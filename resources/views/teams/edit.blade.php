@@ -369,7 +369,11 @@ document.addEventListener('DOMContentLoaded', function () {
     updateMemberPreview();
     updateMemberPreview();
 
-const zoneFn = window.__zonePicker?.initTeamZonePicker;
+document.getElementById('team-form').addEventListener('submit', function () {
+        updateZoneHiddenInputs();
+    });
+
+    const zoneFn = window.__zonePicker?.initTeamZonePicker;
 if (typeof zoneFn === 'function') {
     zoneFn('team-zone-map', {
         clickable: true,

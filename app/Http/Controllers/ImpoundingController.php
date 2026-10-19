@@ -130,7 +130,7 @@ class ImpoundingController extends Controller
         }
 
         $record = ImpoundingRecord::create([
-            'notice_number' => $numberService->noticeNumber(),
+            'notice_number' => $numberService->impoundNumber(),
             'vehicle_plate' => $validated['vehicle_plate'],
             'citation_id' => $citation?->id,
             'clamping_record_id' => $clampingRecord?->id,

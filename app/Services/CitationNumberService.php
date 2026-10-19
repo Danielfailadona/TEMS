@@ -35,6 +35,15 @@ class CitationNumberService
         return $number;
     }
 
+    public function impoundNumber(): string
+    {
+        do {
+            $number = 'IMP-'.now()->format('Ymd').'-'.strtoupper(Str::random(6));
+        } while (\App\Models\ImpoundingRecord::where('notice_number', $number)->exists());
+
+        return $number;
+    }
+
     public function releaseNumber(): string
     {
         return 'REL-'.now()->format('Ymd').'-'.strtoupper(Str::random(6));
