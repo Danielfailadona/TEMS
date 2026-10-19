@@ -163,7 +163,6 @@ if (! \App\Enums\ImpoundingStatus::tryFrom($activeStatus)) {
                         <th scope="col">Officer</th>
                         <th scope="col">Impounded At</th>
                         <th scope="col">Status</th>
-                        <th scope="col">Evidence</th>
                         <th scope="col"><span class="visually-hidden">Actions</span></th>
                     </tr>
                 </thead>
@@ -182,15 +181,6 @@ if (! \App\Enums\ImpoundingStatus::tryFrom($activeStatus)) {
                             <td>{{ $record->officer->name }}</td>
                             <td>{{ $record->impounded_at?->format('M d, Y') ?? '—' }}</td>
                             <td><span class="imp-status {{ $record->status->badgeClass() }}">{{ $record->status->label() }}</span></td>
-                            <td>
-                                @if ($record->evidence_path && \App\Services\SupabaseStorage::has($record->evidence_path))
-                                    <a href="{{ \App\Services\SupabaseStorage::publicUrl($record->evidence_path) }}" target="_blank" rel="noopener">
-                                        <img src="{{ \App\Services\SupabaseStorage::publicUrl($record->evidence_path) }}" alt="Evidence for {{ $record->vehicle_plate }}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;">
-                                    </a>
-                                @else
-                                    <span class="imp-muted-dash">-</span>
-                                @endif
-                            </td>
                             <td>
                                 <div class="imp-actions">
                                     <a href="{{ route('impounding.show', $record) }}" class="imp-eye-btn" title="View details" aria-label="View {{ $record->vehicle_plate }}">
@@ -212,7 +202,7 @@ if (! \App\Enums\ImpoundingStatus::tryFrom($activeStatus)) {
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="imp-empty">No impounded vehicles found.</td></tr>
+                        <tr><td colspan="7" class="imp-empty">No impounded vehicles found.</td></tr>
                     @endforelse
                 </tbody>
             </table>

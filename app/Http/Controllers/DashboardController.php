@@ -51,9 +51,9 @@ class DashboardController extends Controller
                 fn () => Citation::whereBetween('created_at', [now()->subWeeks(2), now()->subWeek()])->count(),
             ),
             'unpaid_citations' => $this->trend(
-                fn () => Citation::whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped, CitationStatus::Impounded\])
+                fn () => Citation::whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped, CitationStatus::Impounded])
                     ->whereBetween('created_at', [now()->subWeek(), now()])->count(),
-                fn () => Citation::whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped, CitationStatus::Impounded\])
+                fn () => Citation::whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped, CitationStatus::Impounded])
                     ->whereBetween('created_at', [now()->subWeeks(2), now()->subWeek()])->count(),
             ),
             'revenue_today' => $this->trend(
@@ -246,9 +246,9 @@ class DashboardController extends Controller
                 fn () => Citation::whereBetween('created_at', [now()->subWeeks(2), now()->subWeek()])->count(),
             ),
             'unpaid_citations' => $this->trend(
-                fn () => Citation::whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped, CitationStatus::Impounded\])
+                fn () => Citation::whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped, CitationStatus::Impounded])
                     ->whereBetween('created_at', [now()->subWeek(), now()])->count(),
-                fn () => Citation::whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped, CitationStatus::Impounded\])
+                fn () => Citation::whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped, CitationStatus::Impounded])
                     ->whereBetween('created_at', [now()->subWeeks(2), now()->subWeek()])->count(),
             ),
             'revenue_today' => $this->trend(
