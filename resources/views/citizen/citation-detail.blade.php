@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Citation #{{ $citation->citation_number }} â€” {{ config('itevcms.app_name') }}</title>
+    <title>Citation #{{ $citation->citation_number }} — {{ config('itevcms.app_name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
@@ -91,7 +91,7 @@
             </div>
             <div class="detail-row">
                 <span class="detail-row-label">Penalty Amount:</span>
-                <span class="detail-row-value fw-bold text-success fs-5">â‚±{{ number_format($citation->penalty_amount, 2) }}</span>
+                <span class="detail-row-value fw-bold text-success fs-5">₱{{ number_format($citation->penalty_amount, 2) }}</span>
             </div>
             <div class="detail-row">
                 <span class="detail-row-label">Issued By:</span>
@@ -114,11 +114,11 @@
             </div>
             <div class="detail-row">
                 <span class="detail-row-label">Type/Year:</span>
-                <span class="detail-row-value">{{ $citation->vehicle_type ?? 'â€”' }}</span>
+                <span class="detail-row-value">{{ $citation->vehicle_type ?? '—' }}</span>
             </div>
             <div class="detail-row">
                 <span class="detail-row-label">Color:</span>
-                <span class="detail-row-value">{{ $citation->vehicle_color ?? 'â€”' }}</span>
+                <span class="detail-row-value">{{ $citation->vehicle_color ?? '—' }}</span>
             </div>
         </div>
 
@@ -169,7 +169,7 @@
             </div>
             <div class="detail-row">
                 <span class="detail-row-label">Phone:</span>
-                <span class="detail-row-value">{{ 'â€”' }}</span>
+                <span class="detail-row-value">{{ '—' }}</span>
             </div>
         </div>
     </div>
@@ -242,7 +242,7 @@
                     </div>
                     <div class="col-md-6">
                         <small class="text-muted d-block">Amount Paid</small>
-                        <strong>â‚±{{ number_format($citation->payment->amount, 2) }}</strong>
+                        <strong>₱{{ number_format($citation->payment->amount, 2) }}</strong>
                     </div>
                     <div class="col-md-6">
                         <small class="text-muted d-block">Payment Method</small>

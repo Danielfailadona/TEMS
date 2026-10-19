@@ -725,6 +725,35 @@ body::before {
     color: #064e3b;
 }
 
+/* Status badges inside the dark detail-hero header */
+.detail-hero .status-badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border-left-color: #fff;
+}
+
+.detail-hero .status-badge-pending {
+    background: rgba(245, 158, 11, 0.5);
+}
+
+.detail-hero .status-badge-paid,
+.detail-hero .status-badge-resolved {
+    background: rgba(5, 150, 105, 0.5);
+}
+
+.detail-hero .status-badge-overdue,
+.detail-hero .status-badge-rejected {
+    background: rgba(220, 38, 38, 0.5);
+}
+
+.detail-hero .status-badge-appealed {
+    background: rgba(124, 58, 237, 0.5);
+}
+
+.detail-hero .status-badge-approved {
+    background: rgba(8, 145, 178, 0.5);
+}
+
 /* Detail Page Hero Header */
 .detail-hero {
     background: linear-gradient(135deg, #2563eb 0%, #0f2b4a 100%);
