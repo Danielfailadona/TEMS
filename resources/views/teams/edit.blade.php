@@ -391,10 +391,22 @@ if (typeof zoneFn === 'function') {
     });
 }
 
+function getAssignedZoneIds() {
+    // Primary: read from DOM zone chips (always up-to-date regardless of map state)
+    const chips = document.querySelectorAll('#assigned-zone-chips .zone-chip[data-zone-id]');
+    const ids = new Set();
+    chips.forEach(chip => ids.add(parseInt(chip.dataset.zoneId, 10)));
+    // Fallback: use _zonePickerState if chips empty but map has state
+    if (ids.size === 0 && window._zonePickerState?.assigned) {
+        window._zonePickerState.assigned.forEach(id => ids.add(id));
+    }
+    return ids;
+}
+
 function updateZoneHiddenInputs() {
     const container = document.getElementById('team-zones-inputs');
-    const assigned = window._zonePickerState?.assigned;
-    if (!container || !assigned) return;
+    const assigned = getAssignedZoneIds();
+    if (!container) return;
     container.innerHTML = '';
     assigned.forEach(zoneId => {
         const input = document.createElement('input');
@@ -413,15 +425,25 @@ function updateZoneChips(assignedCount) {
 	const chips = document.getElementById('assigned-zone-chips');
 	chips.innerHTML = '';
 	TEAM_ZONES.forEach(zone => {
-		const isAssigned = window._zonePickerState?.assigned?.has(zone.id);
+		const isAssigned = getAssignedZoneIds().has(zone.id);
 		if (isAssigned) {
 			const chip = document.createElement('span');
 			chip.className = 'badge bg-primary-subtle text-primary border border-primary-subtle zone-chip';
+			chip.dataset.zoneId = zone.id;
 			chip.innerHTML = '<i class="bi bi-geo-alt-fill me-1"></i>' + zone.name;
 			chips.appendChild(chip);
 		}
 	});
 }
+
+// Initialize _zonePickerState from DOM on load (fallback if map loads late)
+document.addEventListener('DOMContentLoaded', function () {
+    const initialAssigned = getAssignedZoneIds();
+    if (initialAssigned.size > 0 && (!window._zonePickerState || !window._zonePickerState.assigned)) {
+        window._zonePickerState = window._zonePickerState || {};
+        window._zonePickerState.assigned = initialAssigned;
+    }
+});
 });
 </script>
 @endpush
