@@ -123,15 +123,8 @@
 
 @section('content')
 @php
-$options = [
-    '' => 'Active',
-    'awaiting_payment' => 'Awaiting Payment',
-    'paid' => 'Paid',
-    'waiting_release' => 'Waiting Release',
-    'released' => 'Released',
-];
 $activeStatus = (string) request('status');
-if (! array_key_exists($activeStatus, $options)) {
+if (! \App\Enums\ImpoundingStatus::tryFrom($activeStatus)) {
     $activeStatus = '';
 }
 @endphp
@@ -143,8 +136,9 @@ if (! array_key_exists($activeStatus, $options)) {
                 Filters <span class="imp-filter-caret"></span>
             </button>
             <div id="impFilterMenu" class="imp-filter-menu" role="menu" aria-label="Impounding filters">
-                @foreach ($options as $value => $label)
-                    <button type="button" class="imp-filter-option{{ $value === $activeStatus ? ' selected' : '' }}" data-status="{{ $value }}" role="menuitem">{{ $label }}</button>
+                <button type="button" class="imp-filter-option{{ $activeStatus === '' ? ' selected' : '' }}" data-status="" role="menuitem">Active</button>
+                @foreach (\App\Enums\ImpoundingStatus::cases() as $statusOption)
+                    <button type="button" class="imp-filter-option{{ $statusOption->value === $activeStatus ? ' selected' : '' }}" data-status="{{ $statusOption->value }}" role="menuitem">{{ $statusOption->label() }}</button>
                 @endforeach
             </div>
             <input type="hidden" name="status" id="impStatus" value="{{ $activeStatus }}">

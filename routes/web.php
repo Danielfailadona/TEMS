@@ -80,6 +80,9 @@ Route::prefix('cite')->name('public.citation.')->group(function () {
     Route::post('{id}/{token}/pay-online', [PayMongoController::class, 'publicCheckout'])
         ->middleware('throttle:10,5')
         ->name('checkout');
+    Route::post('{id}/{token}/appeal', [CitizenPortalController::class, 'submitAppeal'])
+        ->middleware('throttle:10,5')
+        ->name('appeal');
     Route::get('{id}/{token}/payment/{payment}/success', [PayMongoController::class, 'publicSuccess'])->name('success');
 });
 

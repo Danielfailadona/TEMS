@@ -50,7 +50,7 @@
             <div class="row mb-2"><div class="col-5 text-muted">Driver</div><div class="col-7">{{ $payment->citation->driver_name }}</div></div>
         @endif
         <div class="row mb-2"><div class="col-5 text-muted">Amount Paid</div><div class="col-7 fw-semibold">₱{{ number_format($payment->amount, 2) }}</div></div>
-        <div class="row mb-2"><div class="col-5 text-muted">Payment Method</div><div class="col-7">{{ $payment->isOnlinePayment() ? ucfirst($payment->online_payment_method ?? 'Online Payment') : $payment->payment_method->label() }}</div></div>
+        <div class="row mb-2"><div class="col-5 text-muted">Payment Method</div><div class="col-7">{{ $payment->methodDisplay() }}</div></div>
         @if ($payment->reference_number)
             <div class="row mb-2"><div class="col-5 text-muted">Reference</div><div class="col-7">{{ $payment->reference_number }}</div></div>
         @endif

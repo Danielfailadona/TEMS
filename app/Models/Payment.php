@@ -51,6 +51,15 @@ class Payment extends Model
         return $this->isOnlinePayment() && is_null($this->paid_at);
     }
 
+    public function methodDisplay(): string
+    {
+        if ($this->payment_method === PaymentMethod::Other && $this->isOnlinePayment()) {
+            return ucfirst($this->online_payment_method ?? 'Online');
+        }
+
+        return $this->payment_method?->label() ?? '—';
+    }
+
     public function getStatusBadgeClass(): string
     {
         if ($this->paid_at) {

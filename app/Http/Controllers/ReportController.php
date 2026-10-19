@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CitationStatus;
+use App\Enums\PaymentMethod;
 use App\Models\Citation;
 use App\Models\Payment;
 use App\Models\User;
@@ -36,7 +37,9 @@ class ReportController extends Controller
         $totalRevenue = $payments->sum('amount');
         $totalCount = $payments->count();
 
-        $byMethod = $payments->groupBy(fn ($p) => $p->online_payment_method ?? $p->payment_method->value)
+        $byMethod = $payments->groupBy(fn ($p) => $p->payment_method === PaymentMethod::Other && $p->isOnlinePayment()
+            ? ($p->online_payment_method ?? 'online')
+            : $p->payment_method->value)
             ->map(fn ($group) => ['count' => $group->count(), 'amount' => $group->sum('amount')]);
 
         $dailyTotals = $payments->groupBy(fn ($p) => $p->paid_at->format('Y-m-d'))

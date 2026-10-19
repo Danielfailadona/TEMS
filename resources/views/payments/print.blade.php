@@ -117,7 +117,7 @@
             <tr><td class="label">Driver</td><td class="value">{{ $payment->citation->driver_name }}</td></tr>
         @endif
         <tr><td class="label">Amount Paid</td><td class="value">₱{{ number_format($payment->amount, 2) }}</td></tr>
-        <tr><td class="label">Payment Method</td><td class="value">{{ $payment->isOnlinePayment() ? ucfirst($payment->online_payment_method ?? 'Online Payment') : $payment->payment_method->label() }}</td></tr>
+        <tr><td class="label">Payment Method</td><td class="value">{{ $payment->methodDisplay() }}</td></tr>
         @if ($payment->reference_number)
             <tr><td class="label">Reference</td><td class="value">{{ $payment->reference_number }}</td></tr>
         @endif

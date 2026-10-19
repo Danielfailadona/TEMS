@@ -429,7 +429,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initCharts();
 
-    if (window.__zonePicker?.initZoneViewer) {
+    if (window.__zonePicker?.initZoneViewer && document.getElementById('dashboard-zone-map')) {
         const zoneData = @json($zoneMapData);
         if (zoneData.length) {
             window.__zonePicker.initZoneViewer('dashboard-zone-map', {

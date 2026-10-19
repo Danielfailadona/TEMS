@@ -284,6 +284,92 @@
         </div>
     @endif
 
+    <!-- APPEAL SECTION -->
+    @if ($citation->appeal)
+        <div class="card stat-card mb-4 animate-on-load" style="animation-delay: 0.8s;">
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+                    <div style="width: 3rem; height: 3rem; background: rgba(59, 130, 246, 0.12); border-radius: 0.8rem; display: grid; place-items: center; color: #3b82f6; font-size: 1.5rem;">
+                        <i class="bi bi-chat-square-text"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0">Appeal {{ $citation->appeal->status->label() }}</h5>
+                        <p class="text-muted mb-0">Submitted on {{ $citation->appeal->submitted_at?->format('F d, Y h:i A') }}</p>
+                    </div>
+                    <span class="badge {{ $citation->appeal->status->badgeClass() }} ms-auto">{{ $citation->appeal->status->label() }}</span>
+                </div>
+                <div class="row g-3 mt-1">
+                    <div class="col-md-6">
+                        <small class="text-muted d-block">Reason</small>
+                        <strong>{{ $citation->appeal->reason }}</strong>
+                    </div>
+                    @if ($citation->appeal->description)
+                        <div class="col-12">
+                            <small class="text-muted d-block">Details</small>
+                            <p class="mb-0">{{ $citation->appeal->description }}</p>
+                        </div>
+                    @endif
+                    @if ($citation->appeal->reviewed_at)
+                        <div class="col-md-6">
+                            <small class="text-muted d-block">Decision Date</small>
+                            <strong>{{ $citation->appeal->reviewed_at->format('F d, Y') }}</strong>
+                        </div>
+                    @endif
+                    @if ($citation->appeal->decision_notes)
+                        <div class="col-12">
+                            <small class="text-muted d-block">Office Notes</small>
+                            <p class="mb-0">{{ $citation->appeal->decision_notes }}</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @elseif ($citation->isPayable())
+        <div class="card stat-card mb-4 animate-on-load" style="animation-delay: 0.8s;">
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div style="width: 3rem; height: 3rem; background: rgba(59, 130, 246, 0.12); border-radius: 0.8rem; display: grid; place-items: center; color: #3b82f6; font-size: 1.5rem;">
+                        <i class="bi bi-chat-square-text"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0">Want to Contest This Citation?</h5>
+                        <p class="text-muted mb-0">Submit an appeal and the enforcement office will review your case</p>
+                    </div>
+                </div>
+                <form method="POST" action="{{ route('public.citation.appeal', ['id' => $citation->id, 'token' => $citation->getValidationToken()]) }}" class="mt-3">
+                    @csrf
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold" for="appealGuestName">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" name="guest_name" id="appealGuestName" class="form-control" value="{{ old('guest_name') }}" required maxlength="255" placeholder="Juan Dela Cruz">
+                            @error('guest_name')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold" for="appealGuestContact">Contact Number / Email <span class="text-danger">*</span></label>
+                            <input type="text" name="guest_contact" id="appealGuestContact" class="form-control" value="{{ old('guest_contact') }}" required maxlength="255" placeholder="09XXXXXXXXXX">
+                            @error('guest_contact')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold" for="appealReason">Reason <span class="text-danger">*</span></label>
+                            <input type="text" name="reason" id="appealReason" class="form-control" value="{{ old('reason') }}" required maxlength="255" placeholder="e.g. Ticket was issued in error">
+                            @error('reason')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold" for="appealDescription">Details <span class="text-muted fw-normal">(optional)</span></label>
+                            <textarea name="description" id="appealDescription" class="form-control" rows="3" maxlength="2000" placeholder="Explain why this citation should be reviewed...">{{ old('description') }}</textarea>
+                            @error('description')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send me-2"></i>Submit Appeal
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
     <!-- BACK BUTTON -->
     <div class="text-center mt-4 mb-4">
         <a href="{{ route('citizen.citation.lookup') }}" class="btn btn-outline-secondary no-print">

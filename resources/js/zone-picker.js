@@ -399,6 +399,8 @@ export function initZoneEditor(containerId, options = {}) {
 }
 
 export function initZoneViewer(containerId, options = {}) {
+    if (!document.getElementById(containerId)) return null;
+
     const {
         styleUrl = 'https://tiles.openfreemap.org/styles/liberty',
         center = [121.0402, 14.5432],

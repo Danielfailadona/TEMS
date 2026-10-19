@@ -20,7 +20,12 @@
                     <dt class="col-sm-4">Citation</dt>
                     <dd class="col-sm-8">{{ $appeal->citation->citation_number ?? '—' }} ({{ $appeal->citation->vehicle_plate ?? '—' }})</dd>
                     <dt class="col-sm-4">Submitted By</dt>
-                    <dd class="col-sm-8">{{ $appeal->submitter->name ?? '—' }}</dd>
+                    <dd class="col-sm-8">
+                        {{ $appeal->submitterDisplay() }}
+                        @if ($appeal->isGuestSubmission() && $appeal->guest_contact)
+                            <br><small class="text-muted">{{ $appeal->guest_contact }}</small>
+                        @endif
+                    </dd>
                     <dt class="col-sm-4">Reason</dt>
                     <dd class="col-sm-8">{{ $appeal->reason }}</dd>
                     <dt class="col-sm-4">Details</dt>

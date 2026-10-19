@@ -17,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class PaymentController extends Controller
@@ -61,15 +62,22 @@ class PaymentController extends Controller
             $query->where('payment_method', $request->payment_method);
         }
 
-        // Date range filters - apply only when both from and to are provided
-        if ($request->filled('date_from') && $request->filled('date_to')) {
-            $dateFrom = Carbon::parse($request->date_from)->startOfDay()->setTimezone('UTC');
-            $dateTo   = Carbon::parse($request->date_to)->endOfDay()->setTimezone('UTC');
+        // Date range filters - each bound applies independently when provided
+        $dateFrom = $request->filled('date_from')
+            ? Carbon::parse($request->date_from)->startOfDay()->setTimezone('UTC')
+            : null;
+        $dateTo = $request->filled('date_to')
+            ? Carbon::parse($request->date_to)->endOfDay()->setTimezone('UTC')
+            : null;
+
+        if ($dateFrom !== null || $dateTo !== null) {
             $query->where(function ($q) use ($dateFrom, $dateTo) {
-                $q->whereBetween('paid_at', [$dateFrom, $dateTo])
+                $q->when($dateFrom, fn ($qq) => $qq->where('paid_at', '>=', $dateFrom))
+                  ->when($dateTo, fn ($qq) => $qq->where('paid_at', '<=', $dateTo))
                   ->orWhere(function ($sub) use ($dateFrom, $dateTo) {
                       $sub->whereNull('paid_at')
-                          ->whereBetween('created_at', [$dateFrom, $dateTo]);
+                          ->when($dateFrom, fn ($qq) => $qq->where('created_at', '>=', $dateFrom))
+                          ->when($dateTo, fn ($qq) => $qq->where('created_at', '<=', $dateTo));
                   });
             });
         }
@@ -123,10 +131,10 @@ class PaymentController extends Controller
         $category = $request->input('category');
         $search = trim((string) $request->input('search', ''));
 
-        $dateFrom = $request->filled('date_from') && $request->filled('date_to')
+        $dateFrom = $request->filled('date_from')
             ? Carbon::parse($request->date_from)->startOfDay()->setTimezone('UTC')
             : null;
-        $dateTo = $request->filled('date_from') && $request->filled('date_to')
+        $dateTo = $request->filled('date_to')
             ? Carbon::parse($request->date_to)->endOfDay()->setTimezone('UTC')
             : null;
 
@@ -177,9 +185,22 @@ class PaymentController extends Controller
             ]));
         }
 
-        // Apply the date range to the pending rows' own date (issued/clamped/impounded)
-        if ($dateFrom !== null && $dateTo !== null) {
-            $rows = $rows->filter(fn ($row) => $row['date'] !== null && $row['date']->between($dateFrom, $dateTo));
+        // Apply the date bounds to the pending rows' own date (issued/clamped/impounded)
+        if ($dateFrom !== null || $dateTo !== null) {
+            $rows = $rows->filter(function ($row) use ($dateFrom, $dateTo) {
+                $date = $row['date'];
+                if ($date === null) {
+                    return false;
+                }
+                if ($dateFrom !== null && $date->lt($dateFrom)) {
+                    return false;
+                }
+                if ($dateTo !== null && $date->gt($dateTo)) {
+                    return false;
+                }
+
+                return true;
+            });
         }
 
         return $rows;
@@ -420,7 +441,7 @@ public function edit(Payment $payment): View
         $this->authorize('update', $payment);
 
         $validated = $request->validate([
-            'payment_method' => 'required|string',
+            'payment_method' => ['required', Rule::enum(PaymentMethod::class)],
             'reference_number' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:1000',
         ]);

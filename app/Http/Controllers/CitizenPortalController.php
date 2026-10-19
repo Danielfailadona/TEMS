@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AppealStatus;
+use App\Models\Appeal;
 use App\Models\Archive;
 use App\Models\Citation;
 use App\Models\ClampingRecord;
 use App\Models\ClampingRequest;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
@@ -118,9 +121,43 @@ class CitizenPortalController extends Controller
 
     public function citationDetail(Citation $citation): View
     {
-        $citation->load(['violationType', 'evidence', 'payment']);
+        $citation->load(['violationType', 'evidence', 'payment', 'appeal.submitter', 'enforcer']);
 
         return view('citizen.citation-detail', compact('citation'));
+    }
+
+    public function submitAppeal(Request $request, $id, $token): RedirectResponse
+    {
+        $citation = Citation::find($id);
+
+        if (! $citation || ! hash_equals($citation->getValidationToken(), (string) $token)) {
+            abort(404);
+        }
+
+        if (! $citation->isPayable()) {
+            return back()->with('error', 'This citation can no longer be appealed.');
+        }
+
+        if ($citation->appeal) {
+            return back()->with('error', 'An appeal has already been submitted for this citation.');
+        }
+
+        $validated = $request->validate([
+            'guest_name' => 'required|string|max:255',
+            'guest_contact' => 'required|string|max:255',
+            'reason' => 'required|string|max:255',
+            'description' => 'nullable|string|max:2000',
+        ]);
+
+        Appeal::create([
+            ...$validated,
+            'citation_id' => $citation->id,
+            'submitted_by' => null,
+            'status' => AppealStatus::Submitted,
+            'submitted_at' => now(),
+        ]);
+
+        return back()->with('success', 'Your appeal has been submitted. It will be reviewed by the enforcement office.');
     }
 
     public function clampingLanding(Request $request): View

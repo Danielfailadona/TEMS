@@ -295,7 +295,7 @@
                 </fieldset>
 
                 <div class="pym-field">
-                    <p class="pym-field__label" id="pymStatusLabel">Activity Status</p>
+                    <p class="pym-field__label" id="pymStatusLabel">Payment Source</p>
                     <label class="pym-checkbox">
                         <input type="checkbox" id="pymOnline" name="online" value="1" aria-labelledby="pymStatusLabel" {{ request('online') ? 'checked' : '' }}>
                         <span class="pym-checkbox__box" aria-hidden="true"></span>
@@ -391,7 +391,7 @@
                         </td>
                         <td>
                             @if ($isReceipt)
-                                {{ $payment->isOnlinePayment() ? ucfirst($payment->online_payment_method ?? 'Online') : ($payment->payment_method?->label() ?? '—') }}
+                                {{ $payment->methodDisplay() }}
                             @else
                                 —
                             @endif

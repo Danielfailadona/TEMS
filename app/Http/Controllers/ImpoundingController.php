@@ -25,8 +25,10 @@ class ImpoundingController extends Controller
 
         $query = ImpoundingRecord::with(['officer', 'citation.violationType', 'clampingRecord']);
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        $status = ImpoundingStatus::tryFrom((string) $request->query('status'));
+
+        if ($status !== null) {
+            $query->where('status', $status);
         } else {
             $query->whereIn('status', [
                 ImpoundingStatus::Impounded,
@@ -36,7 +38,7 @@ class ImpoundingController extends Controller
             ]);
         }
 
-        if ($search = trim($request->query('search'))) {
+        if ($search = trim((string) $request->query('search'))) {
             $query->where(function ($inner) use ($search) {
                 $inner->where('vehicle_plate', 'like', "%{$search}%")
                     ->orWhere('notice_number', 'like', "%{$search}%")
