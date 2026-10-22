@@ -58,11 +58,16 @@ class CitationController extends Controller
         $this->authorize('create', Citation::class);
 
         $violationType = ViolationType::findOrFail($request->violation_type_id);
+        $isCustom = $violationType->isCustom();
+        $penaltyAmount = $isCustom && $request->filled('penalty_amount')
+            ? (float) $request->penalty_amount
+            : (float) $violationType->penalty_amount;
 
-        $citation = DB::transaction(function () use ($request, $numberService, $violationType) {
+        $citation = DB::transaction(function () use ($request, $numberService, $violationType, $isCustom, $penaltyAmount) {
             $citation = Citation::create([
                 'citation_number' => $numberService->generate(),
                 'violation_type_id' => $violationType->id,
+                'custom_violation_name' => $isCustom ? $request->custom_violation_name : null,
                 'vehicle_plate' => $request->vehicle_plate,
                 'vehicle_make' => $request->vehicle_make,
                 'vehicle_model' => $request->vehicle_model,
@@ -71,7 +76,7 @@ class CitationController extends Controller
                 'driver_name' => $request->driver_name,
                 'driver_license' => $request->driver_license,
                 'issued_by' => auth()->id(),
-                'penalty_amount' => $violationType->penalty_amount,
+                'penalty_amount' => $penaltyAmount,
                 'status' => CitationStatus::Issued,
                 'location' => $request->location,
                 'latitude' => $request->latitude,
@@ -114,28 +119,14 @@ class CitationController extends Controller
                     'impounded_at' => now(),
                 ]);
 
-                Archive::create([
-                    'archivable_type' => ImpoundingRecord::class,
-                    'archivable_id' => $impounding->id,
-                    'archived_by' => auth()->id(),
-                    'archived_at' => now(),
-                    'reason' => 'Vehicle impounded (auto-created from citation)',
-                    'snapshot' => $impounding->toArray(),
-                ]);
+                Archive::log($impounding, 'Vehicle impounded (auto-created from citation)', auth()->id());
 
                 $citation->update(['status' => CitationStatus::Impounded]);
             } elseif ($violationType->is_clampable) {
                 $citation->update(['status' => CitationStatus::Clamped]);
             }
 
-            Archive::create([
-                'archivable_type' => Citation::class,
-                'archivable_id' => $citation->id,
-                'archived_by' => auth()->id(),
-                'archived_at' => now(),
-                'reason' => 'Citation issued',
-                'snapshot' => $citation->toArray(),
-            ]);
+            Archive::log($citation, 'Citation issued', auth()->id());
 
             return $citation;
         });
@@ -207,14 +198,7 @@ class CitationController extends Controller
                 'clamped_at' => now(),
             ]);
 
-            Archive::create([
-                'archivable_type' => ClampingRecord::class,
-                'archivable_id' => $clamping->id,
-                'archived_by' => auth()->id(),
-                'archived_at' => now(),
-                'reason' => 'Vehicle clamped (referred from citation)',
-                'snapshot' => $clamping->toArray(),
-            ]);
+            Archive::log($clamping, 'Vehicle clamped (referred from citation)', auth()->id());
 
             $citation->update(['status' => CitationStatus::Clamped]);
 

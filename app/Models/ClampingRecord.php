@@ -110,7 +110,7 @@ class ClampingRecord extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll()
+            ->logOnly(['notice_number', 'status', 'citation_id', 'clamped_by', 'paid_at', 'released_at'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

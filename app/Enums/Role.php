@@ -33,6 +33,29 @@ enum Role: string
         return in_array($this, [self::SuperAdmin, self::Administrator], true);
     }
 
+    public function isSuperAdmin(): bool
+    {
+        return $this === self::SuperAdmin;
+    }
+
+    public function isCashier(): bool
+    {
+        return $this === self::Cashier;
+    }
+
+    public function isFrontDesk(): bool
+    {
+        return $this === self::FrontDesk;
+    }
+
+    /**
+     * Only the Super Administrator may permanently remove records.
+     */
+    public function canDelete(): bool
+    {
+        return $this === self::SuperAdmin;
+    }
+
     /**
      * @return list<self>
      */

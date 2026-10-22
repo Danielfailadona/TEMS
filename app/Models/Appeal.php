@@ -17,8 +17,6 @@ class Appeal extends Model
     protected $fillable = [
         'citation_id',
         'submitted_by',
-        'guest_name',
-        'guest_contact',
         'reviewed_by',
         'reason',
         'description',
@@ -56,24 +54,20 @@ class Appeal extends Model
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
-    public function isGuestSubmission(): bool
-    {
-        return is_null($this->submitted_by);
-    }
-
     public function submitterDisplay(): string
     {
-        if ($this->submitted_by !== null) {
-            return $this->submitter?->name ?? 'N/A';
-        }
+        return $this->submitter?->name ?? 'N/A';
+    }
 
-        return $this->guest_name ? "Guest ({$this->guest_name})" : 'Guest';
+    public function ticketNumber(): string
+    {
+        return 'APL-'.str_pad((string) $this->id, 6, '0', STR_PAD_LEFT);
     }
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll()
+            ->logOnly(['status', 'reason', 'decision_notes', 'citation_id', 'reviewed_by', 'original_amount', 'adjusted_amount'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

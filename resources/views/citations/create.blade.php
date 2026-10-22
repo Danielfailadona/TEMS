@@ -86,11 +86,29 @@
                 <select name="violation_type_id" id="violationTypeSelect" class="form-select" required>
                     <option value="">Select violation...</option>
                     @foreach ($violationTypes as $type)
-                        <option value="{{ $type->id }}" data-is-impoundable="{{ $type->is_impoundable ? '1' : '0' }}" data-is-clampable="{{ $type->is_clampable ? '1' : '0' }}" @selected(old('violation_type_id') == $type->id)>
+                        <option value="{{ $type->id }}" data-is-impoundable="{{ $type->is_impoundable ? '1' : '0' }}" data-is-clampable="{{ $type->is_clampable ? '1' : '0' }}" data-is-custom="{{ $type->isCustom() ? '1' : '0' }}" @selected(old('violation_type_id') == $type->id)>
                             {{ $type->name }} — ₱{{ number_format($type->penalty_amount, 2) }}
                         </option>
                     @endforeach
                 </select>
+                <div class="mt-2" id="customViolationPanel" style="display:none;">
+                    <div class="card border-info bg-info-subtle">
+                        <div class="card-body py-2">
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <label class="form-label small fw-semibold mb-1">Violation Description <span class="text-danger">*</span></label>
+                                    <input type="text" name="custom_violation_name" id="customViolationName" class="form-control form-control-sm" value="{{ old('custom_violation_name') }}" maxlength="255" placeholder="Describe the violation">
+                                    @error('custom_violation_name')<small class="text-danger">{{ $message }}</small>@enderror
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-semibold mb-1">Penalty Amount (₱) <span class="text-danger">*</span></label>
+                                    <input type="number" step="0.01" min="0" name="penalty_amount" id="customPenaltyAmount" class="form-control form-control-sm" value="{{ old('penalty_amount') }}" placeholder="e.g. 500.00">
+                                    @error('penalty_amount')<small class="text-danger">{{ $message }}</small>@enderror
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="mt-2" id="impoundableInfoPanel" style="display:none;">
                     <div class="card border-warning bg-warning-subtle">
                         <div class="card-body py-2">
@@ -255,14 +273,17 @@
     const impoundingSection = document.getElementById('impoundingSection');
     const impoundableInfo = document.getElementById('impoundableInfoPanel');
     const clampableInfo = document.getElementById('clampableInfoPanel');
+    const customViolationPanel = document.getElementById('customViolationPanel');
     function toggleImpounding() {
         if (!violationSelect) return;
         const option = violationSelect.options[violationSelect.selectedIndex];
         const isImpoundable = option && option.dataset.isImpoundable === '1';
         const isClampable = option && option.dataset.isClampable === '1';
+        const isCustom = option && option.dataset.isCustom === '1';
         if (impoundingSection) impoundingSection.style.display = isImpoundable ? '' : 'none';
         if (impoundableInfo) impoundableInfo.style.display = isImpoundable ? '' : 'none';
         if (clampableInfo) clampableInfo.style.display = (!isImpoundable && isClampable) ? '' : 'none';
+        if (customViolationPanel) customViolationPanel.style.display = isCustom ? '' : 'none';
     }
     if (violationSelect) {
         violationSelect.addEventListener('change', toggleImpounding);

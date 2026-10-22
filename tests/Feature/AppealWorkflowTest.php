@@ -14,13 +14,13 @@ class AppealWorkflowTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_vehicle_owner_can_submit_an_appeal_for_their_citation(): void
+    public function test_front_desk_can_file_an_appeal_for_a_citation(): void
     {
-        $owner = User::create([
-            'name' => 'Owner User',
-            'email' => 'owner@example.com',
+        $frontDesk = User::create([
+            'name' => 'Front Desk User',
+            'email' => 'frontdesk@example.com',
             'password' => 'secret123',
-            'role' => Role::VehicleOwner->value,
+            'role' => Role::FrontDesk->value,
             'is_active' => true,
         ]);
 
@@ -35,14 +35,14 @@ class AppealWorkflowTest extends TestCase
             'citation_number' => 'CIT-1001',
             'violation_type_id' => $violationType->id,
             'vehicle_plate' => 'ABC123',
-            'issued_by' => $owner->id,
+            'issued_by' => $frontDesk->id,
             'penalty_amount' => 2500,
             'status' => CitationStatus::Issued,
             'issued_at' => now(),
             'due_date' => now()->addDays(15),
         ]);
 
-        $response = $this->actingAs($owner)
+        $response = $this->actingAs($frontDesk)
             ->post(route('appeals.store'), [
                 'citation_id' => $citation->id,
                 'reason' => 'Incorrect violation details',
@@ -52,9 +52,61 @@ class AppealWorkflowTest extends TestCase
         $response->assertRedirect(route('appeals.index'));
         $this->assertDatabaseHas('appeals', [
             'citation_id' => $citation->id,
-            'submitted_by' => $owner->id,
+            'submitted_by' => $frontDesk->id,
             'status' => 'submitted',
         ]);
+    }
+
+    public function test_vehicle_owner_cannot_file_an_appeal(): void
+    {
+        $owner = User::create([
+            'name' => 'Owner User',
+            'email' => 'owner-cannot@example.com',
+            'password' => 'secret123',
+            'role' => Role::VehicleOwner->value,
+            'is_active' => true,
+        ]);
+
+        $violationType = ViolationType::create([
+            'code' => 'OVR-NOAPL',
+            'name' => 'No Appeal',
+            'penalty_amount' => 500,
+            'is_active' => true,
+        ]);
+
+        $citation = Citation::create([
+            'citation_number' => 'CIT-NOAPL',
+            'violation_type_id' => $violationType->id,
+            'vehicle_plate' => 'NOAPL1',
+            'issued_by' => $owner->id,
+            'penalty_amount' => 500,
+            'status' => CitationStatus::Issued,
+            'issued_at' => now(),
+            'due_date' => now()->addDays(15),
+        ]);
+
+        $this->actingAs($owner)
+            ->post(route('appeals.store'), [
+                'citation_id' => $citation->id,
+                'reason' => 'Nope',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseCount('appeals', 0);
+    }
+
+    public function test_appeal_exposes_a_ticket_number(): void
+    {
+        $appeal = new \App\Models\Appeal();
+        $appeal->id = 42;
+
+        $this->assertSame('APL-000042', $appeal->ticketNumber());
+    }
+
+    public function test_guest_appeal_columns_are_removed(): void
+    {
+        $this->assertFalse(\Illuminate\Support\Facades\Schema::hasColumn('appeals', 'guest_name'));
+        $this->assertFalse(\Illuminate\Support\Facades\Schema::hasColumn('appeals', 'guest_contact'));
     }
 
     public function test_staff_can_review_an_appeal(): void

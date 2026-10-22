@@ -40,7 +40,7 @@
             <div class="row g-3">
                 <div class="col-md-4"><strong class="text-muted small d-block">Citation #</strong>{{ $citation->citation_number }}</div>
                 <div class="col-md-4"><strong class="text-muted small d-block">Vehicle</strong>{{ $citation->vehicle_plate }}</div>
-                <div class="col-md-4"><strong class="text-muted small d-block">Violation</strong>{{ $citation->violationType->name }}</div>
+                <div class="col-md-4"><strong class="text-muted small d-block">Violation</strong>{{ $citation->violationLabel() }}</div>
                 <div class="col-md-4"><strong class="text-muted small d-block">Amount</strong>₱{{ number_format($citation->penalty_amount, 2) }}</div>
                 <div class="col-md-4"><strong class="text-muted small d-block">Status</strong><span class="badge {{ $citation->status->badgeClass() }}">{{ $citation->status->label() }}</span></div>
                 <div class="col-md-4"><strong class="text-muted small d-block">Issued</strong>{{ $citation->issued_at->format('M d, Y') }}</div>
@@ -54,8 +54,113 @@
                     </div>
                 @endif
             </div>
+
+            {{-- APPEAL TILE --}}
+            <div class="mt-3 pt-3 border-top">
+                @if ($citation->appeal)
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <strong class="text-muted small d-block">Appeal {{ $citation->appeal->ticketNumber() }}</strong>
+                            <span class="badge {{ $citation->appeal->status->badgeClass() }}">{{ $citation->appeal->status->label() }}</span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary"
+                            data-bs-toggle="modal" data-bs-target="#appealDetailModal">
+                            <i class="bi bi-card-text me-1"></i>View Appeal
+                        </button>
+                    </div>
+                @elseif ($citation->isPayable())
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <strong class="text-muted small d-block">Appeal</strong>
+                            <span class="text-muted small">No appeal filed for this citation.</span>
+                        </div>
+                        @can('create', App\Models\Appeal::class)
+                            <button type="button" class="btn btn-sm btn-primary"
+                                data-bs-toggle="modal" data-bs-target="#fileAppealModal">
+                                <i class="bi bi-plus-lg me-1"></i>File Appeal
+                            </button>
+                        @endcan
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
+
+    @if ($citation->appeal)
+        {{-- Appeal detail modal (reason note + outcome) --}}
+        <div class="modal fade" id="appealDetailModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Appeal {{ $citation->appeal->ticketNumber() }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge {{ $citation->appeal->status->badgeClass() }}">{{ $citation->appeal->status->label() }}</span>
+                            <small class="text-muted">{{ $citation->appeal->submitted_at?->format('M d, Y g:i A') }}</small>
+                        </div>
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">Filed By</dt>
+                            <dd class="col-sm-8">{{ $citation->appeal->submitterDisplay() }}</dd>
+                            <dt class="col-sm-4">Reason</dt>
+                            <dd class="col-sm-8">{{ $citation->appeal->reason }}</dd>
+                            @if ($citation->appeal->description)
+                                <dt class="col-sm-4">Details</dt>
+                                <dd class="col-sm-8">{{ $citation->appeal->description }}</dd>
+                            @endif
+                            @if ($citation->appeal->reviewed_at)
+                                <dt class="col-sm-4">Reviewed</dt>
+                                <dd class="col-sm-8">{{ $citation->appeal->reviewed_at->format('M d, Y') }}
+                                    @if ($citation->appeal->reviewer) by {{ $citation->appeal->reviewer->name }} @endif
+                                </dd>
+                            @endif
+                            <dt class="col-sm-4">Notes</dt>
+                            <dd class="col-sm-8">{{ $citation->appeal->decision_notes ?? '—' }}</dd>
+                        </dl>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="{{ route('appeals.show', $citation->appeal) }}" class="btn btn-outline-secondary">Open Full Record</a>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @elseif ($citation->isPayable())
+        @can('create', App\Models\Appeal::class)
+            {{-- File appeal modal --}}
+            <div class="modal fade" id="fileAppealModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <form method="POST" action="{{ route('appeals.store') }}">
+                            @csrf
+                            <input type="hidden" name="citation_id" value="{{ $citation->id }}">
+                            <div class="modal-header">
+                                <h5 class="modal-title">File Appeal — {{ $citation->citation_number }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Reason <span class="text-danger">*</span></label>
+                                    <input type="text" name="reason" class="form-control" required maxlength="255"
+                                        placeholder="e.g. Ticket was issued in error">
+                                </div>
+                                <div class="mb-0">
+                                    <label class="form-label">Details / Note <span class="text-muted fw-normal">(optional)</span></label>
+                                    <textarea name="description" rows="3" class="form-control" maxlength="2000"
+                                        placeholder="Explain the citizen's grounds for the appeal..."></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary"><i class="bi bi-send me-1"></i>File Appeal</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endcan
+    @endif
 @endif
 
 @if (isset($clamping))
@@ -115,7 +220,7 @@
                     <div class="card-body">
                         <div class="row g-2">
                             <div class="col-6"><strong class="text-muted small d-block">Plate</strong>{{ $citation->vehicle_plate }}</div>
-                            <div class="col-6"><strong class="text-muted small d-block">Violation</strong>{{ $citation->violationType->name }}</div>
+                            <div class="col-6"><strong class="text-muted small d-block">Violation</strong>{{ $citation->violationLabel() }}</div>
                             <div class="col-6"><strong class="text-muted small d-block">Amount</strong>₱{{ number_format($citation->penalty_amount, 2) }}</div>
                             <div class="col-6"><strong class="text-muted small d-block">Issued</strong>{{ $citation->issued_at->format('M d, Y') }}</div>
                         </div>
@@ -123,6 +228,12 @@
                             <div class="mt-2 pt-2 border-top">
                                 <small class="text-muted d-block">Paid {{ $citation->payment->paid_at?->format('M d, Y') ?? '—' }}</small>
                                 <small class="text-muted">Receipt {{ $citation->payment->receipt_number }}</small>
+                            </div>
+                        @endif
+                        @if ($citation->appeal)
+                            <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
+                                <small class="text-muted">Appeal {{ $citation->appeal->ticketNumber() }}</small>
+                                <span class="badge {{ $citation->appeal->status->badgeClass() }}">{{ $citation->appeal->status->label() }}</span>
                             </div>
                         @endif
                     </div>

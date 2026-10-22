@@ -9,3 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('citations:mark-overdue')->daily();
+
+Schedule::command('tems:prune --days=180')->daily();

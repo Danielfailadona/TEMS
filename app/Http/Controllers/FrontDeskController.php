@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Citation;
 use App\Models\ClampingRecord;
-use App\Models\ClampingRequest;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -30,12 +29,12 @@ class FrontDeskController extends Controller
             $citation = null;
 
             if ($citationNumber) {
-                $citation = Citation::with(['violationType', 'payment'])
+                $citation = Citation::with(['violationType', 'payment', 'appeal.submitter', 'appeal.reviewer'])
                     ->where('citation_number', 'like', "%{$citationNumber}%")
                     ->latest('issued_at')
                     ->first();
             } elseif ($plateNumber) {
-                $citation = Citation::with(['violationType', 'payment'])
+                $citation = Citation::with(['violationType', 'payment', 'appeal.submitter', 'appeal.reviewer'])
                     ->where('vehicle_plate', 'like', "%{$plateNumber}%")
                     ->latest('issued_at')
                     ->first();
@@ -45,7 +44,7 @@ class FrontDeskController extends Controller
         }
 
         // Default: paginated list with status filter
-        $citations = Citation::with(['violationType', 'payment'])
+        $citations = Citation::with(['violationType', 'payment', 'appeal'])
             ->when($status, fn ($q) => $q->where('status', $status))
             ->latest('issued_at')
             ->paginate(6)

@@ -24,7 +24,8 @@
         <div class="card stat-card h-100">
             <div class="card-header bg-white"><strong>By Violation Type</strong></div>
             <div class="card-body">
-                <table class="table mb-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
                     <thead><tr><th>Type</th><th class="text-end">Count</th></tr></thead>
                     <tbody>
                         @foreach ($byViolationType as $type => $count)
@@ -39,7 +40,8 @@
         <div class="card stat-card h-100">
             <div class="card-header bg-white"><strong>By Enforcer</strong></div>
             <div class="card-body">
-                <table class="table mb-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
                     <thead><tr><th>Enforcer</th><th class="text-end">Citations</th></tr></thead>
                     <tbody>
                         @foreach ($byEnforcer as $name => $count)

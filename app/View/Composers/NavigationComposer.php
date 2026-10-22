@@ -40,7 +40,7 @@ class NavigationComposer
                 $operations[] = ['label' => 'Citations', 'route' => 'citations.index', 'icon' => 'file-earmark-text'];
             }
 
-            if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::Enforcer)) {
+            if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::Enforcer, Role::FrontDesk)) {
                 $operations[] = ['label' => 'Appeals', 'route' => 'appeals.index', 'icon' => 'exclamation-circle'];
             }
 
@@ -57,7 +57,11 @@ class NavigationComposer
             }
 
             if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::Enforcer)) {
-                $operations[] = ['label' => 'Clamping Requests', 'route' => 'clamping-requests.index', 'icon' => 'inbox'];
+                $operations[] = ['label' => 'Citizen Reports', 'route' => 'citizen-reports.index', 'icon' => 'inbox'];
+            }
+
+            if ($user->isRole(Role::SuperAdmin, Role::Administrator)) {
+                $operations[] = ['label' => 'Task Assignment', 'route' => 'operations.task-assignment.index', 'icon' => 'diagram-3'];
             }
 
             if ($user->isRole(Role::SuperAdmin, Role::Administrator)) {
@@ -69,6 +73,11 @@ class NavigationComposer
                 $administration[] = ['label' => 'Zones', 'route' => 'zones.index', 'icon' => 'geo-alt'];
                 $administration[] = ['label' => 'Archives', 'route' => 'archives.index', 'icon' => 'archive'];
                 $administration[] = ['label' => 'Audit Logs', 'route' => 'audit-logs.index', 'icon' => 'journal-text'];
+            }
+
+            if ($user->isCashier()) {
+                $monitoring[] = ['label' => 'Overdue Citations', 'route' => 'reports.overdue-citations', 'icon' => 'clock-history'];
+                $operations[] = ['label' => 'My Archives', 'route' => 'archives.index', 'icon' => 'archive'];
             }
 
             if ($user->isRole(Role::Enforcer)) {

@@ -11,7 +11,7 @@
                 @forelse ($citations as $citation)
                     <tr>
                         <td>{{ $citation->citation_number }}</td>
-                        <td>{{ $citation->violationType->name }}</td>
+                        <td>{{ $citation->violationLabel() }}</td>
                         <td>{{ $citation->vehicle_plate }}</td>
                         <td>₱{{ number_format($citation->penalty_amount, 2) }}</td>
                         <td>{{ $citation->due_date->format('M d, Y') }}</td>

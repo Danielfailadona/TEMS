@@ -5,9 +5,9 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <p class="text-muted mb-0">Manage citation appeals and review outcomes.</p>
-    @if(auth()->user()->isRole(App\Enums\Role::VehicleOwner))
-        <a href="{{ route('appeals.create') }}" class="btn btn-primary">Submit Appeal</a>
-    @endif
+    @can('create', App\Models\Appeal::class)
+        <a href="{{ route('appeals.create') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>File Appeal</a>
+    @endcan
 </div>
 
 <form class="row g-2 mb-3" method="GET">
@@ -27,7 +27,9 @@
         <table class="table table-hover mb-0">
             <thead>
                 <tr>
+                    <th>Ticket #</th>
                     <th>Citation</th>
+                    <th>Filed By</th>
                     <th>Reason</th>
                     <th>Status</th>
                     <th>Submitted</th>
@@ -37,14 +39,16 @@
             <tbody>
                 @forelse ($appeals as $appeal)
                     <tr>
+                        <td><span class="badge tag-gray">{{ $appeal->ticketNumber() }}</span></td>
                         <td>{{ $appeal->citation->citation_number ?? '—' }}</td>
+                        <td>{{ $appeal->submitterDisplay() }}</td>
                         <td>{{ $appeal->reason }}</td>
                         <td><span class="badge {{ $appeal->status->badgeClass() }}">{{ $appeal->status->label() }}</span></td>
                         <td>{{ optional($appeal->submitted_at)->format('M d, Y') }}</td>
                         <td class="text-end"><a href="{{ route('appeals.show', $appeal) }}" class="btn btn-sm btn-outline-primary">View</a></td>
                     </tr>
                 @empty
-                    <tr><td colspan="5" class="text-center text-muted py-4">No appeals found.</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted py-4">No appeals found.</td></tr>
                 @endforelse
             </tbody>
         </table>

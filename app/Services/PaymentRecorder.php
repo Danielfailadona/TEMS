@@ -34,14 +34,7 @@ class PaymentRecorder
 
             $citation->update(['status' => CitationStatus::Paid]);
 
-            Archive::create([
-                'archivable_type' => Citation::class,
-                'archivable_id' => $citation->id,
-                'archived_by' => $cashierId,
-                'archived_at' => now(),
-                'reason' => 'Citation paid - Receipt: '.$payment->receipt_number,
-                'snapshot' => $citation->refresh()->toArray(),
-            ]);
+            Archive::log($citation->refresh(), 'Citation paid - Receipt: '.$payment->receipt_number, $cashierId);
 
             if ($citation->issued_by) {
                 $enforcer = User::find($citation->issued_by);
@@ -95,14 +88,7 @@ class PaymentRecorder
                 'paid_at' => now(),
             ]);
 
-            Archive::create([
-                'archivable_type' => ClampingRecord::class,
-                'archivable_id' => $clamping->id,
-                'archived_by' => $cashierId,
-                'archived_at' => now(),
-                'reason' => 'Clamp payment recorded (Notice: '.$clamping->notice_number.')',
-                'snapshot' => $clamping->fresh()->toArray(),
-            ]);
+            Archive::log($clamping->fresh(), 'Clamp payment recorded (Notice: '.$clamping->notice_number.')', $cashierId);
 
             return $payment;
         });
@@ -134,14 +120,7 @@ class PaymentRecorder
                 'paid_at' => now(),
             ]);
 
-            Archive::create([
-                'archivable_type' => ImpoundingRecord::class,
-                'archivable_id' => $impounding->id,
-                'archived_by' => $cashierId,
-                'archived_at' => now(),
-                'reason' => 'Impound payment recorded (Notice: '.$impounding->notice_number.')',
-                'snapshot' => $impounding->fresh()->toArray(),
-            ]);
+            Archive::log($impounding->fresh(), 'Impound payment recorded (Notice: '.$impounding->notice_number.')', $cashierId);
 
             return $payment;
         });

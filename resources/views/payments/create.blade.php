@@ -72,7 +72,7 @@
 
             <div class="row g-2 small mb-4">
                 @if ($category === 'citation')
-                    <div class="col-md-4"><strong class="text-muted d-block">Violation</strong>{{ $record->violationType->name }}</div>
+                    <div class="col-md-4"><strong class="text-muted d-block">Violation</strong>{{ $record->violationLabel() }}</div>
                     <div class="col-md-4"><strong class="text-muted d-block">Vehicle</strong>{{ $record->vehicle_plate ?: '—' }}</div>
                     <div class="col-md-4"><strong class="text-muted d-block">Driver</strong>{{ $record->driver_name ?: '—' }}</div>
                 @else
@@ -179,7 +179,7 @@
                                 <td><span class="badge {{ $suggCategory === 'citation' ? 'bg-primary' : ($suggCategory === 'clamping' ? 'bg-warning text-dark' : 'bg-info') }}">{{ ucfirst($suggCategory) }}</span></td>
                                 <td class="fw-semibold">{{ $suggCategory === 'citation' ? $rec->citation_number : $rec->notice_number }}</td>
                                 <td>{{ $rec->vehicle_plate ?: '—' }}</td>
-                                <td>{{ $suggCategory === 'citation' ? $rec->violationType->name : ($rec->officer?->name ?: '—') }}</td>
+                                <td>{{ $suggCategory === 'citation' ? ($rec instanceof \App\Models\Citation ? $rec->violationLabel() : $rec->violationType?->name) : ($rec->officer?->name ?: '—') }}</td>
                                 <td>₱{{ number_format((float) $due, 2) }}</td>
                                 <td><span class="badge {{ $rec->status->badgeClass() }}">{{ $rec->status->label() }}</span></td>
                                 <td class="text-end">

@@ -118,6 +118,9 @@ class PayMongoController extends Controller
             abort(404);
         }
 
+        $payerName = trim((string) $request->input('payer_name', ''));
+        $payerPhone = trim((string) $request->input('payer_phone', ''));
+
         if ($citation->payment) {
             if ($citation->payment->paid_at) {
                 return back()->withErrors(['citation_id' => 'This citation has already been paid.']);
@@ -146,8 +149,8 @@ class PayMongoController extends Controller
 
         try {
             $session = $payMongo->createCheckoutSession([
-                'billing_name' => $citation->driver_name ?? 'Citation Payer',
-                'billing_phone' => null,
+                'billing_name' => $payerName !== '' ? $payerName : ($citation->driver_name ?? 'Citation Payer'),
+                'billing_phone' => $payerPhone !== '' ? $payerPhone : null,
                 'amount' => $citation->penalty_amount,
                 'description' => 'Citation '.$citation->citation_number.' - '.$citation->violationType->name,
                 'success_url' => route('public.citation.success', [
@@ -398,14 +401,7 @@ class PayMongoController extends Controller
             ->exists();
 
         if (! $alreadyArchived) {
-            Archive::create([
-                'archivable_type' => Citation::class,
-                'archivable_id' => $payment->citation->id,
-                'archived_by' => $archivedBy,
-                'archived_at' => now(),
-                'reason' => 'Citation paid online via PayMongo',
-                'snapshot' => $payment->citation->toArray(),
-            ]);
+            Archive::log($payment->citation, 'Citation paid online via PayMongo', $archivedBy);
         }
 
         \App\Models\SystemNotification::notify(

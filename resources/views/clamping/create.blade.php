@@ -34,7 +34,7 @@
                 <label class="form-label">Vehicle Plate</label>
                 <input type="text" name="vehicle_plate" class="form-control" value="{{ old('vehicle_plate', $citation->vehicle_plate ?? '') }}" placeholder="ABC-1234" required>
                 @if (isset($citation))
-                    <div class="small text-muted mt-1">Citation: {{ $citation->citation_number }} — {{ $citation->violationType->name }}</div>
+                    <div class="small text-muted mt-1">Citation: {{ $citation->citation_number }} — {{ $citation->violationLabel() }}</div>
                 @endif
             </div>
             <div class="col-md-6">

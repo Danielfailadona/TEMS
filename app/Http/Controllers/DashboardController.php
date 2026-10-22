@@ -9,15 +9,20 @@ use App\Enums\Role;
 use App\Models\Appeal;
 use App\Models\Citation;
 use App\Models\ClampingRecord;
-use App\Models\ClampingRequest;
+use App\Models\CitizenReport;
 use App\Models\Payment;
 use App\Models\ViolationType;
 use App\Models\Zone;
 use App\Models\User;
+use App\Services\UserKpiService;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
+    public function __construct(private UserKpiService $kpi)
+    {
+    }
+
     public function index(): View
     {
         $user = auth()->user();
@@ -28,6 +33,10 @@ class DashboardController extends Controller
 
         if ($user->isRole(Role::FrontDesk)) {
             return $this->frontDeskDashboard($user);
+        }
+
+        if ($user->isCashier()) {
+            return $this->cashierDashboard($user);
         }
 
         // KPIs
@@ -159,7 +168,7 @@ class DashboardController extends Controller
         // Pending Work Queue
         $pendingQueue = [
             'appeals' => Appeal::whereIn('status', [AppealStatus::Submitted, AppealStatus::UnderReview])->count(),
-            'clamping_requests' => ClampingRequest::where('status', 'pending')->count(),
+            'citizen_reports' => CitizenReport::where('status', 'pending')->count(),
             'account_approvals' => User::where('account_status', 'pending')->count(),
         ];
 
@@ -174,6 +183,8 @@ class DashboardController extends Controller
             'is_active' => $z->is_active,
         ]);
 
+        $contribution = $this->kpi->contribution($user);
+
         return view('dashboard.index', compact(
             'stats',
             'trends',
@@ -184,7 +195,40 @@ class DashboardController extends Controller
             'recentActivity',
             'pendingQueue',
             'zoneMapData',
+            'contribution',
         ));
+    }
+
+    /**
+     * Focused cashier workspace: recording payments, printing receipts (via
+     * archives) and a personal contribution summary.
+     */
+    private function cashierDashboard($user): View
+    {
+        $contribution = $this->kpi->contribution($user);
+
+        $stats = [
+            'collected_today' => Payment::where('cashier_id', $user->id)
+                ->whereDate('paid_at', today())->sum('amount'),
+            'payments_today' => Payment::where('cashier_id', $user->id)
+                ->whereDate('paid_at', today())->count(),
+            'unpaid_citations' => Citation::whereIn('status', [
+                CitationStatus::Issued,
+                CitationStatus::Overdue,
+                CitationStatus::Clamped,
+                CitationStatus::Impounded,
+            ])->count(),
+            'overdue_citations' => Citation::where('status', CitationStatus::Overdue)->count(),
+            'active_clamps' => ClampingRecord::where('status', ClampingStatus::AwaitingPayment)->count(),
+        ];
+
+        $recentPayments = Payment::with(['citation', 'payable'])
+            ->where('cashier_id', $user->id)
+            ->latest('paid_at')
+            ->take(8)
+            ->get();
+
+        return view('dashboard.cashier', compact('stats', 'contribution', 'recentPayments'));
     }
 
     protected function ownerDashboard($user): View

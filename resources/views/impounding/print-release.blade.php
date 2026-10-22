@@ -106,7 +106,7 @@
         <tr><td class="label">Vehicle Plate</td><td class="value">{{ $impounding->vehicle_plate }}</td></tr>
         @if ($impounding->citation)
             <tr><td class="label">Citation #</td><td class="value">{{ $impounding->citation->citation_number }}</td></tr>
-            <tr><td class="label">Violation</td><td class="value">{{ $impounding->citation->violationType->name }}</td></tr>
+            <tr><td class="label">Violation</td><td class="value">{{ $impounding->citation->violationLabel() }}</td></tr>
             <tr><td class="label">Penalty Amount</td><td class="value">₱{{ number_format($impounding->citation->penalty_amount, 2) }}</td></tr>
         @endif
         @if ($impounding->clampingRecord)

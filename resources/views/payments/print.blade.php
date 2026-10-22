@@ -105,7 +105,7 @@
         <tr><td class="label">Category</td><td class="value">{{ $payment->categoryLabel() }}</td></tr>
         @if ($payment->category() === 'citation')
             <tr><td class="label">Citation #</td><td class="value">{{ $payment->citation->citation_number }}</td></tr>
-            <tr><td class="label">Violation</td><td class="value">{{ $payment->citation->violationType->name }}</td></tr>
+            <tr><td class="label">Violation</td><td class="value">{{ $payment->citation->violationLabel() }}</td></tr>
         @else
             <tr><td class="label">Notice #</td><td class="value">{{ $payment->payableNoticeNumber() }}</td></tr>
             @if ($payment->citation)

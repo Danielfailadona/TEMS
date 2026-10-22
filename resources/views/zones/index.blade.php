@@ -561,12 +561,14 @@
                                     <i class="bi bi-{{ $zone->is_active ? 'pause-fill' : 'play-fill' }}"></i>
                                 </button>
                             </form>
+                            @if (auth()->user()?->isSuperAdmin())
                             <form action="{{ route('zones.destroy', $zone) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete zone {{ $zone->name }}?');">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="zone-action-btn delete" title="Delete">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -601,12 +603,13 @@
     document.addEventListener('DOMContentLoaded', function () {
         if (!window.__zonePicker?.initZoneViewer) return;
         const zones = @json($mapData);
+        const canDeleteZone = {{ auth()->user()?->isSuperAdmin() ? 'true' : 'false' }};
         const viewer = window.__zonePicker?.initZoneViewer('zone-index-map', {
             zones: zones,
             detailActions: {
                 editUrl: (id) => @json(route('zones.edit', ['zone' => '__ID__'])).replace('__ID__', id),
                 toggleUrl: (id) => @json(route('zones.toggle-active', ['zone' => '__ID__'])).replace('__ID__', id),
-                deleteUrl: (id) => @json(route('zones.destroy', ['zone' => '__ID__'])).replace('__ID__', id),
+                deleteUrl: canDeleteZone ? (id) => @json(route('zones.destroy', ['zone' => '__ID__'])).replace('__ID__', id) : null,
                 canToggle: true,
             },
             onZoneClick: function(zone) {

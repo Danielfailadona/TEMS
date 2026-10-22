@@ -51,7 +51,8 @@
         <div class="card stat-card h-100">
             <div class="card-header bg-white"><strong>Payments by Method</strong></div>
             <div class="card-body">
-                <table class="table mb-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
                     <thead><tr><th>Method</th><th class="text-end">Count</th><th class="text-end">Amount</th></tr></thead>
                     <tbody>
                         @foreach ($byMethod as $method => $data)

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Role;
+use App\Models\Archive;
 use App\Models\Citation;
 use App\Models\Team;
 use App\Models\User;
@@ -157,11 +158,12 @@ class TeamController extends Controller
 
     public function destroy(Team $team): RedirectResponse
     {
-        $this->authorizeAdmin();
+        $this->authorizeSuperAdmin();
 
         $name = $team->name;
 
         DB::transaction(function () use ($team) {
+            Archive::log($team, 'Team deleted', auth()->id(), $team->load('members')->toArray());
             // Unassign zones so they aren't orphaned.
             $team->zones()->update(['team_id' => null]);
             // Detach members so the pivot rows go with the team.
@@ -206,5 +208,10 @@ class TeamController extends Controller
     protected function authorizeAdmin(): void
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
+    }
+
+    protected function authorizeSuperAdmin(): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
     }
 }

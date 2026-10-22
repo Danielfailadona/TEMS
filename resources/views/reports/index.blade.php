@@ -41,5 +41,16 @@
       </div>
     </a>
   </div>
+  <div class="col-md-4">
+    <a href="{{ route('reports.overdue-citations') }}" class="text-decoration-none">
+      <div class="card stat-card h-100 border-0">
+        <div class="card-body text-center py-5">
+          <i class="bi bi-clock-history fs-1 text-danger mb-3 d-block"></i>
+          <h5 class="card-title">Overdue Citations</h5>
+          <p class="text-muted mb-0">Unpaid citations past their due date, grouped by age.</p>
+        </div>
+      </div>
+    </a>
+  </div>
 </div>
 @endsection

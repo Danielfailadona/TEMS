@@ -102,7 +102,7 @@ class ImpoundingRecord extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll()
+            ->logOnly(['notice_number', 'status', 'citation_id', 'impounded_by', 'paid_at', 'released_at', 'grace_until'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

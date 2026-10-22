@@ -2,16 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\AppealStatus;
-use App\Models\Appeal;
 use App\Models\Archive;
 use App\Models\Citation;
+use App\Models\CitizenReport;
 use App\Models\ClampingRecord;
-use App\Models\ClampingRequest;
+use App\Services\CitationNumberService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Illuminate\Support\Str;
 
 class CitizenPortalController extends Controller
 {
@@ -63,6 +61,25 @@ class CitizenPortalController extends Controller
         $isEnforcerCopy = false;
 
         return view('citations.print', compact('citation', 'isEnforcerCopy'));
+    }
+
+    /**
+     * Payment form reached from the citizen ticket lookup. Every field the
+     * gateway needs is pre-filled from the looked-up citation (autofill), so
+     * the citizen only confirms before being sent to PayMongo.
+     */
+    public function citationPay(Request $request, $id, $token): View
+    {
+        $citation = Citation::with(['violationType', 'enforcer', 'payment'])->find($id);
+
+        if (! $citation || ! hash_equals($citation->getValidationToken(), (string) $token)) {
+            abort(404);
+        }
+
+        $payerName = old('payer_name', $citation->driver_name ?? auth()->user()?->name);
+        $payerPhone = old('payer_phone', auth()->user()?->phone);
+
+        return view('citizen.citation-pay', compact('citation', 'token', 'payerName', 'payerPhone'));
     }
 
     public function citationLookup(Request $request): View
@@ -126,40 +143,6 @@ class CitizenPortalController extends Controller
         return view('citizen.citation-detail', compact('citation'));
     }
 
-    public function submitAppeal(Request $request, $id, $token): RedirectResponse
-    {
-        $citation = Citation::find($id);
-
-        if (! $citation || ! hash_equals($citation->getValidationToken(), (string) $token)) {
-            abort(404);
-        }
-
-        if (! $citation->isPayable()) {
-            return back()->with('error', 'This citation can no longer be appealed.');
-        }
-
-        if ($citation->appeal) {
-            return back()->with('error', 'An appeal has already been submitted for this citation.');
-        }
-
-        $validated = $request->validate([
-            'guest_name' => 'required|string|max:255',
-            'guest_contact' => 'required|string|max:255',
-            'reason' => 'required|string|max:255',
-            'description' => 'nullable|string|max:2000',
-        ]);
-
-        Appeal::create([
-            ...$validated,
-            'citation_id' => $citation->id,
-            'submitted_by' => null,
-            'status' => AppealStatus::Submitted,
-            'submitted_at' => now(),
-        ]);
-
-        return back()->with('success', 'Your appeal has been submitted. It will be reviewed by the enforcement office.');
-    }
-
     public function clampingLanding(Request $request): View
     {
         $requestInfo = $this->findClampingRequest($request->query('reference'));
@@ -174,7 +157,7 @@ class CitizenPortalController extends Controller
         return view('citizen.clamping-request', compact('requestInfo'));
     }
 
-    public function storeClampingRequest(Request $request)
+    public function storeClampingRequest(Request $request, CitationNumberService $numberService)
     {
         $data = $request->validate([
             'requester_name' => 'required|string|max:255',
@@ -184,39 +167,30 @@ class CitizenPortalController extends Controller
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'vehicle_plate' => 'required|string|max:20',
-            'vehicle_description' => 'nullable|string',
+            'vehicle_make' => 'nullable|string|max:100',
+            'vehicle_model' => 'nullable|string|max:100',
+            'vehicle_color' => 'nullable|string|max:50',
             'evidence_photo' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
             'additional_notes' => 'nullable|string|max:1000',
         ]);
 
         try {
-            $photoPath = \App\Services\SupabaseStorage::put('clamping-requests/'.$request->file('evidence_photo')->hashName(), $request->file('evidence_photo'));
+            $photoPath = \App\Services\SupabaseStorage::put('citizen-reports/'.$request->file('evidence_photo')->hashName(), $request->file('evidence_photo'));
         } catch (\Throwable $e) {
             report($e);
             return back()->with('error', 'We could not upload your evidence photo. Please try again.');
         }
         $data['evidence_photo'] = $photoPath;
         $data['status'] = 'pending';
+        $data['report_number'] = $numberService->reportNumber();
 
-        // Generate reference number: CLP-YYYYMMDD-XXXX
-        $datePrefix = now()->format('Ymd');
-        $randomSuffix = Str::upper(Str::random(4));
-        $data['reference_number'] = "CLP-{$datePrefix}-{$randomSuffix}";
-
-        $clampingRequest = ClampingRequest::create($data);
+        $citizenReport = CitizenReport::create($data);
 
         if (auth()->check()) {
-            Archive::create([
-                'archivable_type' => ClampingRequest::class,
-                'archivable_id' => $clampingRequest->id,
-                'archived_by' => auth()->id(),
-                'archived_at' => now(),
-                'reason' => 'Clamping request created',
-                'snapshot' => $clampingRequest->toArray(),
-            ]);
+            Archive::log($citizenReport, 'Citizen report created', auth()->id());
         }
 
-        return redirect()->route('citizen.clamping.success', ['reference' => $clampingRequest->reference_number]);
+        return redirect()->route('citizen.clamping.success', ['reference' => $citizenReport->report_number]);
     }
 
     public function clampingSuccess(Request $request): View
@@ -237,21 +211,20 @@ class CitizenPortalController extends Controller
         ]);
 
         $reference = $request->input('reference');
-        $clampingRequest = ClampingRequest::where('reference_number', $reference)
+        $requestInfo = CitizenReport::where('report_number', $reference)
             ->with(['processedBy'])
             ->first();
-        $requestInfo = $clampingRequest;
 
         return view('citizen.clamping-track', compact('requestInfo', 'reference'));
     }
 
-    private function findClampingRequest(?string $reference): ?ClampingRequest
+    private function findClampingRequest(?string $reference): ?CitizenReport
     {
         if (blank($reference)) {
             return null;
         }
 
-        return ClampingRequest::where('reference_number', $reference)
+        return CitizenReport::where('report_number', $reference)
             ->with(['processedBy'])
             ->first();
     }

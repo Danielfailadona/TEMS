@@ -85,7 +85,7 @@
 
 @php
 function archiveSummary($archive) {
-    $snap = $archive->snapshot ?? [];
+    $snap = $archive->resolvedSnapshot();
     $type = class_basename($archive->archivable_type);
     $id = $snap['id'] ?? $archive->archivable_id;
     $officer = $snap['officer']['name'] ?? $snap['enforcer']['name'] ?? $archive->archivedBy?->name;
@@ -125,12 +125,13 @@ function archiveSummary($archive) {
                 'officer' => $officer ?? ($snap['clamped_by_name'] ?? 'System'),
                 'status' => $status,
             ];
+        case 'CitizenReport':
         case 'ClampingRequest':
             return [
                 'icon' => 'bi-geo-alt',
                 'color' => '#0891b2',
-                'badge' => 'Request',
-                'title' => $snap['requester_name'] ?? "Request #{$id}",
+                'badge' => 'Report',
+                'title' => $snap['report_number'] ?? "Report #{$id}",
                 'subtitle' => $snap['vehicle_plate'] ?? '',
                 'meta' => $snap['location_address'] ?? '',
                 'officer' => $archive->archivedBy?->name ?? ($snap['processed_by_name'] ?? 'System'),
@@ -151,7 +152,7 @@ function archiveSummary($archive) {
 }
 
 function archiveDetails($archive) {
-    $snap = $archive->snapshot ?? [];
+    $snap = $archive->resolvedSnapshot();
     $type = class_basename($archive->archivable_type);
     $details = [];
 
@@ -192,11 +193,13 @@ function archiveDetails($archive) {
             ];
             foreach ($fields as $label => $val) { if ($val) $details[$label] = $val; }
             break;
+        case 'CitizenReport':
         case 'ClampingRequest':
             $fields = [
+                'Report #' => $snap['report_number'] ?? null,
                 'Requester' => $snap['requester_name'] ?? null,
                 'Phone' => $snap['requester_phone'] ?? null,
-                'Vehicle' => $snap['vehicle_plate'] ?? null,
+                'Vehicle' => trim((($snap['vehicle_color'] ?? '').' '.($snap['vehicle_make'] ?? '').' '.($snap['vehicle_model'] ?? ''))) ?: ($snap['vehicle_plate'] ?? null),
                 'Location' => $snap['location_address'] ?? null,
                 'Processed At' => isset($snap['processed_at']) ? \Carbon\Carbon::parse($snap['processed_at'])->format('M d, Y H:i') : null,
                 'Status' => $snap['status'] ?? null,

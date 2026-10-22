@@ -146,14 +146,7 @@ class ImpoundingController extends Controller
             'impounded_at' => now(),
         ]);
 
-        Archive::create([
-            'archivable_type' => ImpoundingRecord::class,
-            'archivable_id' => $record->id,
-            'archived_by' => auth()->id(),
-            'archived_at' => now(),
-            'reason' => 'Vehicle impounded',
-            'snapshot' => $record->toArray(),
-        ]);
+        Archive::log($record, 'Vehicle impounded', auth()->id());
 
         if ($citation) {
             $citation->update(['status' => CitationStatus::Impounded]);
@@ -248,14 +241,7 @@ class ImpoundingController extends Controller
                 $impounding->citation->update(['status' => CitationStatus::Released]);
             }
 
-            Archive::create([
-                'archivable_type' => ImpoundingRecord::class,
-                'archivable_id' => $impounding->id,
-                'archived_by' => auth()->id(),
-                'archived_at' => now(),
-                'reason' => 'Vehicle released (Notice: ' . $impounding->notice_number . ')',
-                'snapshot' => $impounding->toArray(),
-            ]);
+            Archive::log($impounding, 'Vehicle released (Notice: ' . $impounding->notice_number . ')', auth()->id());
         });
 
         return redirect()->route('impounding.index')

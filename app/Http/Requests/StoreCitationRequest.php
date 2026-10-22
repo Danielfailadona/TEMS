@@ -14,12 +14,17 @@ class StoreCitationRequest extends FormRequest
 
     public function rules(): array
     {
+        $selectedType = ViolationType::find(request()->input('violation_type_id'));
+        $isCustom = $selectedType?->isCustom() ?? false;
+
         return [
             'violation_type_id' => ['required', 'exists:violation_types,id', function ($attribute, $value, $fail) {
                 if (! ViolationType::where('id', $value)->where('is_active', true)->exists()) {
                     $fail('The selected violation type is not available.');
                 }
             }],
+            'custom_violation_name' => [$isCustom ? 'required' : 'nullable', 'string', 'max:255'],
+            'penalty_amount' => [$isCustom ? 'required' : 'nullable', 'numeric', 'min:0'],
             'vehicle_plate' => ['required', 'string', 'max:20'],
             'vehicle_make' => ['nullable', 'string', 'max:100'],
             'vehicle_model' => ['nullable', 'string', 'max:100'],

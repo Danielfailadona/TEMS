@@ -38,7 +38,7 @@
         <div class="row mb-2"><div class="col-5 text-muted">Category</div><div class="col-7">{{ $payment->categoryLabel() }}</div></div>
         @if ($payment->category() === 'citation')
             <div class="row mb-2"><div class="col-5 text-muted">Citation #</div><div class="col-7">{{ $payment->citation->citation_number }}</div></div>
-            <div class="row mb-2"><div class="col-5 text-muted">Violation</div><div class="col-7">{{ $payment->citation->violationType->name }}</div></div>
+            <div class="row mb-2"><div class="col-5 text-muted">Violation</div><div class="col-7">{{ $payment->citation->violationLabel() }}</div></div>
         @else
             <div class="row mb-2"><div class="col-5 text-muted">Notice #</div><div class="col-7">{{ $payment->payableNoticeNumber() }}</div></div>
             @if ($payment->citation)

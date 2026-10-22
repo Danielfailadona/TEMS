@@ -24,7 +24,7 @@ class AppealPolicy
 
     public function create(User $user): bool
     {
-        return $user->isRole(Role::VehicleOwner);
+        return $user->isRole(Role::SuperAdmin, Role::Administrator, Role::FrontDesk);
     }
 
     public function update(User $user, Appeal $appeal): bool
@@ -38,5 +38,10 @@ class AppealPolicy
         }
 
         return true;
+    }
+
+    public function delete(User $user, Appeal $appeal): bool
+    {
+        return $user->isSuperAdmin();
     }
 }

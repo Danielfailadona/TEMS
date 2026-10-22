@@ -60,4 +60,9 @@ class ClampingPolicy
             Role::Enforcer
         );
     }
+
+    public function delete(User $user, ClampingRecord $clampingRecord): bool
+    {
+        return $user->isSuperAdmin();
+    }
 }

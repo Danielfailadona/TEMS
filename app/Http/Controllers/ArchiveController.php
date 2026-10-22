@@ -15,7 +15,7 @@ class ArchiveController extends Controller
     private function filteredQuery(Request $request)
     {
         $user = auth()->user();
-        $query = Archive::with('archivedBy')->latest('archived_at');
+        $query = Archive::with(['archivedBy', 'archivable'])->latest('archived_at');
 
         if ($user->isAdmin()) {
             if ($request->filled('user_id')) {
@@ -72,7 +72,7 @@ class ArchiveController extends Controller
 
     public function print(Archive $archive): View
     {
-        $archive->load('archivedBy');
+        $archive->load(['archivedBy', 'archivable']);
         $type = class_basename($archive->archivable_type);
 
         return view('archives.print', compact('archive', 'type'));
@@ -101,7 +101,7 @@ class ArchiveController extends Controller
                     'reason' => $archive->reason,
                     'archived_by' => $archive->archivedBy?->name ?? 'System',
                     'archived_at' => $archive->archived_at->toISOString(),
-                    'snapshot' => $archive->snapshot,
+                    'snapshot' => $archive->resolvedSnapshot(),
                 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
                 fwrite($handle, $line . "\n");

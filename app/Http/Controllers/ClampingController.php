@@ -8,7 +8,7 @@ use App\Http\Requests\StoreClampingRequest;
 use App\Models\Archive;
 use App\Models\Citation;
 use App\Models\ClampingRecord;
-use App\Models\ClampingRequest as CitizenClampingRequest;
+use App\Models\CitizenReport;
 use App\Models\User;
 use App\Models\VehicleRelease;
 use App\Services\CitationNumberService;
@@ -48,7 +48,7 @@ class ClampingController extends Controller
 
         $records = $query->latest('clamped_at')->paginate(12)->withQueryString();
 
-        $pendingRequests = CitizenClampingRequest::where('status', 'pending')
+        $pendingRequests = CitizenReport::where('status', 'pending')
             ->latest()
             ->get();
 
@@ -120,14 +120,7 @@ class ClampingController extends Controller
             'clamped_at' => now(),
         ]);
 
-        Archive::create([
-            'archivable_type' => ClampingRecord::class,
-            'archivable_id' => $record->id,
-            'archived_by' => auth()->id(),
-            'archived_at' => now(),
-            'reason' => 'Vehicle clamped',
-            'snapshot' => $record->toArray(),
-        ]);
+        Archive::log($record, 'Vehicle clamped', auth()->id());
 
         if ($citation) {
             $citation->update(['status' => CitationStatus::Clamped]);
@@ -173,14 +166,7 @@ class ClampingController extends Controller
             'status' => ClampingStatus::WaitingRelease,
         ]);
 
-        Archive::create([
-            'archivable_type' => ClampingRecord::class,
-            'archivable_id' => $clamping->id,
-            'archived_by' => auth()->id(),
-            'archived_at' => now(),
-            'reason' => 'Vehicle marked waiting for release (Notice: '.$clamping->notice_number.')',
-            'snapshot' => $clamping->fresh()->toArray(),
-        ]);
+        Archive::log($clamping->fresh(), 'Vehicle marked waiting for release (Notice: '.$clamping->notice_number.')', auth()->id());
 
         return redirect()->route('clamping.show', $clamping)
             ->with('success', 'Vehicle marked as waiting for release.');
@@ -212,14 +198,7 @@ class ClampingController extends Controller
                 $clamping->citation->update(['status' => CitationStatus::Released]);
             }
 
-            Archive::create([
-                'archivable_type' => ClampingRecord::class,
-                'archivable_id' => $clamping->id,
-                'archived_by' => auth()->id(),
-                'archived_at' => now(),
-                'reason' => 'Vehicle released (Notice: '.$clamping->notice_number.')',
-                'snapshot' => $clamping->fresh()->toArray(),
-            ]);
+            Archive::log($clamping->fresh(), 'Vehicle released (Notice: '.$clamping->notice_number.')', auth()->id());
         });
 
         $admins = User::whereIn('role', [Role::SuperAdmin, Role::Administrator])->get();

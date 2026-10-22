@@ -18,6 +18,7 @@ class Citation extends Model
     protected $fillable = [
         'citation_number',
         'violation_type_id',
+        'custom_violation_name',
         'issued_by',
         'penalty_amount',
         'status',
@@ -49,6 +50,23 @@ class Citation extends Model
     public function violationType(): BelongsTo
     {
         return $this->belongsTo(ViolationType::class);
+    }
+
+    /**
+     * Display label for the violation, honouring a free-text "Others" entry.
+     */
+    public function violationLabel(): string
+    {
+        if (filled($this->custom_violation_name)) {
+            return $this->custom_violation_name;
+        }
+
+        return $this->violationType?->name ?? '—';
+    }
+
+    public function isCustomViolation(): bool
+    {
+        return filled($this->custom_violation_name);
     }
 
     public function enforcer(): BelongsTo
@@ -136,7 +154,7 @@ class Citation extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll()
+            ->logOnly(['citation_number', 'status', 'violation_type_id', 'custom_violation_name', 'penalty_amount', 'issued_by', 'due_date', 'vehicle_plate'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

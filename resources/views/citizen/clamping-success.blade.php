@@ -1,6 +1,6 @@
 @extends('layouts.guest')
 
-@section('title', 'Request Submitted')
+@section('title', 'Report Submitted')
 
 @section('content')
 <div class="container py-5">
@@ -10,14 +10,14 @@
                 <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 100px; height: 100px;">
                     <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
                 </div>
-                <h1 class="h2 fw-bold">Request Submitted Successfully!</h1>
-                <p class="text-muted">Your clamping request has been received and is now under review.</p>
+                <h1 class="h2 fw-bold">Report Submitted Successfully!</h1>
+                <p class="text-muted">Your report has been received and is now under review.</p>
             </div>
 
             <div class="card stat-card mb-4 animate-on-load">
                 <div class="card-body p-4 text-center">
                     <div class="mb-3">
-                        <span class="text-muted small d-block">Your Reference Number</span>
+                        <span class="text-muted small d-block">Your Report Number</span>
                         <div class="d-flex align-items-center justify-content-center gap-2 flex-wrap">
                             <div class="bg-primary bg-opacity-10 text-primary px-4 py-2 rounded font-monospace fw-bold fs-4" style="letter-spacing: 0.1em;">{{ $reference }}</div>
                             <button type="button" class="btn btn-outline-primary" onclick="copyReference()" id="copyBtn">
@@ -27,7 +27,7 @@
                     </div>
                     <div class="alert alert-info d-inline-flex align-items-center gap-2 mb-0" style="max-width: 100%;">
                         <i class="bi bi-info-circle me-1"></i>
-                        <span class="small">Save this reference number to track your request status.</span>
+                        <span class="small">Save this report number to track your report status.</span>
                     </div>
                 </div>
             </div>
@@ -70,7 +70,7 @@
 
             <div class="text-center mt-4 animate-on-load">
                 <a href="{{ route('citizen.clamping.landing', ['tab' => 'track']) }}" class="btn btn-outline-primary px-4 py-2">
-                    <i class="bi bi-search me-1"></i> Track Your Request
+                    <i class="bi bi-search me-1"></i> Track Your Report
                 </a>
                 <a href="{{ route('citizen.clamping.landing') }}" class="btn btn-outline-secondary ms-2 px-4 py-2">
                     <i class="bi bi-plus-circle me-1"></i> Submit Another

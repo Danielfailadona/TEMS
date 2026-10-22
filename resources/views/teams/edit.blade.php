@@ -168,7 +168,8 @@
                 </div>
             </div>
 
-            {{-- Danger Zone --}}
+            {{-- Danger Zone (Super Administrator only) --}}
+            @if (auth()->user()?->isSuperAdmin())
             <div class="card stat-card mb-4 animate-on-load" style="border-color:#fecaca;">
                 <div class="card-header bg-transparent border-bottom">
                     <h5 class="mb-0 text-danger"><i class="bi bi-exclamation-octagon me-2"></i>Danger Zone</h5>
@@ -183,6 +184,7 @@
                     </button>
                 </div>
             </div>
+            @endif
         </div>
 
         <div class="col-lg-6">
@@ -231,6 +233,7 @@
     </div>
   </div>
 
+@if (auth()->user()?->isSuperAdmin())
 <!-- Delete Team Modal -->
 <div class="modal fade" id="deleteTeamModal" tabindex="-1" aria-labelledby="deleteTeamModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -254,6 +257,7 @@
         </div>
     </div>
 </div>
+@endif
 
 </form>
 @endsection

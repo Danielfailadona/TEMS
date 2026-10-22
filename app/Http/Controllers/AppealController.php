@@ -154,14 +154,7 @@ class AppealController extends Controller
             }
 
             if (in_array($request->status, ['approved', 'rejected'], true)) {
-                Archive::create([
-                    'archivable_type' => Appeal::class,
-                    'archivable_id' => $appeal->id,
-                    'archived_by' => auth()->id(),
-                    'archived_at' => now(),
-                    'reason' => 'Appeal '.$request->status,
-                    'snapshot' => $appeal->refresh()->toArray(),
-                ]);
+                Archive::log($appeal->refresh(), 'Appeal '.$request->status, auth()->id());
             }
         });
 

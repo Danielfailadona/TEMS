@@ -63,4 +63,9 @@ class ImpoundingRecordPolicy
 
         return true;
     }
+
+    public function delete(User $user, ImpoundingRecord $impoundingRecord): bool
+    {
+        return $user->isSuperAdmin();
+    }
 }

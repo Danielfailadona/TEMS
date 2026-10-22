@@ -57,7 +57,7 @@
         <div class="stat-label">Citation Linked</div>
     </div>
     <div class="stat-card-sm">
-        <div class="stat-value" style="color:#2563eb;">{{ $citation?->violationType?->name ?? '—' }}</div>
+        <div class="stat-value" style="color:#2563eb;">{{ $citation?->violationLabel() ?? '—' }}</div>
         <div class="stat-label">Violation Type</div>
     </div>
 </div>
@@ -79,7 +79,7 @@
                     <div class="mb-3">
                         <label class="form-label">Citation</label>
                         @if ($citation)
-                            <div class="form-control-plaintext fw-semibold">{{ $citation->citation_number }} - {{ $citation->violationType->name }}</div>
+                            <div class="form-control-plaintext fw-semibold">{{ $citation->citation_number }} - {{ $citation->violationLabel() }}</div>
                             <input type="hidden" name="citation_id" value="{{ $citation->id }}">
                         @else
                             <div class="form-control-plaintext text-muted">No citation linked. Violation eligibility will be checked on impound.</div>

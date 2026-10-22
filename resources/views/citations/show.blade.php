@@ -28,7 +28,7 @@
 <div class="d-flex justify-content-between align-items-start mb-4">
     <div>
         <h1 class="h3 mb-1">{{ $citation->citation_number }}</h1>
-        <p class="text-muted mb-0">{{ $citation->violationType->name }}</p>
+        <p class="text-muted mb-0">{{ $citation->violationLabel() }}</p>
     </div>
     <span class="badge {{ $citation->status->badgeClass() }} fs-6">{{ $citation->status->label() }}</span>
 </div>

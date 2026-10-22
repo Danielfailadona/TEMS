@@ -242,8 +242,19 @@
                                 @error('vehicle_plate')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold small">Vehicle Description</label>
-                                <input type="text" name="vehicle_description" class="form-control" placeholder="e.g., White Toyota Corolla" value="{{ old('vehicle_description') }}">
+                                <label class="form-label fw-semibold small">Color</label>
+                                <input type="text" name="vehicle_color" class="form-control @error('vehicle_color') is-invalid @enderror" placeholder="e.g., White" value="{{ old('vehicle_color') }}">
+                                @error('vehicle_color')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Make</label>
+                                <input type="text" name="vehicle_make" class="form-control @error('vehicle_make') is-invalid @enderror" placeholder="e.g., Toyota" value="{{ old('vehicle_make') }}">
+                                @error('vehicle_make')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Model</label>
+                                <input type="text" name="vehicle_model" class="form-control @error('vehicle_model') is-invalid @enderror" placeholder="e.g., Corolla" value="{{ old('vehicle_model') }}">
+                                @error('vehicle_model')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
                             </div>
                             <div class="col-12">
                                 <label class="form-label fw-semibold small">Additional Notes</label>
@@ -272,7 +283,7 @@
 
         <div class="d-flex flex-column flex-md-row gap-2">
             <button type="submit" class="btn btn-primary flex-grow-1 fw-semibold py-2">
-                <i class="bi bi-send me-2"></i>Submit Request
+                <i class="bi bi-send me-2"></i>Submit Report
             </button>
             <a href="{{ route('citizen.citation.lookup') }}" class="btn btn-outline-secondary py-2">Cancel</a>
         </div>

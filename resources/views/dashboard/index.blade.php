@@ -47,6 +47,9 @@
     </div>
 </div>
 
+{{-- Per-user contribution KPIs --}}
+@include('dashboard.partials.my-contribution')
+
 {{-- Needs attention --}}
 <div class="section-label">Needs attention</div>
 <div class="tier1-row animate-on-load">
@@ -107,13 +110,13 @@
     </div>
     <div class="queue-row">
         <div class="queue-left">
-            <div class="queue-count {{ $pendingQueue['clamping_requests'] > 0 ? 'some' : 'zero' }}">{{ $pendingQueue['clamping_requests'] }}</div>
+            <div class="queue-count {{ $pendingQueue['citizen_reports'] > 0 ? 'some' : 'zero' }}">{{ $pendingQueue['citizen_reports'] }}</div>
             <div>
-                <div class="queue-title">Clamping Requests</div>
-                <div class="queue-sub">Citizen requests to review</div>
+                <div class="queue-title">Citizen Reports</div>
+                <div class="queue-sub">Citizen reports to review</div>
             </div>
         </div>
-        <a href="{{ route('clamping-requests.index') }}" class="queue-btn">View</a>
+        <a href="{{ route('citizen-reports.index') }}" class="queue-btn">View</a>
     </div>
     @if (!auth()->user()->isRole(\App\Enums\Role::Enforcer))
     <div class="queue-row">

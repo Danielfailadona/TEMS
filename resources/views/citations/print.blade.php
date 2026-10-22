@@ -105,7 +105,7 @@
     @endif
 
     <table>
-        <tr><td class="label">Violation</td><td class="value">{{ $citation->violationType->name }}</td></tr>
+        <tr><td class="label">Violation</td><td class="value">{{ $citation->violationLabel() }}</td></tr>
         <tr><td class="label">Penalty Amount</td><td class="value">₱{{ number_format($citation->penalty_amount, 2) }}</td></tr>
         <tr><td class="label">Plate Number</td><td class="value">{{ $citation->vehicle_plate }}</td></tr>
         <tr><td class="label">Vehicle</td><td class="value">{{ $citation->vehicle_make }} {{ $citation->vehicle_model }} {{ $citation->vehicle_type ? '('.$citation->vehicle_type.')' : '' }}</td></tr>

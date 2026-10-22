@@ -47,6 +47,7 @@ class DatabaseSeeder extends Seeder
             ['code' => 'SMOKE-EMIT', 'name' => 'Excessive Smoke Emission', 'description' => 'No or wasteful emission of smoke or exhaust', 'penalty_amount' => 1000, 'is_impoundable' => false, 'is_clampable' => false],
             ['code' => 'OVERLOAD', 'name' => 'Overloading', 'description' => 'Vehicle exceeding authorized passenger or cargo limit', 'penalty_amount' => 1000, 'is_impoundable' => false, 'is_clampable' => false],
             ['code' => 'NO-REG', 'name' => 'Unregistered Vehicle', 'description' => 'Operating an unregistered motor vehicle', 'penalty_amount' => 2000, 'is_impoundable' => true, 'is_clampable' => false],
+            ['code' => 'others', 'name' => 'Others', 'description' => 'Other violation (specify description and penalty)', 'penalty_amount' => 0, 'is_impoundable' => false, 'is_clampable' => false],
         ];
 
         foreach ($violations as $violation) {

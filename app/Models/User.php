@@ -30,6 +30,7 @@ class User extends Authenticatable
         'last_login_at',
         'last_login_ip',
         'is_online',
+        'is_available',
         'preferences',
     ];
 
@@ -47,6 +48,7 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
             'is_online' => 'boolean',
+            'is_available' => 'boolean',
             'preferences' => 'array',
         ];
     }
@@ -76,14 +78,34 @@ class User extends Authenticatable
         return $this->role->isAdmin();
     }
 
+    public function isSuperAdmin(): bool
+    {
+        return $this->role->isSuperAdmin();
+    }
+
+    public function isCashier(): bool
+    {
+        return $this->role->isCashier();
+    }
+
+    public function isFrontDesk(): bool
+    {
+        return $this->role->isFrontDesk();
+    }
+
+    public function canDelete(): bool
+    {
+        return $this->role->canDelete();
+    }
+
     public function devices(): HasMany
     {
         return $this->hasMany(DeviceManager::class);
     }
 
-    public function assignedClampingRequests(): HasMany
+    public function assignedCitizenReports(): HasMany
     {
-        return $this->hasMany(ClampingRequest::class, 'assigned_to');
+        return $this->hasMany(CitizenReport::class, 'assigned_to');
     }
 
     public function notifications(): HasMany
@@ -134,5 +156,24 @@ class User extends Authenticatable
     public function getBadgeIdAttribute(): string
     {
         return 'TE-'.str_pad((string) $this->id, 6, '0', STR_PAD_LEFT);
+    }
+
+    public function enforcerLocation(): HasOne
+    {
+        return $this->hasOne(EnforcerLocation::class);
+    }
+
+    /**
+     * An enforcer is assignable when they have manually marked themselves
+     * available AND are currently online (marked by an active GPS ping).
+     */
+    public function isAssignable(): bool
+    {
+        return (bool) $this->is_available && (bool) $this->is_online;
+    }
+
+    public function scopeAssignable($query)
+    {
+        return $query->where('is_available', true)->where('is_online', true);
     }
 }

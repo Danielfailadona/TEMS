@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\Role;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\Archive;
 use App\Models\DeviceManager;
 use App\Models\SystemNotification;
 use App\Models\User;
@@ -74,6 +75,30 @@ class UserController extends Controller
         $user->update($data);
 
         return redirect()->route('users.index')->with('success', 'User updated successfully.');
+    }
+
+    public function destroy(User $user): RedirectResponse
+    {
+        $this->authorize('delete', $user);
+
+        if ($user->issuedCitations()->exists() || $user->processedPayments()->exists()) {
+            return back()->with('error', 'This user has issued citations or recorded payments and cannot be deleted. Suspend the account instead.');
+        }
+
+        $name = $user->name;
+
+        DB::transaction(function () use ($user) {
+            Archive::log($user, 'User deleted', auth()->id(), $user->toArray());
+
+            $user->teams()->detach();
+            $user->notifications()->delete();
+            $user->devices()->delete();
+            $user->delete();
+        });
+
+        activity()->log("Deleted user {$name}");
+
+        return redirect()->route('users.index')->with('success', "User \"{$name}\" deleted.");
     }
 
     public function approve(User $user): RedirectResponse

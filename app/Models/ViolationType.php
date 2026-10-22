@@ -31,4 +31,13 @@ class ViolationType extends Model
     {
         return $this->hasMany(Citation::class);
     }
+
+    /**
+     * Whether this violation type is the free-text "Others" placeholder.
+     */
+    public function isCustom(): bool
+    {
+        return strcasecmp((string) $this->code, 'others') === 0
+            || strcasecmp((string) $this->name, 'others') === 0;
+    }
 }

@@ -63,7 +63,7 @@
                         {{ $citation->status->label() }}
                     </span>
                 </div>
-                <h1>{{ $citation->violationType->name }}</h1>
+                <h1>{{ $citation->violationLabel() }}</h1>
                 <p class="mb-0 opacity-75">Issued on {{ $citation->issued_at?->format('F d, Y') }} at {{ $citation->location }}</p>
             </div>
             <div class="detail-hero-qr">
@@ -269,12 +269,9 @@
                 </div>
                 <div class="d-flex gap-2 mt-3 flex-wrap">
                     @if ($citation->isPayable())
-                        <form method="POST" action="{{ route('public.citation.checkout', ['id' => $citation->id, 'token' => $citation->getValidationToken()]) }}">
-                            @csrf
-                            <button class="btn btn-primary">
-                                <i class="bi bi-credit-card me-2"></i>Pay Online
-                            </button>
-                        </form>
+                        <a href="{{ route('public.citation.pay', ['id' => $citation->id, 'token' => $citation->getValidationToken()]) }}" class="btn btn-primary">
+                            <i class="bi bi-credit-card me-2"></i>Pay Online
+                        </a>
                     @endif
                     <button class="btn btn-outline-secondary" onclick="window.print()">
                         <i class="bi bi-printer me-2"></i>Print Citation
@@ -333,39 +330,14 @@
                     </div>
                     <div>
                         <h5 class="mb-0">Want to Contest This Citation?</h5>
-                        <p class="text-muted mb-0">Submit an appeal and the enforcement office will review your case</p>
+                        <p class="text-muted mb-0">Appeals are filed in person at the enforcement office front desk</p>
                     </div>
                 </div>
-                <form method="POST" action="{{ route('public.citation.appeal', ['id' => $citation->id, 'token' => $citation->getValidationToken()]) }}" class="mt-3">
-                    @csrf
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label small fw-semibold" for="appealGuestName">Full Name <span class="text-danger">*</span></label>
-                            <input type="text" name="guest_name" id="appealGuestName" class="form-control" value="{{ old('guest_name') }}" required maxlength="255" placeholder="Juan Dela Cruz">
-                            @error('guest_name')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-semibold" for="appealGuestContact">Contact Number / Email <span class="text-danger">*</span></label>
-                            <input type="text" name="guest_contact" id="appealGuestContact" class="form-control" value="{{ old('guest_contact') }}" required maxlength="255" placeholder="09XXXXXXXXXX">
-                            @error('guest_contact')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-semibold" for="appealReason">Reason <span class="text-danger">*</span></label>
-                            <input type="text" name="reason" id="appealReason" class="form-control" value="{{ old('reason') }}" required maxlength="255" placeholder="e.g. Ticket was issued in error">
-                            @error('reason')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-semibold" for="appealDescription">Details <span class="text-muted fw-normal">(optional)</span></label>
-                            <textarea name="description" id="appealDescription" class="form-control" rows="3" maxlength="2000" placeholder="Explain why this citation should be reviewed...">{{ old('description') }}</textarea>
-                            @error('description')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-send me-2"></i>Submit Appeal
-                            </button>
-                        </div>
-                    </div>
-                </form>
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    To contest this citation, please visit the <strong>Front Desk</strong> and present your citation number. A
+                    front desk officer will file your appeal and give you a ticket number you can use to track the outcome.
+                </div>
             </div>
         </div>
     @endif

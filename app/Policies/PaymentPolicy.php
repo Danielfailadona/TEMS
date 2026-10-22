@@ -27,4 +27,9 @@ class PaymentPolicy
     {
         return $user->isRole(Role::SuperAdmin, Role::Cashier);
     }
+
+    public function delete(User $user, Payment $payment): bool
+    {
+        return $user->isSuperAdmin();
+    }
 }

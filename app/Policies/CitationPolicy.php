@@ -46,4 +46,9 @@ class CitationPolicy
     {
         return $user->isStaff();
     }
+
+    public function delete(User $user, Citation $citation): bool
+    {
+        return $user->isSuperAdmin();
+    }
 }

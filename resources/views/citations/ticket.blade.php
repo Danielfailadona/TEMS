@@ -50,7 +50,7 @@
             <div class="row g-3">
                 <div class="col-6">
                     <small class="text-muted d-block">Violation</small>
-                    <strong>{{ $citation->violationType->name }}</strong>
+                    <strong>{{ $citation->violationLabel() }}</strong>
                 </div>
                 <div class="col-6">
                     <small class="text-muted d-block">Penalty Amount</small>

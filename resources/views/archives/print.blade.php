@@ -43,14 +43,14 @@
     </div>
 
     @php
-        $snap = $archive->snapshot ?? [];
+        $snap = $archive->resolvedSnapshot();
         $id = $snap['id'] ?? $archive->archivable_id;
 
         $badgeConfig = match($type) {
             'Citation' => ['label' => 'Citation', 'color' => '#2563eb', 'icon' => 'bi-receipt'],
             'Appeal' => ['label' => 'Appeal', 'color' => '#7c3aed', 'icon' => 'bi-chat-square-text'],
             'ClampingRecord' => ['label' => 'Clamping Record', 'color' => '#dc2626', 'icon' => 'bi-lock'],
-            'ClampingRequest' => ['label' => 'Clamping Request', 'color' => '#0891b2', 'icon' => 'bi-geo-alt'],
+            'CitizenReport', 'ClampingRequest' => ['label' => 'Citizen Report', 'color' => '#0891b2', 'icon' => 'bi-geo-alt'],
             default => ['label' => $type, 'color' => '#6b7280', 'icon' => 'bi-archive'],
         };
     @endphp
@@ -140,16 +140,18 @@
             </table>
         </div>
 
-    {{-- ClampingRequest --}}
-    @elseif ($type === 'ClampingRequest')
+    {{-- CitizenReport --}}
+    @elseif ($type === 'CitizenReport' || $type === 'ClampingRequest')
         <div class="doc-section">
-            <h2>Request Information</h2>
+            <h2>Report Information</h2>
             <table class="detail-table">
+                <tr><td>Report Number</td><td>{{ $snap['report_number'] ?? "RPT-{$id}" }}</td></tr>
                 <tr><td>Requester Name</td><td>{{ $snap['requester_name'] ?? 'N/A' }}</td></tr>
                 <tr><td>Phone</td><td>{{ $snap['requester_phone'] ?? 'N/A' }}</td></tr>
                 <tr><td>Email</td><td>{{ $snap['requester_email'] ?? 'N/A' }}</td></tr>
                 <tr><td>Vehicle Plate</td><td>{{ $snap['vehicle_plate'] ?? 'N/A' }}</td></tr>
-                <tr><td>Vehicle Description</td><td>{{ $snap['vehicle_description'] ?? 'N/A' }}</td></tr>
+                <tr><td>Make / Model</td><td>{{ trim(($snap['vehicle_make'] ?? '').' '.($snap['vehicle_model'] ?? '')) ?: 'N/A' }}</td></tr>
+                <tr><td>Color</td><td>{{ $snap['vehicle_color'] ?? 'N/A' }}</td></tr>
                 <tr><td>Location</td><td>{{ $snap['location_address'] ?? 'N/A' }}</td></tr>
                 <tr><td>Status</td><td>{{ strtoupper($snap['status'] ?? 'N/A') }}</td></tr>
             </table>

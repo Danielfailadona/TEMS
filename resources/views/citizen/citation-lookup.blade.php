@@ -220,7 +220,7 @@
                                             <div class="row g-3">
                                                 <div class="col-6"><small class="text-muted d-block">Citation #</small><strong>{{ $citationResult->citation_number }}</strong></div>
                                                 <div class="col-6"><small class="text-muted d-block">Plate Number</small><strong>{{ $citationResult->vehicle_plate }}</strong></div>
-                                                <div class="col-6"><small class="text-muted d-block">Violation</small>{{ $citationResult->violationType->name ?? '—' }}</div>
+                                                <div class="col-6"><small class="text-muted d-block">Violation</small>{{ $citationResult->violationLabel() }}</div>
                                                 <div class="col-6"><small class="text-muted d-block">Penalty</small>₱{{ number_format($citationResult->penalty_amount, 2) }}</div>
                                                 <div class="col-6"><small class="text-muted d-block">Driver</small>{{ $citationResult->driver_name ?? '—' }}</div>
                                                 <div class="col-6"><small class="text-muted d-block">Issued</small>{{ $citationResult->issued_at?->format('M d, Y') }}</div>
@@ -239,6 +239,9 @@
                                             </div>
                                         </div>
                                         <div class="card-footer bg-white d-flex gap-2 justify-content-end flex-wrap">
+                                            @if ($citationResult->isPayable())
+                                                <a href="{{ route('public.citation.pay', ['id' => $citationResult->id, 'token' => $citationResult->getValidationToken()]) }}" class="btn btn-sm btn-success"><i class="bi bi-credit-card me-1"></i>Pay Online</a>
+                                            @endif
                                             <a href="{{ route('citizen.citation.detail', $citationResult) }}" class="btn btn-sm btn-primary"><i class="bi bi-ticket me-1"></i>Open Full Ticket</a>
                                             <a href="{{ route('public.citation.print', ['id' => $citationResult->id, 'token' => $citationResult->getValidationToken()]) }}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer me-1"></i>Print</a>
                                         </div>
@@ -334,7 +337,7 @@
                         </div>
                     </div>
                 </a>
-                <a href="#" class="action-card animate-on-load" style="animation-delay: 0.2s;" onclick="alert('Payment portal coming soon!')">
+                <a href="#tab-citation" class="action-card animate-on-load" style="animation-delay: 0.2s;" onclick="document.getElementById('search').focus();">
                     <div class="card stat-card mb-4">
                         <div class="card-body d-flex align-items-center gap-3 py-3 px-4">
                             <div style="width: 3rem; height: 3rem; background: rgba(16, 185, 129, 0.12); border-radius: 0.8rem; display: grid; place-items: center; color: #10b981; font-size: 1.4rem; flex-shrink: 0;">
@@ -342,7 +345,7 @@
                             </div>
                             <div class="flex-grow-1">
                                 <div class="fw-semibold">Pay Citation</div>
-                                <small class="text-muted">Online payment portal</small>
+                                <small class="text-muted">Look up your ticket, then pay online</small>
                             </div>
                             <i class="bi bi-chevron-right text-muted"></i>
                         </div>

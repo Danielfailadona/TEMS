@@ -59,6 +59,56 @@ class EvidenceRequiredTest extends TestCase
         $this->assertDatabaseCount('citations', 0);
     }
 
+    public function test_others_violation_requires_description_and_penalty(): void
+    {
+        $others = ViolationType::create([
+            'code' => 'others',
+            'name' => 'Others',
+            'penalty_amount' => 0,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($this->admin())
+            ->from('/citations/create')
+            ->post('/citations', [
+                'violation_type_id' => $others->id,
+                'vehicle_plate' => 'ABC-1234',
+                'location' => 'Test Street',
+                'evidence' => [UploadedFile::fake()->image('evidence.jpg')],
+            ]);
+
+        $response->assertSessionHasErrors(['custom_violation_name', 'penalty_amount']);
+        $this->assertDatabaseCount('citations', 0);
+    }
+
+    public function test_others_violation_stores_custom_name_and_penalty(): void
+    {
+        $this->fakeStorage();
+
+        $others = ViolationType::create([
+            'code' => 'others',
+            'name' => 'Others',
+            'penalty_amount' => 0,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->admin())
+            ->post('/citations', [
+                'violation_type_id' => $others->id,
+                'custom_violation_name' => 'Illegal use of horn',
+                'penalty_amount' => 750,
+                'vehicle_plate' => 'ABC-1234',
+                'location' => 'Test Street',
+                'evidence' => [UploadedFile::fake()->image('evidence.jpg')],
+            ]);
+
+        $citation = \App\Models\Citation::firstOrFail();
+        $this->assertSame('Illegal use of horn', $citation->custom_violation_name);
+        $this->assertSame('Illegal use of horn', $citation->violationLabel());
+        $this->assertEquals(750.0, (float) $citation->penalty_amount);
+        $this->assertTrue($citation->isCustomViolation());
+    }
+
     public function test_citation_is_created_with_evidence_photo(): void
     {
         $this->fakeStorage();

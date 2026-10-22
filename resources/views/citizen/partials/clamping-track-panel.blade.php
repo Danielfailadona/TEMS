@@ -7,10 +7,10 @@
         <form method="GET" action="{{ route('citizen.clamping.landing') }}" class="row g-3">
             <input type="hidden" name="tab" value="track">
             <div class="col-12 col-md-9">
-                <label class="form-label visually-hidden">Reference Number</label>
+                <label class="form-label visually-hidden">Report Number</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-tag"></i></span>
-                    <input type="text" name="reference" class="form-control form-control-lg" placeholder="Enter reference number (e.g., CLP-20250115-A1B2)" value="{{ $trackReference }}" required>
+                    <input type="text" name="reference" class="form-control form-control-lg" placeholder="Enter report number (e.g., RPT-20250115-A1B2)" value="{{ $trackReference }}" required>
                 </div>
             </div>
             <div class="col-12 col-md-3 d-grid">
@@ -32,8 +32,8 @@
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <div class="text-muted small d-block">Reference Number</div>
-                        <div class="fw-bold fs-5">{{ $requestInfo->reference_number }}</div>
+                        <div class="text-muted small d-block">Report Number</div>
+                        <div class="fw-bold fs-5">{{ $requestInfo->report_number }}</div>
                     </div>
                     <div class="col-md-6">
                         <div class="text-muted small d-block">Submitted</div>
@@ -44,7 +44,7 @@
                         <div class="fw-bold">{{ $requestInfo->vehicle_plate }}</div>
                     </div>
                     <div class="col-md-6">
-                        <div class="text-muted small d-block">Vehicle Description</div>
+                        <div class="text-muted small d-block">Vehicle</div>
                         <div>{{ $requestInfo->vehicle_description ?? '—' }}</div>
                     </div>
                     <div class="col-md-6">
@@ -55,7 +55,7 @@
                         <div class="text-muted small d-block">Coordinates</div>
                         <div class="font-monospace small">{{ $requestInfo->latitude }}, {{ $requestInfo->longitude }}</div>
                     </div>
-                    @if ($requestInfo->status === 'approved' || $requestInfo->status === 'rejected' || $requestInfo->status === 'resolved')
+                    @if (in_array($requestInfo->status, ['accepted', 'rejected', 'resolved']))
                         <div class="col-md-6">
                             <div class="text-muted small d-block">Processed By</div>
                             <div>{{ $requestInfo->processedBy?->name ?? 'System' }}</div>
@@ -95,11 +95,11 @@
                             </div>
                         </div>
                     @endif
-                    @if (in_array($requestInfo->status, ['approved', 'rejected', 'resolved']))
+                    @if (in_array($requestInfo->status, ['accepted', 'rejected', 'resolved']))
                         <div class="list-group-item d-flex align-items-center gap-2">
-                            <span class="badge {{ $requestInfo->status === 'approved' ? 'bg-success' : 'bg-danger' }} rounded-circle p-1" style="width:10px;height:10px;"></span>
+                            <span class="badge {{ $requestInfo->status === 'accepted' ? 'bg-success' : 'bg-danger' }} rounded-circle p-1" style="width:10px;height:10px;"></span>
                             <div>
-                                <small class="fw-semibold d-block">{{ $requestInfo->status === 'approved' ? 'Approved' : 'Rejected' }}</small>
+                                <small class="fw-semibold d-block">{{ $requestInfo->status === 'accepted' ? 'Accepted' : 'Rejected' }}</small>
                                 <small class="text-muted">{{ $requestInfo->processed_at?->format('M d, Y h:i A') ?? '—' }}</small>
                             </div>
                         </div>
@@ -133,7 +133,7 @@
     @else
         <div class="alert alert-warning text-center">
             <i class="bi bi-exclamation-triangle me-1"></i>
-            No clamping request found with reference number: <strong>{{ $trackReference }}</strong>
+            No citizen report found with report number: <strong>{{ $trackReference }}</strong>
         </div>
     @endif
 @endif

@@ -44,6 +44,15 @@ class CitationNumberService
         return $number;
     }
 
+    public function reportNumber(): string
+    {
+        do {
+            $number = 'RPT-'.now()->format('Ymd').'-'.strtoupper(Str::random(6));
+        } while (\App\Models\CitizenReport::where('report_number', $number)->exists());
+
+        return $number;
+    }
+
     public function releaseNumber(): string
     {
         return 'REL-'.now()->format('Ymd').'-'.strtoupper(Str::random(6));

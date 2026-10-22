@@ -24,7 +24,7 @@ class ArchivesExport implements FromCollection, WithHeadings, WithMapping, WithC
 
     public function collection(): \Illuminate\Support\Collection
     {
-        $query = Archive::with('archivedBy')->latest('archived_at');
+        $query = Archive::with(['archivedBy', 'archivable'])->latest('archived_at');
 
         $user = auth()->user();
         if ($user->isAdmin()) {
@@ -87,7 +87,7 @@ class ArchivesExport implements FromCollection, WithHeadings, WithMapping, WithC
 
     public function map($archive): array
     {
-        $snap = $archive->snapshot ?? [];
+        $snap = $archive->resolvedSnapshot();
         $type = class_basename($archive->archivable_type);
 
         $recordTitle = '';
@@ -135,13 +135,13 @@ class ArchivesExport implements FromCollection, WithHeadings, WithMapping, WithC
                 $penalty = '',
                 $notes = $snap['notes'] ?? '',
             ],
-            'ClampingRequest' => [
-                $recordTitle = $snap['requester_name'] ?? "Request #{$archive->archivable_id}",
+            'CitizenReport', 'ClampingRequest' => [
+                $recordTitle = $snap['report_number'] ?? $snap['requester_name'] ?? "Report #{$archive->archivable_id}",
                 $driver = $snap['requester_name'] ?? '',
                 $driverLicense = '',
                 $vehiclePlate = $snap['vehicle_plate'] ?? '',
-                $vehicleMake = '',
-                $vehicleModel = '',
+                $vehicleMake = $snap['vehicle_make'] ?? '',
+                $vehicleModel = $snap['vehicle_model'] ?? '',
                 $location = $snap['location_address'] ?? '',
                 $penalty = '',
                 $notes = $snap['additional_notes'] ?? '',

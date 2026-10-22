@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Archive;
 use App\Models\Team;
 use App\Models\Zone;
 use Illuminate\Http\RedirectResponse;
@@ -145,7 +146,9 @@ class ZoneController extends Controller
 
     public function destroy(Zone $zone): RedirectResponse
     {
-        $this->authorizeAdmin();
+        $this->authorizeSuperAdmin();
+
+        Archive::log($zone, 'Zone deleted', auth()->id(), $zone->toArray());
 
         $zone->delete();
 
@@ -164,5 +167,10 @@ class ZoneController extends Controller
     protected function authorizeAdmin(): void
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
+    }
+
+    protected function authorizeSuperAdmin(): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
     }
 }

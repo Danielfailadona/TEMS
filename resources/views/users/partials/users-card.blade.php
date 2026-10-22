@@ -96,6 +96,16 @@
                                         </li>
                                     @endif
                                     <li><a href="{{ route('users.devices', $user) }}" class="dropdown-item"><i class="bi bi-phone"></i> Devices</a></li>
+                                    @if (auth()->user()?->isSuperAdmin() && auth()->id() !== $user->id)
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <form method="POST" action="{{ route('users.destroy', $user) }}" class="d-inline" onsubmit="return confirm('Permanently delete user {{ $user->name }}? This cannot be undone.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button class="dropdown-item text-danger"><i class="bi bi-trash"></i> Delete</button>
+                                            </form>
+                                        </li>
+                                    @endif
                                 </ul>
                             </div>
                         </td>

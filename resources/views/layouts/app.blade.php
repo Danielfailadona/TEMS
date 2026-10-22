@@ -153,8 +153,8 @@
     <a href="{{ route('appeals.index') }}" class="enforcer-more-item">
       <i class="bi bi-exclamation-circle"></i><span>Appeals</span>
     </a>
-    <a href="{{ route('clamping-requests.index') }}" class="enforcer-more-item">
-      <i class="bi bi-inbox"></i><span>Clamp Req</span>
+    <a href="{{ route('citizen-reports.index') }}" class="enforcer-more-item">
+      <i class="bi bi-inbox"></i><span>Reports</span>
     </a>
     <a href="{{ route('archives.index') }}" class="enforcer-more-item">
       <i class="bi bi-archive"></i><span>My Archives</span>
@@ -168,6 +168,13 @@
     <a href="{{ route('settings.index') }}" class="enforcer-more-item">
       <i class="bi bi-gear"></i><span>Settings</span>
     </a>
+    <form action="{{ route('availability.toggle') }}" method="POST" class="enforcer-more-item">
+      @csrf
+      <button type="submit" class="enforcer-more-btn {{ auth()->user()->is_available ? 'text-success' : 'text-muted' }}">
+        <i class="bi bi-{{ auth()->user()->is_available ? 'check-circle' : 'pause-circle' }}"></i>
+        <span>{{ auth()->user()->is_available ? 'Available' : 'Unavailable' }}</span>
+      </button>
+    </form>
     <form action="{{ route('logout') }}" method="POST" class="enforcer-more-item">
       @csrf
       <button type="submit" class="enforcer-more-btn text-danger"><i class="bi bi-box-arrow-right"></i><span>Logout</span></button>

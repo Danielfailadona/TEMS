@@ -595,6 +595,7 @@
                                 <i class="bi bi-{{ $team->is_active ? 'pause-fill' : 'play-fill' }}"></i>
                             </button>
                         </form>
+                        @if (auth()->user()?->isSuperAdmin())
                         <form action="{{ route('teams.destroy', $team) }}" method="POST"
                               onsubmit="return confirm('Delete team {{ $team->name }}?\n\nAssigned zones will be released and members detached.');">
                             @csrf
@@ -603,6 +604,7 @@
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>
+                        @endif
                     </div>
                 </div>
             </div>

@@ -79,7 +79,7 @@ class Payment extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logAll()
+            ->logOnly(['receipt_number', 'citation_id', 'payable_type', 'payable_id', 'amount', 'payment_method', 'reference_number', 'paid_at', 'cashier_id'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }

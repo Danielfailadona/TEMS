@@ -10,7 +10,7 @@ use App\Http\Controllers\Auth\VerificationController;
 use App\Http\Controllers\CitationController;
 use App\Http\Controllers\CitizenPortalController;
 use App\Http\Controllers\ClampingController;
-use App\Http\Controllers\ClampingRequestController;
+use App\Http\Controllers\CitizenReportController;
 use App\Http\Controllers\ImpoundingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FrontDeskController;
@@ -21,6 +21,7 @@ use App\Http\Controllers\PayMongoController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\TaskAssignmentController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\UserController;
@@ -77,12 +78,10 @@ Route::middleware('guest')->group(function () {
 Route::prefix('cite')->name('public.citation.')->group(function () {
     Route::get('{id}/{token}', [CitizenPortalController::class, 'citationTicket'])->name('ticket');
     Route::get('{id}/{token}/print', [CitizenPortalController::class, 'citationPrint'])->name('print');
+    Route::get('{id}/{token}/pay', [CitizenPortalController::class, 'citationPay'])->name('pay');
     Route::post('{id}/{token}/pay-online', [PayMongoController::class, 'publicCheckout'])
         ->middleware('throttle:10,5')
         ->name('checkout');
-    Route::post('{id}/{token}/appeal', [CitizenPortalController::class, 'submitAppeal'])
-        ->middleware('throttle:10,5')
-        ->name('appeal');
     Route::get('{id}/{token}/payment/{payment}/success', [PayMongoController::class, 'publicSuccess'])->name('success');
 });
 
@@ -124,13 +123,23 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
     Route::post('clamping/{clamping}/mark-paid', [ClampingController::class, 'markPaid'])->name('clamping.mark-paid');
     Route::post('clamping/{clamping}/mark-waiting-release', [ClampingController::class, 'markWaitingRelease'])->name('clamping.mark-waiting-release');
     Route::post('clamping/{clamping}/process-release', [ClampingController::class, 'processRelease'])->name('clamping.process-release');
-    Route::prefix('clamping-requests')->name('clamping-requests.')->controller(ClampingRequestController::class)->group(function () {
+    Route::prefix('citizen-reports')->name('citizen-reports.')->controller(CitizenReportController::class)->group(function () {
         Route::get('/', 'index')->name('index');
-        Route::get('{clampingRequest}', 'show')->name('show');
-        Route::post('{clampingRequest}/approve', 'approve')->name('approve');
-        Route::post('{clampingRequest}/reject', 'reject')->name('reject');
-        Route::post('{clampingRequest}/assign', 'assign')->name('assign');
-        Route::post('{clampingRequest}/resolve', 'resolve')->name('resolve');
+        Route::get('{citizenReport}', 'show')->name('show');
+        Route::post('{citizenReport}/claim', 'claim')->name('claim');
+        Route::post('{citizenReport}/accept', 'accept')->name('accept');
+        Route::post('{citizenReport}/approve', 'approve')->name('approve');
+        Route::post('{citizenReport}/reject', 'reject')->name('reject');
+        Route::post('{citizenReport}/assign', 'assign')->name('assign');
+        Route::post('{citizenReport}/resolve', 'resolve')->name('resolve');
+        Route::post('{citizenReport}/issue-citation', 'issueCitation')->name('issue-citation');
+    });
+    Route::prefix('operations/task-assignment')->name('operations.task-assignment.')->controller(TaskAssignmentController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('auto-assign-all', 'autoAssignAll')->name('auto-assign-all');
+        Route::post('{citizenReport}/assign', 'assign')->name('assign');
+        Route::post('{citizenReport}/auto-assign', 'autoAssign')->name('auto-assign');
+        Route::post('enforcers/{user}/toggle-availability', 'toggleAvailability')->name('toggle-availability');
     });
     Route::prefix('impounding')->name('impounding.')->controller(ImpoundingController::class)->group(function () {
         Route::get('/', 'index')->name('index');
@@ -160,7 +169,7 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
     Route::post('citations/{citation}/checkout', [PayMongoController::class, 'checkout'])->name('citations.checkout');
 
     // User management
-    Route::resource('users', UserController::class)->except(['show', 'destroy']);
+    Route::resource('users', UserController::class)->except(['show']);
     Route::post('users/{user}/approve', [UserController::class, 'approve'])->name('users.approve');
     Route::post('users/{user}/reject', [UserController::class, 'reject'])->name('users.reject');
     Route::post('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
@@ -185,6 +194,7 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('index');
         Route::get('revenue', [ReportController::class, 'revenue'])->name('revenue');
         Route::get('citations', [ReportController::class, 'citations'])->name('citations');
+        Route::get('overdue-citations', [ReportController::class, 'overdueCitations'])->name('overdue-citations');
         Route::get('enforcer-performance', [ReportController::class, 'enforcerPerformance'])->name('enforcer-performance');
     });
 
@@ -237,6 +247,20 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
         }
         return response()->json(['error' => 'Unauthorized'], 403);
     })->name('location.offline');
+
+    // Enforcer self-service availability toggle
+    Route::post('availability/toggle', function (Request $request) {
+        $user = auth()->user();
+        abort_unless($user?->isRole(\App\Enums\Role::Enforcer), 403);
+
+        $user->update(['is_available' => ! $user->is_available]);
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'is_available' => $user->is_available]);
+        }
+
+        return back()->with('success', 'You are now ' . ($user->is_available ? 'available' : 'unavailable') . ' for assignment.');
+    })->name('availability.toggle');
 
     // Owner Portal
     Route::prefix('owner')->name('owner.')->group(function () {
