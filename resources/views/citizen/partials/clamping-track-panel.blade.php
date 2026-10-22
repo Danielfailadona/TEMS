@@ -4,7 +4,7 @@
 
 <div class="card stat-card mb-4">
     <div class="card-body p-4">
-        <form method="GET" action="{{ route('citizen.clamping.landing') }}" class="row g-3">
+        <form method="GET" action="{{ route('citizen.report-parking.landing') }}" class="row g-3">
             <input type="hidden" name="tab" value="track">
             <div class="col-12 col-md-9">
                 <label class="form-label visually-hidden">Report Number</label>
