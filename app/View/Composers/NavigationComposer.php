@@ -61,7 +61,7 @@ class NavigationComposer
             }
 
             if ($user->isRole(Role::SuperAdmin, Role::Administrator)) {
-                $operations[] = ['label' => 'Task Assignment', 'route' => 'operations.task-assignment.index', 'icon' => 'diagram-3'];
+                $operations[] = ['label' => 'Task Management', 'route' => 'operations.task-management.index', 'icon' => 'diagram-3'];
             }
 
             if ($user->isRole(Role::SuperAdmin, Role::Administrator)) {

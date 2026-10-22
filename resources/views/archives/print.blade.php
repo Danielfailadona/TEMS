@@ -111,8 +111,8 @@
         <div class="doc-section">
             <h2>Review Details</h2>
             <table class="detail-table">
-                <tr><td>Reviewed By</td><td>{{ $snap['reviewed_by_name'] ?? $snap['officer']['name'] ?? 'N/A' }}</td></tr>
-                <tr><td>Reviewed At</td><td>{{ isset($snap['reviewed_at']) ? \Carbon\Carbon::parse($snap['reviewed_at'])->format('M d, Y h:i A') : 'N/A' }}</td></tr>
+                <tr><td>Reviewed By</td><td>{{ $snap['reviewer']['name'] ?? $snap['reviewed_by_name'] ?? $snap['reviewed_by'] ?? 'N/A' }}</td></tr>
+                <tr><td>Reviewed At</td><td>{{ isset($snap['reviewed_at']) && $snap['reviewed_at'] ? \Carbon\Carbon::parse($snap['reviewed_at'])->format('M d, Y h:i A') : 'N/A' }}</td></tr>
                 <tr><td>Decision Notes</td><td>{{ $snap['decision_notes'] ?? 'N/A' }}</td></tr>
             </table>
         </div>
@@ -160,8 +160,8 @@
         <div class="doc-section">
             <h2>Processing Details</h2>
             <table class="detail-table">
-                <tr><td>Processed By</td><td>{{ $snap['processed_by_name'] ?? 'N/A' }}</td></tr>
-                <tr><td>Processed At</td><td>{{ isset($snap['processed_at']) ? \Carbon\Carbon::parse($snap['processed_at'])->format('M d, Y h:i A') : 'N/A' }}</td></tr>
+                <tr><td>Processed By</td><td>{{ $snap['processedBy']['name'] ?? $snap['processed_by_name'] ?? $snap['processed_by'] ?? 'N/A' }}</td></tr>
+                <tr><td>Processed At</td><td>{{ isset($snap['processed_at']) && $snap['processed_at'] ? \Carbon\Carbon::parse($snap['processed_at'])->format('M d, Y h:i A') : 'N/A' }}</td></tr>
                 @if ($snap['additional_notes'] ?? null)
                     <tr><td>Additional Notes</td><td>{{ $snap['additional_notes'] }}</td></tr>
                 @endif

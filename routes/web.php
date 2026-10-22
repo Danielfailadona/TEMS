@@ -134,12 +134,14 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
         Route::post('{citizenReport}/resolve', 'resolve')->name('resolve');
         Route::post('{citizenReport}/issue-citation', 'issueCitation')->name('issue-citation');
     });
-    Route::prefix('operations/task-assignment')->name('operations.task-assignment.')->controller(TaskAssignmentController::class)->group(function () {
+    Route::prefix('operations/task-management')->name('operations.task-management.')->controller(TaskManagementController::class)->group(function () {
         Route::get('/', 'index')->name('index');
+        Route::get('enforcers/{enforcer}', 'show')->name('show');
+        Route::post('enforcers/{enforcer}/schedule', 'updateSchedule')->name('schedule.update');
+        Route::post('enforcers/{enforcer}/override', 'updateOverride')->name('override.update');
         Route::post('auto-assign-all', 'autoAssignAll')->name('auto-assign-all');
         Route::post('{citizenReport}/assign', 'assign')->name('assign');
         Route::post('{citizenReport}/auto-assign', 'autoAssign')->name('auto-assign');
-        Route::post('enforcers/{user}/toggle-availability', 'toggleAvailability')->name('toggle-availability');
     });
     Route::prefix('impounding')->name('impounding.')->controller(ImpoundingController::class)->group(function () {
         Route::get('/', 'index')->name('index');

@@ -12,7 +12,7 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --no-progress --optimize-autoloader --ignore-platform-req=ext-gd --no-scripts
 COPY --from=node-build /app/public/build /app/public/build
 
-FROM php:8.3-fpm-alpine
+FROM php:8.3.36-fpm-alpine
 RUN apk add --no-cache \
     nginx \
     supervisor \

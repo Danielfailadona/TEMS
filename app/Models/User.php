@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Role;
+use App\Models\EnforcerSchedule;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -163,6 +164,11 @@ class User extends Authenticatable
         return $this->hasOne(EnforcerLocation::class);
     }
 
+    public function enforcerSchedules(): HasMany
+    {
+        return $this->hasMany(EnforcerSchedule::class, 'enforcer_id');
+    }
+
     /**
      * An enforcer is assignable when they have manually marked themselves
      * available AND are currently online (marked by an active GPS ping).
@@ -175,5 +181,81 @@ class User extends Authenticatable
     public function scopeAssignable($query)
     {
         return $query->where('is_available', true)->where('is_online', true);
+    }
+
+    /**
+     * Check if the enforcer is currently within their scheduled duty hours.
+     * Considers the availability_override: 'auto' uses schedule, 'force_available'/'force_unavailable' overrides.
+     */
+    public function isWithinSchedule(): bool
+    {
+        // Manual override takes precedence
+        if ($this->availability_override === 'force_available') {
+            return true;
+        }
+        if ($this->availability_override === 'force_unavailable') {
+            return false;
+        }
+
+        // 'auto' mode: check schedule
+        return EnforcerSchedule::isEnforcerScheduledAt($this->id, now());
+    }
+
+    /**
+     * Check if enforcer is available for assignment based on schedule AND online status.
+     * This replaces the old isAssignable logic for schedule-aware assignment.
+     */
+    public function isScheduleAssignable(): bool
+    {
+        return $this->isWithinSchedule() && (bool) $this->is_online;
+    }
+
+    /**
+     * Scope for enforcers who are currently schedule-assignable (within schedule AND online).
+     */
+    public function scopeScheduleAssignable($query)
+    {
+        return $query->where('is_online', true)
+            ->where(function ($q) {
+                // Force available
+                $q->where('availability_override', 'force_available')
+                    // Or auto with valid schedule
+                    ->orWhere(function ($q2) {
+                        $q2->where('availability_override', 'auto')
+                            ->whereHas('enforcerSchedules', function ($q3) {
+                                $dayOfWeek = now()->dayOfWeek;
+                                $time = now()->format('H:i:s');
+                                $q3->where('is_active', true)
+                                    ->where('day_of_week', $dayOfWeek)
+                                    ->where('start_time', '<=', now()->format('H:i:s'))
+                                    ->where('end_time', '>', now()->format('H:i:s'));
+                            });
+                    });
+            });
+    }
+
+    /**
+     * Get the enforcer's active schedules for the current day.
+     */
+    public function getTodaysSchedulesAttribute(): \Illuminate\Database\Eloquent\Collection
+    {
+        $dayOfWeek = now()->dayOfWeek;
+        return $this->enforcerSchedules()
+            ->where('is_active', true)
+            ->where('day_of_week', $dayOfWeek)
+            ->orderBy('start_time')
+            ->get();
+    }
+
+    /**
+     * Get the enforcer's full weekly schedule.
+     */
+    public function getWeeklyScheduleAttribute(): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->enforcerSchedules()
+            ->where('is_active', true)
+            ->orderBy('day_of_week')
+            ->orderBy('start_time')
+            ->get();
     }
 }

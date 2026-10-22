@@ -302,9 +302,23 @@
         const isImpoundable = option && option.dataset.isImpoundable === '1';
         const isClampable = option && option.dataset.isClampable === '1';
         const isCustom = option && option.dataset.isCustom === '1';
-        if (impoundingSection) impoundingSection.style.display = isImpoundable ? '' : 'none';
-        if (violationDetailsPanels) violationDetailsPanels.style.display = (isImpoundable || isClampable) ? '' : 'none';
-        if (customViolationPanel) customViolationPanel.style.display = isCustom ? '' : 'none';
+        // Impounding section shows only when impoundable
+        if (impoundingSection) {
+            impoundingSection.style.display = isImpoundable ? 'block' : 'none';
+        }
+        // Violation details panels show when either impoundable OR clampable
+        if (violationDetailsPanels) {
+            violationDetailsPanels.style.display = (isImpoundable || isClampable) ? 'flex' : 'none';
+        }
+        // Custom violation panel shows only for "Others" type
+        if (customViolationPanel) {
+            customViolationPanel.style.display = isCustom ? 'block' : 'none';
+        }
+        // Ensure main Notes field is always visible (safety)
+        const notesField = document.querySelector('[name="notes"]').closest('.col-12');
+        if (notesField) {
+            notesField.style.display = 'block';
+        }
     }
     if (violationSelect) {
         violationSelect.addEventListener('change', toggleImpounding);

@@ -6,70 +6,70 @@
     <title>Citation #{{ $citation->citation_number }}</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; color: #111; font-size: 11px; background: #e5e7eb; }
-        .ticket { width: 5in; height: 7in; margin: 16px auto; padding: 0.3in; background: #fff; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.15); display: flex; flex-direction: column; page-break-inside: avoid; break-inside: avoid; overflow: hidden; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; color: #111; font-size: 10px; background: #e5e7eb; }
+        .ticket { width: 5in; height: 7in; margin: 12px auto; padding: 0.2in; background: #fff; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.15); display: flex; flex-direction: column; page-break-inside: avoid; break-inside: avoid; overflow: hidden; }
 
-        .header { text-align: center; border-bottom: 2px solid #111; padding-bottom: 6px; margin-bottom: 8px; flex-shrink: 0; }
-        .header img { height: 40px; margin-bottom: 3px; }
-        .header .name { font-size: 15px; font-weight: 700; letter-spacing: 0.02em; }
-        .header .sub { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: #444; }
+        .header { text-align: center; border-bottom: 1.5px solid #111; padding-bottom: 4px; margin-bottom: 5px; flex-shrink: 0; }
+        .header img { height: 34px; margin-bottom: 2px; }
+        .header .name { font-size: 13px; font-weight: 700; letter-spacing: 0.02em; }
+        .header .sub { font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase; color: #444; }
 
-        .title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-shrink: 0; }
-        .title-row h1 { font-size: 14px; }
-        .status { font-size: 10px; font-weight: 700; padding: 2px 8px; border: 2px solid #111; border-radius: 999px; }
+        .title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-shrink: 0; }
+        .title-row h1 { font-size: 12px; }
+        .status { font-size: 9px; font-weight: 700; padding: 1.5px 6px; border: 1.5px solid #111; border-radius: 999px; }
 
-        .copy-banner { font-size: 10px; font-weight: 700; text-align: center; border: 2px dashed #111; padding: 3px; margin-bottom: 6px; flex-shrink: 0; }
+        .copy-banner { font-size: 9px; font-weight: 700; text-align: center; border: 1.5px dashed #111; padding: 2px; margin-bottom: 4px; flex-shrink: 0; }
 
-        table { width: 100%; border-collapse: collapse; margin-bottom: 4px; flex-shrink: 0; }
-        td { padding: 2px 0; vertical-align: top; }
-        td.label { width: 40%; font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em; color: #555; }
-        td.value { font-weight: 600; font-size: 11px; text-align: right; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 3px; flex-shrink: 0; }
+        td { padding: 1.5px 0; vertical-align: top; }
+        td.label { width: 40%; font-size: 8px; text-transform: uppercase; letter-spacing: 0.03em; color: #555; }
+        td.value { font-weight: 600; font-size: 10px; text-align: right; }
 
-        .qr { text-align: center; margin: 4px 0; flex-shrink: 0; }
-        .qr img { max-width: 100px; height: auto; }
-        .qr .hint { font-size: 8px; color: #555; margin-top: 2px; }
+        .qr { text-align: center; margin: 3px 0; flex-shrink: 0; }
+        .qr img { max-width: 85px; height: auto; }
+        .qr .hint { font-size: 7px; color: #555; margin-top: 1px; }
 
         .stamp-paid {
             position: absolute;
             top: 40%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-14deg);
-            font-size: 34px;
+            font-size: 28px;
             font-weight: 800;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.06em;
             color: rgba(22, 163, 74, 0.35);
-            border: 5px solid rgba(22, 163, 74, 0.35);
-            border-radius: 12px;
-            padding: 6px 20px;
+            border: 4px solid rgba(22, 163, 74, 0.35);
+            border-radius: 10px;
+            padding: 4px 16px;
             pointer-events: none;
             z-index: 1;
         }
 
-        .footer { margin-top: auto; padding-top: 4px; font-size: 8px; color: #333; flex-shrink: 0; }
-        .footer-divider { border-top: 1px solid #111; margin: 4px 0; }
-        .footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+        .footer { margin-top: auto; padding-top: 3px; font-size: 7px; color: #333; flex-shrink: 0; }
+        .footer-divider { border-top: 1px solid #111; margin: 3px 0; }
+        .footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 3px; }
         .footer-col { text-align: center; }
-        .footer-label { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #555; margin-bottom: 2px; }
-        .officer-name { font-size: 10px; font-weight: 600; margin-bottom: 1px; }
-        .officer-role { font-size: 8px; color: #444; margin-bottom: 1px; }
-        .officer-id { font-size: 8px; color: #666; }
-        .inquiry-text { font-size: 8px; color: #444; margin-bottom: 1px; }
-        .inquiry-number { font-size: 9px; font-weight: 700; margin-bottom: 1px; }
-        .inquiry-location { font-size: 8px; color: #444; }
-        .footer-meta { text-align: center; border-top: 1px dashed #999; padding-top: 4px; }
-        .meta-line { margin-bottom: 2px; }
-        .system-notice { font-size: 7px; color: #888; font-style: italic; margin-top: 2px; }
+        .footer-label { font-size: 7px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #555; margin-bottom: 1px; }
+        .officer-name { font-size: 9px; font-weight: 600; margin-bottom: 1px; }
+        .officer-role { font-size: 7px; color: #444; margin-bottom: 1px; }
+        .officer-id { font-size: 7px; color: #666; }
+        .inquiry-text { font-size: 7px; color: #444; margin-bottom: 1px; }
+        .inquiry-number { font-size: 8px; font-weight: 700; margin-bottom: 1px; }
+        .inquiry-location { font-size: 7px; color: #444; }
+        .footer-meta { text-align: center; border-top: 1px dashed #999; padding-top: 3px; }
+        .meta-line { margin-bottom: 1px; }
+        .system-notice { font-size: 6px; color: #888; font-style: italic; margin-top: 1px; }
 
-        .print-btn { text-align: center; margin: 16px 0; }
+        .print-btn { text-align: center; margin: 12px 0; }
         .print-btn button, .print-btn a {
-            display: inline-block; padding: 10px 24px; font-size: 14px; cursor: pointer;
-            border-radius: 8px; text-decoration: none; margin: 0 4px;
+            display: inline-block; padding: 8px 20px; font-size: 12px; cursor: pointer;
+            border-radius: 6px; text-decoration: none; margin: 0 3px;
         }
 
         @media print {
             @page { size: 5in 7in; margin: 0; }
             body { background: #fff; }
-            .ticket { width: 5in; height: 7in; margin: 0; padding: 0.3in; box-shadow: none; }
+            .ticket { width: 5in; height: 7in; margin: 0; padding: 0.2in; box-shadow: none; }
             .print-btn { display: none !important; }
         }
     </style>
