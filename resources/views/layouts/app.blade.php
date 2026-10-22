@@ -90,6 +90,7 @@
                     </button>
                 </div>
 
+                @if (auth()->check())
                 <div class="dropdown">
                     <button class="btn btn-link text-dark text-decoration-none dropdown-toggle d-flex align-items-center gap-2 p-0 border-0" data-bs-toggle="dropdown" aria-expanded="false" id="userDropdown">
                         <span class="status-dot text-success"><i class="bi bi-circle-fill" style="font-size:0.6rem;"></i></span>
@@ -115,6 +116,12 @@
                         </li>
                     </ul>
                 </div>
+            @else
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">Sign In</a>
+                    <a href="{{ route('register') }}" class="btn btn-primary btn-sm">Sign Up</a>
+                </div>
+            @endif
             </div>
         </header>
 
