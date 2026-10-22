@@ -35,9 +35,7 @@ class TaskManagementController extends Controller
                 ]);
             }])
             ->with(['enforcerLocation', 'teams', 'enforcerSchedules' => function ($q) {
-                $q->where('is_active', true)
-                    ->orderBy('day_of_week')
-                    ->orderBy('start_time');
+                $q->orderBy('start_time');
             }])
             ->orderBy('name');
 
@@ -82,11 +80,15 @@ class TaskManagementController extends Controller
         $enforcers = $query->get()->map(function ($enforcer) {
             $dayOfWeek = now()->dayOfWeek;
             $time = now()->format('H:i:s');
+            
+            // Find today's schedule from the new structure
             $todaysSchedule = $enforcer->enforcerSchedules
-                ->where('is_active', true)
-                ->where('day_of_week', $dayOfWeek)
-                ->where('start_time', '<=', $time)
-                ->where('end_time', '>', $time)
+                ->filter(function ($schedule) use ($dayOfWeek, $time) {
+                    return in_array($dayOfWeek, $schedule->days ?? []) 
+                        && ($schedule->is_active_days[$dayOfWeek] ?? false)
+                        && $schedule->start_time <= $time 
+                        && $schedule->end_time > $time;
+                })
                 ->first();
 
             $isWithinSchedule = $enforcer->isWithinSchedule();
@@ -135,9 +137,7 @@ class TaskManagementController extends Controller
         abort_unless($enforcer->isRole(Role::Enforcer), 404);
 
         $enforcer->load(['enforcerLocation', 'teams', 'enforcerSchedules' => function ($q) {
-            $q->where('is_active', true)
-                ->orderBy('day_of_week')
-                ->orderBy('start_time');
+            $q->orderBy('start_time');
         }]);
 
         $dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -145,8 +145,8 @@ class TaskManagementController extends Controller
         return view('operations.partials.enforcer-detail', compact('enforcer', 'dayNames'));
     }
 
-    /**
-     * Update enforcer's schedule.
+/**
+     * Update an enforcer's schedule.
      */
     public function updateSchedule(Request $request, User $enforcer): RedirectResponse
     {
@@ -155,26 +155,28 @@ class TaskManagementController extends Controller
         abort_unless($enforcer->isRole(Role::Enforcer), 404);
 
         $validated = $request->validate([
-            'schedules' => 'array',
-            'schedules.*.day_of_week' => 'required|integer|between:0,6',
-            'schedules.*.start_time' => 'required|date_format:H:i',
-            'schedules.*.end_time' => 'required|date_format:H:i|after:schedules.*.start_time',
-            'schedules.*.is_active' => 'boolean',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i|after:start_time',
+            'days' => 'required|array|min:1',
+            'days.*' => 'integer|between:0,6',
+            'is_active_days' => 'array',
+            'is_active_days.*' => 'boolean',
         ]);
 
         // Delete existing schedules
         $enforcer->enforcerSchedules()->delete();
 
-        // Create new schedules
-        foreach ($validated['schedules'] as $schedule) {
-            EnforcerSchedule::create([
-                'enforcer_id' => $enforcer->id,
-                'day_of_week' => $schedule['day_of_week'],
-                'start_time' => $schedule['start_time'],
-                'end_time' => $schedule['end_time'],
-                'is_active' => $schedule['is_active'] ?? true,
-            ]);
-        }
+        // Create new single schedule with days array and per-day active status
+        EnforcerSchedule::create([
+            'enforcer_id' => $enforcer->id,
+            'days' => array_values(array_unique($validated['days'])),
+            'start_time' => $validated['start_time'],
+            'end_time' => $validated['end_time'],
+            'is_active_days' => $validated['is_active_days'] ?? [],
+        ]);
+
+        return back()->with('success', 'Schedule updated successfully.');
+    }
 
         return back()->with('success', 'Schedule updated successfully.');
     }

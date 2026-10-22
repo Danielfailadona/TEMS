@@ -432,52 +432,79 @@
 {{-- Schedule Editor Modals --}}
 @foreach ($enforcers as $data)
     @php $enforcer = $data['enforcer']; @endphp
-    <div class="modal fade" id="scheduleModal-{{ $enforcer->id }}" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <form method="POST" action="{{ route('operations.task-management.schedule.update', $enforcer) }}">
-                @csrf
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title fw-bold"><i class="bi bi-calendar-event me-2"></i>Edit Schedule — {{ $enforcer->name }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="schedule-editor" id="scheduleEditor-{{ $enforcer->id }}">
-                            @php
-                                $dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-                                $existingSchedules = $enforcer->enforcerSchedules->where('is_active', true)->keyBy('day_of_week');
-                            @endphp
-                            @foreach ($dayNames as $i => $day)
-                                @php $sched = $existingSchedules[$i] ?? null; @endphp
-                                <div class="day-row">
-                                    <label class="day-label">{{ $day }}</label>
-                                    <div class="time-inputs">
-<input type="time" name="schedules[{{ $i }}][start_time]"
-                                                value="{{ $sched && $sched->start_time ? \Carbon\Carbon::parse($sched->start_time)->format('H:i') : '' }}"
-                                                placeholder="Start">
-                                        <span class="text-muted">to</span>
-                                        <input type="time" name="schedules[{{ $i }}][end_time]"
-                                                value="{{ $sched && $sched->end_time ? \Carbon\Carbon::parse($sched->end_time)->format('H:i') : '' }}"
-                                                placeholder="End">
-                                        <div class="form-check form-check-inline ms-3">
-                                            <input class="form-check-input" type="checkbox" name="schedules[{{ $i }}][is_active]" value="1" {{ ($sched && $sched->is_active) ? 'checked' : '' }}>
-                                            <label class="form-check-label small">Active</label>
-                                        </div>
-                                        <input type="hidden" name="schedules[{{ $i }}][day_of_week]" value="{{ $i }}">
+<div class="modal fade" id="scheduleModal-{{ $enforcer->id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <form method="POST" action="{{ route('operations.task-management.schedule.update', $enforcer) }}">
+                    @csrf
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold"><i class="bi bi-calendar-event me-2"></i>Edit Schedule — {{ $enforcer->name }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="schedule-editor" id="scheduleEditor-{{ $enforcer->id }}">
+                                @php
+                                    $dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+                                    // Get the enforcer's single schedule
+                                    $schedule = $enforcer->enforcerSchedules->where('is_active', true)->first();
+                                    $days = $schedule->days ?? [];
+                                    $isActiveDays = $schedule->is_active_days ?? [];
+                                    $startTime = $schedule->start_time ? \Carbon\Carbon::parse($schedule->start_time)->format('H:i') : '';
+                                    $endTime = $schedule->end_time ? \Carbon\Carbon::parse($schedule->end_time)->format('H:i') : '';
+                                @endphp
+
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold small">Start Time</label>
+                                        <input type="time" name="start_time" class="form-control" 
+                                               value="{{ $startTime }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold small">End Time</label>
+                                        <input type="time" name="end_time" class="form-control" 
+                                               value="{{ $endTime }}" required>
                                     </div>
                                 </div>
-                            @endforeach
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Schedule</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-@endforeach
+
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold small mb-2">Days of Week</label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @php
+                                            $dayNamesShort = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+                                            $dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+                                            $isActiveDays = $schedule->is_active_days ?? [];
+                                        @endphp
+                                        @foreach ($dayNamesShort as $i => $dayShort)
+                                            @php
+                                                $dayIdx = $i;
+                                                $dayName = $dayNames[$i];
+                                                $isChecked = in_array($dayIdx, $schedule->days ?? []);
+                                                $isActive = $isActiveDays[$dayIdx] ?? false;
+                                            @endphp
+                                            <div class="day-toggle-group me-2 mb-2">
+                                                <input type="checkbox" class="form-check-input day-checkbox" 
+                                                       id="day_{{ $enforcer->id }}_{{ $dayIdx }}" 
+                                                       name="days[]" value="{{ $dayIdx }}"
+                                                       {{ $isChecked ? 'checked' : '' }}
+                                                       onchange="toggleDay({{ $dayIdx }}, this, {{ $enforcer->id }})">
+                                                <label class="form-check-label day-label" for="day_{{ $enforcer->id }}_{{ $dayIdx }}">
+                                                    {{ $dayShort }}
+                                                </label>
+                                                <input type="hidden" name="is_active_days[{{ $dayIdx }}]" value="0">
+                                                <button type="button" 
+                                                        class="btn btn-sm active-toggle {{ $isActive ? 'btn-success' : 'btn-outline-secondary' }} ms-1"
+                                                        id="active_{{ $enforcer->id }}_{{ $dayIdx }}"
+                                                        onclick="toggleActive({{ $dayIdx }}, this, {{ $enforcer->id }})"
+                                                        {{ !$isChecked ? 'disabled' : '' }}>
+                                                    <i class="bi bi-check"></i>
+                                                </button>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    <small class="text-muted">Click day to include/exclude. Click active button to toggle active/inactive.</small>
+                                </div>
+
+<input type="hidden" name="days[]" value="">
 
 {{-- Auto Assign Modal --}}
 <div class="modal fade" id="autoAssignModal" tabindex="-1" aria-hidden="true">
@@ -522,7 +549,57 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Schedule editor: add remove button functionality if needed
+    // Schedule editor: time validation
+    document.querySelectorAll('.schedule-editor .day-row').forEach(row => {
+        const timeInputs = row.querySelectorAll('input[type="time"]');
+        timeInputs.forEach(input => {
+            input.addEventListener('change', () => {
+                const start = row.querySelector('input[name$="[start_time]"]');
+                const end = row.querySelector('input[name$="[end_time]"]');
+                if (start && end && start.value && end.value && start.value >= end.value) {
+                    end.setCustomValidity('End time must be after start time');
+                } else {
+                    end.setCustomValidity('');
+                }
+            });
+        });
+    });
+
+    // Schedule editor: day checkbox and active toggle functionality
+    window.toggleDay = function(dayIdx, checkbox, enforcerId) {
+        const activeBtn = document.getElementById('active_' + enforcerId + '_' + dayIdx);
+        if (checkbox.checked) {
+            activeBtn.disabled = false;
+            activeBtn.classList.remove('btn-outline-secondary');
+            activeBtn.classList.add('btn-success');
+        } else {
+            activeBtn.disabled = true;
+            activeBtn.classList.remove('btn-success');
+            activeBtn.classList.add('btn-outline-secondary');
+        }
+        // Update hidden checkbox for day inclusion
+        const dayCheckbox = checkbox; // The day checkbox itself
+        // The value is handled by the checkbox itself
+    };
+
+    window.toggleActive = function(dayIdx, button, enforcerId) {
+        const dayCheckbox = document.getElementById('day_' + enforcerId + '_' + dayIdx);
+        if (!dayCheckbox.checked) return; // Only allow if day is selected
+
+        const isActive = button.classList.contains('btn-success');
+        if (isActive) {
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-secondary');
+            button.innerHTML = '<i class="bi bi-x"></i>';
+        } else {
+            button.classList.remove('btn-outline-secondary');
+            button.classList.add('btn-success');
+            button.innerHTML = '<i class="bi bi-check"></i>';
+        }
+        // The hidden is_active_days input will be updated via form submission
+    };
+
+    // Schedule editor: time validation
     document.querySelectorAll('.schedule-editor .day-row').forEach(row => {
         const timeInputs = row.querySelectorAll('input[type="time"]');
         timeInputs.forEach(input => {

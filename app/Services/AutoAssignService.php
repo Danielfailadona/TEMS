@@ -40,4 +40,23 @@ class AutoAssignService
             ->orderByRaw('RANDOM()')
             ->first();
     }
+
+    /**
+     * Check if an enforcer is currently within their scheduled hours.
+     */
+    public static function isEnforcerCurrentlyScheduled(User $enforcer): bool
+    {
+        $dayOfWeek = now()->dayOfWeek; // 0=Sunday, 1=Monday, ..., 6=Saturday
+        $time = now()->format('H:i:s');
+
+        return EnforcerSchedule::where('enforcer_id', $enforcer->id)
+            ->where('is_active', true)
+            ->whereJsonContains('days', now()->dayOfWeek)
+            ->where(function ($q) {
+                $q->whereJsonContains('is_active_days->' . now()->dayOfWeek, true);
+            })
+            ->where('start_time', '<=', now()->format('H:i:s'))
+            ->where('end_time', '>', now()->format('H:i:s'))
+            ->exists();
+    }
 }

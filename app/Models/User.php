@@ -203,7 +203,6 @@ class User extends Authenticatable
 
     /**
      * Check if enforcer is available for assignment based on schedule AND online status.
-     * This replaces the old isAssignable logic for schedule-aware assignment.
      */
     public function isScheduleAssignable(): bool
     {
@@ -226,9 +225,12 @@ class User extends Authenticatable
                                 $dayOfWeek = now()->dayOfWeek;
                                 $time = now()->format('H:i:s');
                                 $q3->where('is_active', true)
-                                    ->where('day_of_week', $dayOfWeek)
-                                    ->where('start_time', '<=', now()->format('H:i:s'))
-                                    ->where('end_time', '>', now()->format('H:i:s'));
+                                    ->whereJsonContains('days', $dayOfWeek)
+                                    ->where(function ($q4) {
+                                        $q4->whereJsonContains('is_active_days->' . $dayOfWeek, true);
+                                    })
+                                    ->where('start_time', '<=', $time)
+                                    ->where('end_time', '>', $time);
                             });
                     });
             });
@@ -240,9 +242,15 @@ class User extends Authenticatable
     public function getTodaysSchedulesAttribute(): \Illuminate\Database\Eloquent\Collection
     {
         $dayOfWeek = now()->dayOfWeek;
+        $time = now()->format('H:i:s');
         return $this->enforcerSchedules()
             ->where('is_active', true)
-            ->where('day_of_week', $dayOfWeek)
+            ->whereJsonContains('days', $dayOfWeek)
+            ->where(function ($q) use ($dayOfWeek) {
+                $q->whereJsonContains('is_active_days->' . $dayOfWeek, true);
+            })
+            ->where('start_time', '<=', $time)
+            ->where('end_time', '>', $time)
             ->orderBy('start_time')
             ->get();
     }
@@ -254,7 +262,6 @@ class User extends Authenticatable
     {
         return $this->enforcerSchedules()
             ->where('is_active', true)
-            ->orderBy('day_of_week')
             ->orderBy('start_time')
             ->get();
     }
