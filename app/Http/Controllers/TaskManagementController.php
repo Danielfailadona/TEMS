@@ -178,9 +178,6 @@ class TaskManagementController extends Controller
         return back()->with('success', 'Schedule updated successfully.');
     }
 
-        return back()->with('success', 'Schedule updated successfully.');
-    }
-
     /**
      * Update enforcer's availability override.
      */
