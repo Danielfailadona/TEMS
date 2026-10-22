@@ -452,13 +452,13 @@
                                 <div class="day-row">
                                     <label class="day-label">{{ $day }}</label>
                                     <div class="time-inputs">
-                                        <input type="time" name="schedules[{{ $i }}][start_time]"
-                                               value="{{ $sched->start_time ? \Carbon\Carbon::parse($sched->start_time)->format('H:i') : '' }}"
-                                               placeholder="Start">
+<input type="time" name="schedules[{{ $i }}][start_time]"
+                                                value="{{ $sched && $sched->start_time ? \Carbon\Carbon::parse($sched->start_time)->format('H:i') : '' }}"
+                                                placeholder="Start">
                                         <span class="text-muted">to</span>
                                         <input type="time" name="schedules[{{ $i }}][end_time]"
-                                               value="{{ $sched->end_time ? \Carbon\Carbon::parse($sched->end_time)->format('H:i') : '' }}"
-                                               placeholder="End">
+                                                value="{{ $sched && $sched->end_time ? \Carbon\Carbon::parse($sched->end_time)->format('H:i') : '' }}"
+                                                placeholder="End">
                                         <div class="form-check form-check-inline ms-3">
                                             <input class="form-check-input" type="checkbox" name="schedules[{{ $i }}][is_active]" value="1" {{ ($sched && $sched->is_active) ? 'checked' : '' }}>
                                             <label class="form-check-label small">Active</label>
