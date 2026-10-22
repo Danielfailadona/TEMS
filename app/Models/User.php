@@ -225,7 +225,7 @@ class User extends Authenticatable
                                 $dayOfWeek = now()->dayOfWeek;
                                 $time = now()->format('H:i:s');
                                 $q3->whereJsonContains('days', $dayOfWeek)
-                                    ->where(function ($q4) {
+                                    ->where(function ($q4) use ($dayOfWeek) {
                                         $q4->whereJsonContains('is_active_days->' . $dayOfWeek, true);
                                     })
                                     ->where('start_time', '<=', $time)
