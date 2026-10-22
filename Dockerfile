@@ -21,6 +21,7 @@ RUN apk add --no-cache \
     oniguruma-dev \
     libzip-dev \
     libpng-dev \
+    composer \
     && docker-php-ext-install -j$(nproc) \
     pdo_pgsql \
     pgsql \
