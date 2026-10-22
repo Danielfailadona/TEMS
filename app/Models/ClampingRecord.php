@@ -114,4 +114,51 @@ class ClampingRecord extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
+    /**
+     * Read vehicle_plate from the linked citation (deduplication R1).
+     */
+    public function getVehiclePlateAttribute(): ?string
+    {
+        return $this->citation?->vehicle_plate;
+    }
+
+    /**
+     * Read clamping_fee from the linked payment or citation (deduplication R3).
+     */
+    public function getClampingFeeAttribute(): ?float
+    {
+        $payment = $this->payments->firstWhere('paid_at');
+        if ($payment) {
+            return (float) $payment->amount;
+        }
+        return $this->citation?->penalty_amount;
+    }
+
+    /**
+     * Read payment_method from the linked payment (deduplication R3).
+     */
+    public function getPaymentMethodAttribute(): ?string
+    {
+        $payment = $this->payments->firstWhere('paid_at');
+        return $payment?->payment_method?->value;
+    }
+
+    /**
+     * Read reference_number from the linked payment (deduplication R3).
+     */
+    public function getReferenceNumberAttribute(): ?string
+    {
+        $payment = $this->payments->firstWhere('paid_at');
+        return $payment?->reference_number;
+    }
+
+    /**
+     * Read paid_at from the linked payment (deduplication R3).
+     */
+    public function getPaidAtAttribute(): ?\Carbon\Carbon
+    {
+        $payment = $this->payments->firstWhere('paid_at');
+        return $payment?->paid_at;
+    }
 }

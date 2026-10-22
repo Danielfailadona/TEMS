@@ -110,7 +110,6 @@ class ClampingController extends Controller
 
         $record = ClampingRecord::create([
             'notice_number' => $numberService->noticeNumber(),
-            'vehicle_plate' => $request->vehicle_plate,
             'citation_id' => $citation?->id,
             'clamped_by' => auth()->id(),
             'status' => ClampingStatus::AwaitingPayment,

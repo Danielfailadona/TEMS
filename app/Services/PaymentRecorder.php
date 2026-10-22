@@ -82,10 +82,6 @@ class PaymentRecorder
 
             $clamping->update([
                 'status' => ClampingStatus::Paid,
-                'clamping_fee' => $data['amount'],
-                'payment_method' => $data['payment_method'],
-                'reference_number' => $data['reference_number'] ?? null,
-                'paid_at' => now(),
             ]);
 
             Archive::log($clamping->fresh(), 'Clamp payment recorded (Notice: '.$clamping->notice_number.')', $cashierId);

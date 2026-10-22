@@ -105,7 +105,6 @@ class CitationController extends Controller
 
                 $impounding = ImpoundingRecord::create([
                     'notice_number' => $numberService->impoundNumber(),
-                    'vehicle_plate' => $citation->vehicle_plate,
                     'citation_id' => $citation->id,
                     'impounded_by' => auth()->id(),
                     'status' => ImpoundingStatus::Impounded,

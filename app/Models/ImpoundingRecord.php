@@ -106,4 +106,12 @@ class ImpoundingRecord extends Model
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
+
+    /**
+     * Read vehicle_plate from the linked citation (deduplication R2).
+     */
+    public function getVehiclePlateAttribute(): ?string
+    {
+        return $this->citation?->vehicle_plate;
+    }
 }
