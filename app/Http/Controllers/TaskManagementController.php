@@ -118,7 +118,7 @@ class TaskManagementController extends Controller
                 ->count(),
         ];
 
-        $zones = \App\Models\Team::whereHas('users', function ($q) {
+        $zones = \App\Models\Team::whereHas('members', function ($q) {
             $q->where('role', Role::Enforcer->value);
         })->orderBy('name')->get();
 
