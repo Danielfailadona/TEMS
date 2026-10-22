@@ -35,7 +35,7 @@ RUN apk add --no-cache \
 COPY --from=composer-build /app /var/www/html
 COPY . /var/www/html
 
-RUN composer dump-autoload -o --no-dev
+RUN composer dump-autoload -o --no-dev --no-scripts
 
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 COPY docker/supervisord.conf /etc/supervisord.conf
