@@ -21,7 +21,7 @@ use App\Http\Controllers\PayMongoController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
-use App\Http\Controllers\TaskAssignmentController;
+use App\Http\Controllers\TaskManagementController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\UserController;
