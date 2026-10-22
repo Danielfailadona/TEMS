@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Enums\AppealStatus;
 use App\Enums\CitationStatus;
+use App\Enums\Role;
 use App\Http\Requests\StoreAppealRequest;
 use App\Http\Requests\UpdateAppealRequest;
 use App\Models\Appeal;
 use App\Models\Archive;
 use App\Models\Citation;
+use App\Models\SystemNotification;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -63,7 +66,7 @@ class AppealController extends Controller
             return back()->withErrors(['citation_id' => 'This citation has already been paid and cannot be appealed.']);
         }
 
-        Appeal::create([
+        $appeal = Appeal::create([
             'citation_id' => $citation->id,
             'submitted_by' => auth()->id(),
             'reason' => $request->reason,
@@ -71,6 +74,18 @@ class AppealController extends Controller
             'status' => AppealStatus::Submitted,
             'submitted_at' => now(),
         ]);
+
+        // Notify FrontDesk and Admins
+        $recipients = User::whereIn('role', [Role::SuperAdmin, Role::Administrator, Role::FrontDesk])->get();
+        foreach ($recipients as $recipient) {
+            SystemNotification::notify(
+                $recipient,
+                'appeal_filed',
+                'New Appeal Filed',
+                "An appeal has been filed for citation {$citation->citation_number} by {$citation->driver_name}. Reason: {$request->reason}",
+                ['appeal_id' => $appeal->id, 'citation_id' => $citation->id]
+            );
+        }
 
         return redirect()->route('appeals.index')->with('success', 'Appeal submitted successfully.');
     }
@@ -154,7 +169,22 @@ class AppealController extends Controller
             }
 
             if (in_array($request->status, ['approved', 'rejected'], true)) {
-                Archive::log($appeal->refresh(), 'Appeal '.$request->status, auth()->id());
+                $appeal = $appeal->refresh();
+                Archive::log($appeal, 'Appeal '.$request->status, auth()->id());
+
+                // Notify the appellant
+                if ($appeal->submitted_by) {
+                    $appellant = User::find($appeal->submitted_by);
+                    if ($appellant) {
+                        SystemNotification::notify(
+                            $appellant,
+                            'appeal_reviewed',
+                            'Appeal '.ucfirst($request->status),
+                            "Your appeal for citation {$appeal->citation->citation_number} has been {$request->status}. ".($appeal->decision_notes ? 'Notes: '.$appeal->decision_notes : ''),
+                            ['appeal_id' => $appeal->id, 'citation_id' => $appeal->citation_id]
+                        );
+                    }
+                }
             }
         });
 

@@ -7,6 +7,7 @@
     <title>@yield('title', config('itevcms.app_name'))</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bootstrap-4@5.0.14/bootstrap-4.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=dashboard,auto_towing,car_gear">
     @stack('styles')
 </head>
@@ -79,10 +80,15 @@
                 <h2 class="h4 mb-0">{{ $pageTitle }}</h2>
             </div>
             <div class="d-flex align-items-center gap-3">
-                <a href="{{ route('notifications.index') }}" class="position-relative text-decoration-none text-dark topbar-icon-btn">
-                    <i class="bi bi-bell fs-5"></i>
-                    <span class="notification-badge position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount" style="font-size:0.6rem; display:none;">0</span>
-                </a>
+                <!-- Notification Bell with Modal Dropdown -->
+                <div class="dropdown" id="notificationDropdown">
+                    <button class="btn btn-link text-dark text-decoration-none p-0 border-0 position-relative topbar-icon-btn"
+                            data-bs-toggle="modal" data-bs-target="#notificationModal" aria-label="Notifications">
+                        <i class="bi bi-bell fs-5"></i>
+                        <span class="notification-badge position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                              id="notificationCount" style="font-size:0.6rem; display:none;">0</span>
+                    </button>
+                </div>
 
                 <div class="dropdown">
                     <button class="btn btn-link text-dark text-decoration-none dropdown-toggle d-flex align-items-center gap-2 p-0 border-0" data-bs-toggle="dropdown" aria-expanded="false" id="userDropdown">
@@ -150,15 +156,6 @@
     </button>
   </div>
   <div class="enforcer-more-grid">
-    <a href="{{ route('appeals.index') }}" class="enforcer-more-item">
-      <i class="bi bi-exclamation-circle"></i><span>Appeals</span>
-    </a>
-    <a href="{{ route('citizen-reports.index') }}" class="enforcer-more-item">
-      <i class="bi bi-inbox"></i><span>Reports</span>
-    </a>
-    <a href="{{ route('archives.index') }}" class="enforcer-more-item">
-      <i class="bi bi-archive"></i><span>My Archives</span>
-    </a>
     <a href="{{ route('profile.edit') }}" class="enforcer-more-item">
       <i class="bi bi-person-circle"></i><span>My Profile</span>
     </a>
@@ -397,23 +394,217 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 </style>
 
+<!-- Notification Modal -->
+<div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-end modal-lg">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+            <div class="modal-header bg-white border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="notificationModalLabel">
+                    <i class="bi bi-bell text-primary me-2"></i>Notifications
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0" style="max-height: 500px; overflow-y: auto;">
+                <div class="list-group list-group-flush" id="notificationList">
+                    <div class="text-center py-4 text-muted" id="notificationLoading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <div class="mt-2 small">Loading notifications...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-white border-0 pt-0">
+                <a href="{{ route('notifications.index') }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-list-ul me-1"></i> View All Notifications
+                </a>
+                <form method="POST" action="{{ route('notifications.markAllRead') }}" class="m-0">
+                    @csrf
+                    <button type="submit" class="btn btn-primary btn-sm" id="markAllReadBtn">
+                        <i class="bi bi-check-all me-1"></i> Mark All as Read
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@yield('modals')
+
+@stack('scripts')
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.8/dist/sweetalert2.all.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const badge = document.getElementById('notificationCount');
-    if (!badge) return;
+    const notificationList = document.getElementById('notificationList');
+    const notificationModal = document.getElementById('notificationModal');
+    const markAllReadBtn = document.getElementById('markAllReadBtn');
 
-    function updateBadge() {
-        fetch('{{ route("api.notifications.unread") }}')
-            .then(r => r.json())
-            .then(d => {
-                if (d.count > 0) { badge.textContent = d.count; badge.style.display = 'inline'; }
-                else { badge.style.display = 'none'; }
-            })
-            .catch(() => {});
+    // Load notifications when modal opens
+    if (notificationModal) {
+        notificationModal.addEventListener('show.bs.modal', async () => {
+            await loadNotifications();
+            // Mark all as read when modal opens
+            await markAllAsRead();
+        });
     }
 
-    updateBadge();
-    setInterval(updateBadge, 30000);
+    async function loadNotifications() {
+        if (!notificationList) return;
+        
+        notificationList.innerHTML = `
+            <div class="text-center py-4 text-muted" id="notificationLoading">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="mt-2 small">Loading notifications...</div>
+            </div>
+        `;
+
+        try {
+            const response = await fetch('{{ route("api.notifications.latest") }}');
+            const notifications = await response.json();
+            
+            if (notifications.length === 0) {
+                notificationList.innerHTML = `
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-bell-slash fs-1 d-block mb-2"></i>
+                        <p class="mb-0">No notifications yet.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            notificationList.innerHTML = notifications.map(n => `
+                <div class="list-group-item py-3 ${n.is_read ? '' : 'bg-light'}" data-notification-id="${n.id}">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div class="d-flex gap-3">
+                            <div>
+                                ${getNotificationIcon(n.type)}
+                            </div>
+                            <div>
+                                <div class="fw-semibold">${n.title}</div>
+                                <div class="text-muted small">${n.message}</div>
+                                ${n.data && n.data.citation_number ? `<div class="mt-1"><span class="badge bg-primary">${n.data.citation_number}</span></div>` : ''}
+                                ${n.data && n.data.payment_id ? `<div class="mt-1"><span class="badge bg-success">Payment #${n.data.payment_id}</span></div>` : ''}
+                            </div>
+                        </div>
+                        <div class="text-end text-nowrap">
+                            <small class="text-muted d-block">${n.created_at}</small>
+                            ${!n.is_read ? `
+                                <form method="POST" action="{{ route('notifications.read', ':id') }}" class="d-inline" data-id="${n.id}">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-link text-decoration-none p-0">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                </form>
+                            ` : ''}
+                            <form method="POST" action="{{ route('notifications.destroy', ':id') }}" class="d-inline" data-id="${n.id}">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-link text-danger text-decoration-none p-0">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Add event listeners for dynamically added forms
+            notificationList.querySelectorAll('form[data-id]').forEach(form => {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const notificationId = form.dataset.id;
+                    const action = form.action.replace(':id', notificationId);
+                    const method = form.querySelector('[name="_method"]') ? 'DELETE' : 'POST';
+                    
+                    try {
+                        await fetch(action, {
+                            method: method,
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            },
+                            body: JSON.stringify({_token: document.querySelector('meta[name="csrf-token"]').content})
+                        });
+                        await loadNotifications();
+                        updateBadge();
+                    } catch (err) {
+                        console.error('Error:', err);
+                    }
+                });
+            });
+
+        } catch (err) {
+            console.error('Error loading notifications:', err);
+            notificationList.innerHTML = `
+                <div class="text-center text-danger py-4">
+                    <i class="bi bi-exclamation-triangle fs-1 d-block mb-2"></i>
+                    <p class="mb-0">Failed to load notifications</p>
+                </div>
+            `;
+        }
+    }
+
+    function getNotificationIcon(type) {
+        const icons = {
+            'payment_received': '<i class="bi bi-cash-stack text-success fs-5"></i>',
+            'citation_issued': '<i class="bi bi-receipt text-primary fs-5"></i>',
+            'appeal_status': '<i class="bi bi-chat-square-text text-warning fs-5"></i>',
+            'appeal_filed': '<i class="bi bi-chat-square-text text-warning fs-5"></i>',
+            'appeal_reviewed': '<i class="bi bi-chat-square-text text-warning fs-5"></i>',
+            'clamping_action': '<i class="bi bi-lock text-danger fs-5"></i>',
+            'clamping_created': '<i class="bi bi-lock text-danger fs-5"></i>',
+            'release': '<i class="bi bi-unlock text-secondary fs-5"></i>',
+            'impounding_created': '<i class="bi bi-truck text-info fs-5"></i>',
+            'citizen_report': '<i class="bi bi-inbox text-primary fs-5"></i>',
+            'report_assigned': '<i class="bi bi-person-badge text-info fs-5"></i>',
+            'report_resolved': '<i class="bi bi-check-all text-success fs-5"></i>',
+            'account_approved': '<i class="bi bi-person-check text-success fs-5"></i>',
+            default: '<i class="bi bi-bell text-muted fs-5"></i>',
+        };
+        return icons[type] || icons.default;
+    }
+
+    async function markAllAsRead() {
+        try {
+            await fetch('{{ route("notifications.markAllRead") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({_token: document.querySelector('meta[name="csrf-token"]').content})
+            });
+            updateBadge();
+        } catch (err) {
+            console.error('Error marking all as read:', err);
+        }
+    }
+
+    if (markAllReadBtn) {
+        markAllReadBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await markAllAsRead();
+            await loadNotifications();
+        });
+    }
+
+    if (badge) {
+        function updateBadge() {
+            fetch('{{ route("api.notifications.unread") }}')
+                .then(r => r.json())
+                .then(d => {
+                    if (d.count > 0) { badge.textContent = d.count; badge.style.display = 'inline'; }
+                    else { badge.style.display = 'none'; }
+                })
+                .catch(() => {});
+        }
+
+        updateBadge();
+        setInterval(updateBadge, 30000);
+    }
 });
 </script>
 </body>

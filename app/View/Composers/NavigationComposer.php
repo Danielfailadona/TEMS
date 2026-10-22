@@ -48,11 +48,11 @@ class NavigationComposer
                 $operations[] = ['label' => 'Payments', 'route' => 'payments.index', 'icon' => 'cash-coin'];
             }
 
-            if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::Enforcer)) {
+            if ($user->isRole(Role::SuperAdmin, Role::Administrator)) {
                 $operations[] = ['label' => 'Clamping', 'route' => 'clamping.index', 'icon' => 'car_gear'];
             }
 
-            if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::Cashier, Role::FrontDesk, Role::Enforcer)) {
+            if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::Cashier, Role::FrontDesk)) {
                 $operations[] = ['label' => 'Impounding', 'route' => 'impounding.index', 'icon' => 'auto_towing'];
             }
 

@@ -158,6 +158,20 @@ class CitizenReportController extends Controller
             'processed_at' => now(),
         ]);
 
+        // Notify the reporter if they have a user account
+        if ($citizenReport->requester_email) {
+            $reporter = User::where('email', $citizenReport->requester_email)->first();
+            if ($reporter) {
+                SystemNotification::notify(
+                    $reporter,
+                    'citizen_report',
+                    'Report Assigned',
+                    "Your citizen report {$citizenReport->report_number} for vehicle {$citizenReport->vehicle_plate} has been assigned to an enforcer.",
+                    ['citizen_report_id' => $citizenReport->id]
+                );
+            }
+        }
+
         return redirect()->route('citizen-reports.show', $citizenReport)
             ->with('success', 'Report claimed. It is now assigned to you.');
     }
@@ -232,6 +246,20 @@ class CitizenReportController extends Controller
                 "Report {$citizenReport->report_number} for {$citizenReport->vehicle_plate} has been resolved.",
                 ['citizen_report_id' => $citizenReport->id]
             );
+        }
+
+        // Notify the reporter if they have a user account
+        if ($citizenReport->requester_email) {
+            $reporter = User::where('email', $citizenReport->requester_email)->first();
+            if ($reporter) {
+                SystemNotification::notify(
+                    $reporter,
+                    'citizen_report',
+                    'Report Resolved',
+                    "Your citizen report {$citizenReport->report_number} for vehicle {$citizenReport->vehicle_plate} has been resolved. ".($citizenReport->resolution_notes ? 'Notes: '.$citizenReport->resolution_notes : ''),
+                    ['citizen_report_id' => $citizenReport->id]
+                );
+            }
         }
 
         return redirect()->route('citizen-reports.show', $citizenReport)

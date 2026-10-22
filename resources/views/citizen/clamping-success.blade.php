@@ -1,9 +1,49 @@
-@extends('layouts.guest')
+@extends('layouts.app')
 
 @section('title', 'Report Submitted')
 
+@push('styles')
+<style>
+    .animate-on-load {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.6s ease forwards;
+    }
+    .animate-on-load:nth-child(1) { animation-delay: 0.1s; }
+    .animate-on-load:nth-child(2) { animation-delay: 0.2s; }
+    @keyframes fadeInUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="container py-5">
+<nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top" style="z-index: 100;">
+    <div class="container-fluid px-4 px-lg-5">
+        <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ route('welcome') }}">
+            <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" height="32" class="me-2">
+            <span style="background: linear-gradient(135deg, #0f2b4a, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">TEMs</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-center gap-2">
+                <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('welcome') }}#features">Features</a></li>
+                <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('citizen.citation.lookup') }}">Ticket Lookup</a></li>
+                <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('citizen.report-parking.landing') }}">Report Parking</a></li>
+                <li class="nav-item">
+                    <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">Sign In</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('register') }}" class="btn btn-primary btn-sm">Sign Up</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-4 py-lg-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="text-center mb-5 animate-on-load">
@@ -69,10 +109,10 @@
             </div>
 
             <div class="text-center mt-4 animate-on-load">
-                <a href="{{ route('citizen.clamping.landing', ['tab' => 'track']) }}" class="btn btn-outline-primary px-4 py-2">
+                <a href="{{ route('citizen.report-parking.track') }}" class="btn btn-outline-primary px-4 py-2">
                     <i class="bi bi-search me-1"></i> Track Your Report
                 </a>
-                <a href="{{ route('citizen.clamping.landing') }}" class="btn btn-outline-secondary ms-2 px-4 py-2">
+                <a href="{{ route('citizen.report-parking.landing') }}" class="btn btn-outline-secondary ms-2 px-4 py-2">
                     <i class="bi bi-plus-circle me-1"></i> Submit Another
                 </a>
             </div>

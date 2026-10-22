@@ -95,7 +95,7 @@
                 <ul class="navbar-nav ms-auto align-items-center gap-2">
                     <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('welcome') }}#features">Features</a></li>
                     <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('citizen.citation.lookup') }}">Ticket Lookup</a></li>
-                    <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('citizen.clamping.landing') }}">Report Parking</a></li>
+                    <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('citizen.report-parking.landing') }}">Report Parking</a></li>
                     <li class="nav-item">
                         <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">Sign In</a>
                     </li>
@@ -323,7 +323,7 @@
                         <i class="bi bi-lightning me-2 text-primary"></i>Quick Actions
                     </h5>
                 </div>
-                <a href="{{ route('citizen.clamping.landing') }}" class="action-card animate-on-load" style="animation-delay: 0.1s;">
+                <a href="{{ route('citizen.report-parking.landing') }}" class="action-card animate-on-load" style="animation-delay: 0.1s;">
                     <div class="card stat-card mb-3">
                         <div class="card-body d-flex align-items-center gap-3 py-3 px-4">
                             <div style="width: 3rem; height: 3rem; background: rgba(245, 158, 11, 0.12); border-radius: 0.8rem; display: grid; place-items: center; color: #f59e0b; font-size: 1.4rem; flex-shrink: 0;">

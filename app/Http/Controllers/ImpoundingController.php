@@ -5,13 +5,15 @@ namespace App\Http\Controllers;
 use App\Enums\CitationStatus;
 use App\Enums\ClampingStatus;
 use App\Enums\ImpoundingStatus;
+use App\Enums\Role;
 use App\Models\Archive;
 use App\Models\Citation;
 use App\Models\ClampingRecord;
 use App\Models\ImpoundingRecord;
+use App\Models\SystemNotification;
+use App\Models\User;
 use App\Models\VehicleRelease;
 use App\Services\CitationNumberService;
-use App\Services\PaymentRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -149,6 +151,46 @@ class ImpoundingController extends Controller
 
         if ($citation) {
             $citation->update(['status' => CitationStatus::Impounded]);
+        }
+
+        // Notify vehicle owner (if exists in users)
+        if ($record->citation && $record->citation->driver_id) {
+            $driver = User::find($record->citation->driver_id);
+            if ($driver) {
+                SystemNotification::notify(
+                    $driver,
+                    'impounding_created',
+                    'Vehicle Impounded',
+                    "Your vehicle {$record->vehicle_plate} has been impounded. Notice: {$record->notice_number}. Total fees will accrue after grace period.",
+                    ['impounding_record_id' => $record->id]
+                );
+            }
+        }
+
+        // Notify the impounding officer
+        if ($record->impounded_by) {
+            $officer = User::find($record->impounded_by);
+            if ($officer) {
+                SystemNotification::notify(
+                    $officer,
+                    'impounding_created',
+                    'Impound Recorded',
+                    "You impounded vehicle {$record->vehicle_plate}. Notice: {$record->notice_number}",
+                    ['impounding_record_id' => $record->id]
+                );
+            }
+        }
+
+        // Notify admins
+        $admins = User::whereIn('role', [Role::SuperAdmin, Role::Administrator])->get();
+        foreach ($admins as $admin) {
+            SystemNotification::notify(
+                $admin,
+                'impounding_created',
+                'Vehicle Impounded',
+                "Vehicle {$record->vehicle_plate} was impounded. Notice: {$record->notice_number}",
+                ['impounding_record_id' => $record->id]
+            );
         }
 
         return redirect()->route('impounding.show', $record)->with('success', 'Vehicle impounded successfully. Fees will accrue after grace period.');

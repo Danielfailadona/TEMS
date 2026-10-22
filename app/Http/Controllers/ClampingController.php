@@ -9,6 +9,7 @@ use App\Models\Archive;
 use App\Models\Citation;
 use App\Models\ClampingRecord;
 use App\Models\CitizenReport;
+use App\Models\SystemNotification;
 use App\Models\User;
 use App\Models\VehicleRelease;
 use App\Services\CitationNumberService;
@@ -123,6 +124,46 @@ class ClampingController extends Controller
 
         if ($citation) {
             $citation->update(['status' => CitationStatus::Clamped]);
+        }
+
+        // Notify vehicle owner (if exists in users) and assigned enforcer
+        if ($record->citation && $record->citation->driver_id) {
+            $driver = User::find($record->citation->driver_id);
+            if ($driver) {
+                SystemNotification::notify(
+                    $driver,
+                    'clamping_action',
+                    'Vehicle Clamped',
+                    "Your vehicle {$record->vehicle_plate} has been clamped. Notice: {$record->notice_number}. Please settle the fee to release.",
+                    ['clamping_record_id' => $record->id]
+                );
+            }
+        }
+
+        // Notify the clamping officer
+        if ($record->clamped_by) {
+            $officer = User::find($record->clamped_by);
+            if ($officer) {
+                SystemNotification::notify(
+                    $officer,
+                    'clamping_action',
+                    'Clamp Recorded',
+                    "You clamped vehicle {$record->vehicle_plate}. Notice: {$record->notice_number}",
+                    ['clamping_record_id' => $record->id]
+                );
+            }
+        }
+
+        // Notify admins
+        $admins = User::whereIn('role', [Role::SuperAdmin, Role::Administrator])->get();
+        foreach ($admins as $admin) {
+            SystemNotification::notify(
+                $admin,
+                'clamping_created',
+                'Vehicle Clamped',
+                "Vehicle {$record->vehicle_plate} was clamped. Notice: {$record->notice_number}",
+                ['clamping_record_id' => $record->id]
+            );
         }
 
         return redirect()->route('clamping.show', $record)->with('success', 'Vehicle clamp recorded successfully.');

@@ -122,14 +122,6 @@
             {{ $request->getStatusLabel() }}
         </span>
         <div class="d-flex gap-2">
-            @can('claim', $request)
-                <form action="{{ route('citizen-reports.claim', $request) }}" method="POST" class="d-inline">
-                    @csrf
-                    <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="bi bi-hand-index-thumb me-1"></i>Claim Report
-                    </button>
-                </form>
-            @endcan
             @can('update', $request)
                 @if ($isAccepted)
                     @if ($request->citation)
@@ -441,9 +433,12 @@
                     <i class="bi bi-x-circle me-2"></i>Reject
                 </button>
                 <div class="vr opacity-25" style="height:2.5rem;"></div>
-                <button type="button" class="btn btn-lg btn-success px-5 shadow-sm" data-bs-toggle="modal" data-bs-target="#acceptModal">
-                    <i class="bi bi-check-circle me-2"></i>Accept & Assign
-                </button>
+                <form action="{{ route('citizen-reports.accept', $request) }}" method="POST" class="d-inline">
+                    @csrf
+                    <button type="button" class="btn btn-lg btn-success px-5 shadow-sm" onclick="confirmAccept(this)">
+                        <i class="bi bi-check-circle me-2"></i>Accept & Assign
+                    </button>
+                </form>
             </div>
         </div>
     @elseif ($isAccepted && ! $request->citation)
@@ -463,33 +458,6 @@
 
 @can('update', $request)
     @if ($isPending)
-        <div class="modal fade" id="acceptModal" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered">
-                <form method="POST" action="{{ route('citizen-reports.accept', $request) }}">
-                    @csrf
-                    <div class="modal-content" style="border-radius:1rem;border:none;box-shadow:0 20px 60px rgba(0,0,0,0.15);">
-                        <div class="modal-header border-0 pb-0">
-                            <h5 class="modal-title fw-bold"><i class="bi bi-check-circle text-success me-2"></i>Accept & Assign</h5>
-                            <button class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p class="text-muted small">Assign this report to a clamping officer or enforcer:</p>
-                            <select name="assigned_to" class="form-select" required>
-                                <option value="">— Select Personnel —</option>
-                                @foreach ($enforcers as $enforcer)
-                                    <option value="{{ $enforcer->id }}">{{ $enforcer->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="modal-footer border-0 pt-0">
-                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-1"></i>Accept & Assign</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-
         <div class="modal fade" id="rejectModal" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <form method="POST" action="{{ route('citizen-reports.reject', $request) }}">
@@ -736,5 +704,30 @@
         select.addEventListener('change', toggle);
         toggle();
     })();
+</script>
+
+<script>
+    function confirmAccept(button) {
+        const form = button.closest('form');
+        if (!form) return;
+
+        Swal.fire({
+            title: 'Accept & Assign?',
+            text: 'This will accept the report and auto-assign it to an available enforcer.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Accept & Assign',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#6b7280',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Assigning...';
+                form.submit();
+            }
+        });
+    }
 </script>
 @endpush

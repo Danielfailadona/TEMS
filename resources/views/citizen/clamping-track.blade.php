@@ -1,6 +1,6 @@
 @extends('layouts.guest')
 
-@section('title', 'Track Citizen Report')
+@section('title', 'Track Report Parking')
 
 @section('content')
 <div class="container py-5">
@@ -10,13 +10,13 @@
                 <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
                     <i class="bi bi-search text-info" style="font-size: 2rem;"></i>
                 </div>
-                <h1 class="h2 fw-bold">Track Citizen Report</h1>
+                <h1 class="h2 fw-bold">Track Report Parking</h1>
                 <p class="text-muted">Enter your report number to check the status of your report.</p>
             </div>
 
             <div class="card stat-card mb-4 animate-on-load">
                 <div class="card-body p-4">
-                    <form method="GET" action="{{ route('citizen.clamping.track') }}" class="row g-3">
+                    <form method="GET" action="{{ route('citizen.report-parking.track') }}" class="row g-3">
                         <div class="col-12 col-md-9">
                             <label class="form-label visually-hidden">Reference Number</label>
                             <div class="input-group">

@@ -399,7 +399,7 @@
             <ul class="navbar-nav ms-auto align-items-center gap-2">
                 <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('welcome') }}#features">Features</a></li>
                 <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('citizen.citation.lookup') }}">Ticket Lookup</a></li>
-                <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('citizen.clamping.landing') }}">Report Parking</a></li>
+                <li class="nav-item"><a class="nav-link px-3 py-2" href="{{ route('citizen.report-parking.landing') }}">Report Parking</a></li>
                 <li class="nav-item"><a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">Sign In</a></li>
                 <li class="nav-item"><a href="{{ route('register') }}" class="btn btn-primary btn-sm">Sign Up</a></li>
             </ul>

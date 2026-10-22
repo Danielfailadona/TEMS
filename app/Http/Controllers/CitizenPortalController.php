@@ -190,7 +190,7 @@ class CitizenPortalController extends Controller
             Archive::log($citizenReport, 'Citizen report created', auth()->id());
         }
 
-        return redirect()->route('citizen.clamping.success', ['reference' => $citizenReport->report_number]);
+        return redirect()->route('citizen.report-parking.success', ['reference' => $citizenReport->report_number]);
     }
 
     public function clampingSuccess(Request $request): View

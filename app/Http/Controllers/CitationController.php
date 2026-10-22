@@ -12,6 +12,8 @@ use App\Models\Citation;
 use App\Models\CitationEvidence;
 use App\Models\ClampingRecord;
 use App\Models\ImpoundingRecord;
+use App\Models\SystemNotification;
+use App\Models\User;
 use App\Models\ViolationType;
 use App\Services\CitationNumberService;
 use App\Services\SupabaseStorage;
@@ -129,6 +131,66 @@ class CitationController extends Controller
 
             return $citation;
         });
+
+        // Notify vehicle owner (if exists in users) and assigned enforcer
+        if ($citation->driver_id) {
+            $driver = User::find($citation->driver_id);
+            if ($driver) {
+                SystemNotification::notify(
+                    $driver,
+                    'citation_issued',
+                    'New Citation Issued',
+                    "A citation ({$citation->citation_number}) has been issued for your vehicle {$citation->vehicle_plate}. Amount: ₱".number_format($citation->penalty_amount, 2).". Due: {$citation->due_date->format('M d, Y')}.",
+                    ['citation_id' => $citation->id]
+                );
+            }
+        }
+
+        // Notify the issuing enforcer
+        if ($citation->issued_by) {
+            $enforcer = User::find($citation->issued_by);
+            if ($enforcer) {
+                SystemNotification::notify(
+                    $enforcer,
+                    'citation_issued',
+                    'Citation Issued',
+                    "You issued citation {$citation->citation_number} for {$citation->vehicle_plate}.",
+                    ['citation_id' => $citation->id]
+                );
+            }
+        }
+
+        // Notify if impounding was created
+        if ($violationType->is_impoundable) {
+            $impounding = ImpoundingRecord::where('citation_id', $citation->id)->latest()->first();
+            if ($impounding) {
+                // Notify admins
+                $admins = User::whereIn('role', [Role::SuperAdmin, Role::Administrator])->get();
+                foreach ($admins as $admin) {
+                    SystemNotification::notify(
+                        $admin,
+                        'impounding_created',
+                        'Vehicle Impounded',
+                        "Vehicle {$citation->vehicle_plate} was impounded via citation {$citation->citation_number}. Notice: {$impounding->notice_number}",
+                        ['impounding_record_id' => $impounding->id, 'citation_id' => $citation->id]
+                    );
+                }
+            }
+        }
+
+        // Notify if clamping was created
+        if ($violationType->is_clampable) {
+            $admins = User::whereIn('role', [Role::SuperAdmin, Role::Administrator])->get();
+            foreach ($admins as $admin) {
+                SystemNotification::notify(
+                    $admin,
+                    'clamping_created',
+                    'Vehicle Clamped',
+                    "Vehicle {$citation->vehicle_plate} was clamped via citation {$citation->citation_number}.",
+                    ['citation_id' => $citation->id]
+                );
+            }
+        }
 
         $impoundSuffix = $violationType->is_impoundable ? ' An impounding record was created for this violation.' : '';
         $clampSuffix = (!$violationType->is_impoundable && $violationType->is_clampable) ? ' Vehicle is clamped.' : '';
