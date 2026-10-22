@@ -224,8 +224,7 @@ class User extends Authenticatable
                             ->whereHas('enforcerSchedules', function ($q3) {
                                 $dayOfWeek = now()->dayOfWeek;
                                 $time = now()->format('H:i:s');
-                                $q3->where('is_active', true)
-                                    ->whereJsonContains('days', $dayOfWeek)
+                                $q3->whereJsonContains('days', $dayOfWeek)
                                     ->where(function ($q4) {
                                         $q4->whereJsonContains('is_active_days->' . $dayOfWeek, true);
                                     })
@@ -244,7 +243,6 @@ class User extends Authenticatable
         $dayOfWeek = now()->dayOfWeek;
         $time = now()->format('H:i:s');
         return $this->enforcerSchedules()
-            ->where('is_active', true)
             ->whereJsonContains('days', $dayOfWeek)
             ->where(function ($q) use ($dayOfWeek) {
                 $q->whereJsonContains('is_active_days->' . $dayOfWeek, true);
@@ -261,7 +259,6 @@ class User extends Authenticatable
     public function getWeeklyScheduleAttribute(): \Illuminate\Database\Eloquent\Collection
     {
         return $this->enforcerSchedules()
-            ->where('is_active', true)
             ->orderBy('start_time')
             ->get();
     }

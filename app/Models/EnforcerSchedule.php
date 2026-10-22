@@ -40,7 +40,6 @@ class EnforcerSchedule extends Model
 
         return static::where('enforcer_id', $enforcerId)
             ->whereJsonContains('days', $dayOfWeek)
-            ->where('is_active', true) // Legacy compatibility - keep for now
             ->where(function ($q) use ($dayOfWeek) {
                 // Check per-day active toggle
                 $q->whereJsonContains('is_active_days->' . $dayOfWeek, true);
@@ -56,7 +55,6 @@ class EnforcerSchedule extends Model
     public static function getActiveSchedulesForEnforcer(int $enforcerId): \Illuminate\Database\Eloquent\Collection
     {
         return static::where('enforcer_id', $enforcerId)
-            ->where('is_active', true) // Legacy
             ->orderBy('start_time')
             ->get();
     }
