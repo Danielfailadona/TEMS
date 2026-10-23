@@ -1313,18 +1313,22 @@ body::before {
     display: inline-block; margin-right: 0.5rem;
 }
 .task-mgmt .modal-full .modal-dialog { max-width: 900px; }
-.task-mgmt .day-select-group {
+.task-mgmt .day-select-group,
+.schedule-editor-modal .day-select-group {
     display: flex;
     flex-wrap: wrap;
     flex-direction: row;
     gap: 0.375rem;
     width: 100%;
 }
-.task-mgmt .day-select-item { position: relative; flex: 0 0 auto; }
-.task-mgmt .day-select-check {
+.task-mgmt .day-select-item,
+.schedule-editor-modal .day-select-item { position: relative; flex: 0 0 auto; }
+.task-mgmt .day-select-check,
+.schedule-editor-modal .day-select-check {
     position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;
 }
-.task-mgmt .day-select-label {
+.task-mgmt .day-select-label,
+.schedule-editor-modal .day-select-label {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1342,24 +1346,29 @@ body::before {
     user-select: none;
     white-space: nowrap;
 }
-.task-mgmt .day-select-label .bi-check {
+.task-mgmt .day-select-label .bi-check,
+.schedule-editor-modal .day-select-label .bi-check {
     font-size: 0.875rem;
     line-height: 1;
 }
-.task-mgmt .day-select-label:hover {
+.task-mgmt .day-select-label:hover,
+.schedule-editor-modal .day-select-label:hover {
     background: #f8fafc;
     color: #374151;
     border-color: #9ca3af;
 }
-.task-mgmt .day-select-check:checked + .day-select-label {
+.task-mgmt .day-select-check:checked + .day-select-label,
+.schedule-editor-modal .day-select-check:checked + .day-select-label {
     background: #198754;
     color: #fff;
     border-color: #198754;
 }
-.task-mgmt .day-select-check:checked + .day-select-label .bi-check {
+.task-mgmt .day-select-check:checked + .day-select-label .bi-check,
+.schedule-editor-modal .day-select-check:checked + .day-select-label .bi-check {
     display: inline-block;
 }
-.task-mgmt .day-select-check:focus-visible + .day-select-label {
+.task-mgmt .day-select-check:focus-visible + .day-select-label,
+.schedule-editor-modal .day-select-check:focus-visible + .day-select-label {
     box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
     outline: none;
 }

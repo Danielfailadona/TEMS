@@ -316,7 +316,7 @@
 @foreach ($enforcers as $data)
     @php $enforcer = $data['enforcer']; @endphp
 <div class="modal fade" id="scheduleModal-{{ $enforcer->id }}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
+            <div class="modal-dialog modal-lg schedule-editor-modal">
                 <form method="POST" action="{{ route('operations.task-management.schedule.update', $enforcer) }}">
                     @csrf
                     <div class="modal-content">
