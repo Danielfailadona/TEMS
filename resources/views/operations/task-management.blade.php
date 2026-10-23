@@ -460,11 +460,11 @@
                                 @php
                                     $dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
                                     // Get the enforcer's single schedule
-                                    $schedule = $enforcer->enforcerSchedules->where('is_active', true)->first();
-                                    $days = $schedule->days ?? [];
-                                    $isActiveDays = $schedule->is_active_days ?? [];
-                                    $startTime = $schedule->start_time ? \Carbon\Carbon::parse($schedule->start_time)->format('H:i') : '';
-                                    $endTime = $schedule->end_time ? \Carbon\Carbon::parse($schedule->end_time)->format('H:i') : '';
+                                    $schedule = $enforcer->enforcerSchedules->first();
+                                    $days = $schedule?->days ?? [];
+                                    $isActiveDays = $schedule?->is_active_days ?? [];
+                                    $startTime = $schedule?->start_time ? \Carbon\Carbon::parse($schedule->start_time)->format('H:i') : '';
+                                    $endTime = $schedule?->end_time ? \Carbon\Carbon::parse($schedule->end_time)->format('H:i') : '';
                                 @endphp
 
                                 <div class="row g-3 mb-4">
@@ -486,13 +486,13 @@
                                         @php
                                             $dayNamesShort = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
                                             $dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-                                            $isActiveDays = $schedule->is_active_days ?? [];
+                                            $isActiveDays = $schedule?->is_active_days ?? [];
                                         @endphp
                                         @foreach ($dayNamesShort as $i => $dayShort)
                                             @php
                                                 $dayIdx = $i;
                                                 $dayName = $dayNames[$i];
-                                                $isChecked = in_array($dayIdx, $schedule->days ?? []);
+                                                $isChecked = in_array($dayIdx, $schedule?->days ?? []);
                                                 $isActive = $isActiveDays[$dayIdx] ?? false;
                                             @endphp
                                             <div class="day-toggle-group me-2 mb-2">
@@ -517,30 +517,40 @@
                                     </div>
                                     <small class="text-muted">Click day to include/exclude. Click active button to toggle active/inactive.</small>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Save Schedule</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endforeach
 
-<input type="hidden" name="days[]" value="">
-
-{{-- Auto Assign Modal --}}
-<div class="modal fade" id="autoAssignModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <form method="POST" action="{{ route('operations.task-management.auto-assign-all') }}">
-            @csrf
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-magic me-2"></i>Auto-Assign All Unassigned Reports</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="text-muted">This will automatically assign all unassigned accepted reports to available enforcers based on their schedules and online status.</p>
-                    <div class="alert alert-info small">
-                        <i class="bi bi-info-circle me-1"></i>Only enforcers who are <strong>within their scheduled hours</strong> and <strong>online</strong> will be assigned. If no enforcer is available, reports remain unassigned.
+    {{-- Auto Assign Modal --}}
+    <div class="modal fade" id="autoAssignModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form method="POST" action="{{ route('operations.task-management.auto-assign-all') }}">
+                @csrf
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold"><i class="bi bi-magic me-2"></i>Auto-Assign All Unassigned Reports</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted">This will automatically assign all unassigned accepted reports to available enforcers based on their schedules and online status.</p>
+                        <div class="alert alert-info small">
+                            <i class="bi bi-info-circle me-1"></i>Only enforcers who are <strong>within their scheduled hours</strong> and <strong>online</strong> will be assigned. If no enforcer is available, reports remain unassigned.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-magic me-1"></i>Auto-Assign All</button>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-magic me-1"></i>Auto-Assign All</button>
-                </div>
-            </div>
+            </form>
         </div>
     </div>
 @endsection
