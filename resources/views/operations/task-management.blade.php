@@ -292,7 +292,17 @@
 
                         <div class="mb-2">
                             <small class="text-muted d-block mb-1"><strong>Today's Schedule:</strong></small>
-                            @if ($todaysSchedule = $enforcer->enforcerSchedules->where('is_active', true)->where('day_of_week', now()->dayOfWeek)->where('start_time', '<=', now()->format('H:i:s'))->where('end_time', '>', now()->format('H:i:s'))->first())
+                            @php
+                                $today = now()->dayOfWeek;
+                                $now = now()->format('H:i:s');
+                                $todaysSchedule = $enforcer->enforcerSchedules->filter(function ($s) use ($today, $now) {
+                                    return in_array($today, $s->days ?? []) &&
+                                           ($s->is_active_days[$today] ?? false) &&
+                                           $s->start_time <= $now &&
+                                           $s->end_time > $now;
+                                })->first();
+                            @endphp
+                            @if ($todaysSchedule)
                                 <div class="d-inline-flex align-items-center gap-2 px-2 py-1 bg-success-soft text-success rounded-pill small">
                                     <i class="bi bi-clock"></i> {{ $todaysSchedule->start_time }} - {{ $todaysSchedule->end_time }}
                                 </div>
@@ -377,7 +387,11 @@
                                 </thead>
                                 <tbody>
                                     @foreach (['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'] as $i => $day)
-                                        @php $sched = $enforcer->enforcerSchedules->where('is_active', true)->where('day_of_week', $i)->first(); @endphp
+                                        @php
+                                            $sched = $enforcer->enforcerSchedules->filter(function ($s) use ($i) {
+                                                return in_array($i, $s->days ?? []) && ($s->is_active_days[$i] ?? false);
+                                            })->first();
+                                        @endphp
                                         <tr>
                                             <td><strong>{{ $day }}</strong></td>
                                             <td>{{ $sched ? $sched->start_time : '—' }}</td>
@@ -616,4 +630,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
-@endpush
+
+@endpush 
