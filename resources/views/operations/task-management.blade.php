@@ -119,14 +119,29 @@
         display: inline-block; margin-right: 0.5rem;
     }
     .task-mgmt .modal-full .modal-dialog { max-width: 900px; }
-    .task-mgmt .day-pill {
-        padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;
-        border: 2px solid #d1d5db; background: #f8fafc; color: #6b7280;
-        font-weight: 600; font-size: 0.875rem; transition: all 0.15s ease;
+    .task-mgmt .day-select-group {
+        display: inline-flex; border: 1px solid #d1d5db; border-radius: 0.5rem;
+        overflow: hidden; background: #f8fafc;
     }
-    .task-mgmt .day-pill:hover { border-color: #9ca3af; }
-    .task-mgmt .day-pill.active {
-        border-color: #198754; background: #f0fdf4; color: #198754;
+    .task-mgmt .day-select-item { position: relative; }
+    .task-mgmt .day-select-check {
+        position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;
+    }
+    .task-mgmt .day-select-label {
+        display: flex; align-items: center; justify-content: center;
+        min-width: 52px; padding: 0.5rem 0.75rem; cursor: pointer;
+        font-weight: 600; font-size: 0.8125rem; color: #6b7280;
+        background: #f8fafc; border-right: 1px solid #e5e7eb;
+        transition: background 0.15s ease, color 0.15s ease;
+        user-select: none;
+    }
+    .task-mgmt .day-select-item:last-child .day-select-label { border-right: none; }
+    .task-mgmt .day-select-label:hover { background: #eef2f7; color: #374151; }
+    .task-mgmt .day-select-check:checked + .day-select-label {
+        background: #198754; color: #fff;
+    }
+    .task-mgmt .day-select-check:focus-visible + .day-select-label {
+        outline: 2px solid #198754; outline-offset: -2px;
     }
     .task-mgmt .empty-state { text-align: center; padding: 3rem; color: #9ca3af; }
     .task-mgmt .empty-state i { font-size: 3rem; margin-bottom: 1rem; display: block; }
@@ -298,7 +313,7 @@
                             @endphp
                             @if ($todaysSchedule)
                                 <div class="d-inline-flex align-items-center gap-2 px-2 py-1 bg-success-soft text-success rounded-pill small">
-                                    <i class="bi bi-clock"></i> {{ $todaysSchedule->start_time }} - {{ $todaysSchedule->end_time }}
+                                    <i class="bi bi-clock"></i> {{ $todaysSchedule->start_time_short }} - {{ $todaysSchedule->end_time_short }}
                                 </div>
                             @else
                                 <span class="text-muted small">No shift scheduled</span>
@@ -388,8 +403,8 @@
                                         @endphp
                                         <tr>
                                             <td><strong>{{ $day }}</strong></td>
-                                            <td>{{ $sched ? $sched->start_time : '—' }}</td>
-                                            <td>{{ $sched ? $sched->end_time : '—' }}</td>
+                                            <td>{{ $sched ? $sched->start_time_short : '—' }}</td>
+                                            <td>{{ $sched ? $sched->end_time_short : '—' }}</td>
                                             <td>
                                                 @if ($sched)
                                                     <span class="badge bg-success">Active</span>
@@ -457,8 +472,8 @@
                                     $schedule = $enforcer->enforcerSchedules->first();
                                     $days = $schedule?->days ?? [];
                                     $isActiveDays = $schedule?->is_active_days ?? [];
-                                    $startTime = $schedule?->start_time ? \Carbon\Carbon::parse($schedule->start_time)->format('H:i') : '';
-                                    $endTime = $schedule?->end_time ? \Carbon\Carbon::parse($schedule->end_time)->format('H:i') : '';
+                                    $startTime = $schedule?->start_time_short ?? '';
+                                    $endTime = $schedule?->end_time_short ?? '';
                                 @endphp
 
                                 <div class="row g-3 mb-4">
@@ -476,20 +491,21 @@
 
                                 <div class="mb-4">
                                     <label class="form-label fw-semibold small mb-2">Days of Week</label>
-                                    <div class="d-flex flex-wrap gap-2 day-pill-group" id="dayGroup_{{ $enforcer->id }}">
+                                    <div class="day-select-group" id="dayGroup_{{ $enforcer->id }}">
                                         @php
                                             $dayNamesShort = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
                                             $isActiveDays = $schedule?->is_active_days ?? [];
                                         @endphp
                                         @foreach ($dayNamesShort as $dayIdx => $dayShort)
                                             @php $isActive = (bool) ($isActiveDays[$dayIdx] ?? false); @endphp
-                                            <div class="day-pill-wrapper" data-day="{{ $dayIdx }}">
-                                                <button type="button"
-                                                        class="day-pill {{ $isActive ? 'active' : '' }}"
-                                                        id="dayPill_{{ $enforcer->id }}_{{ $dayIdx }}"
-                                                        onclick="toggleDayPill({{ $dayIdx }}, {{ $enforcer->id }})">
+                                            <div class="day-select-item">
+                                                <input type="checkbox" class="day-select-check"
+                                                       id="daySelect_{{ $enforcer->id }}_{{ $dayIdx }}"
+                                                       {{ $isActive ? 'checked' : '' }}
+                                                       onchange="toggleDayPill({{ $dayIdx }}, {{ $enforcer->id }})">
+                                                <label class="day-select-label" for="daySelect_{{ $enforcer->id }}_{{ $dayIdx }}">
                                                     {{ $dayShort }}
-                                                </button>
+                                                </label>
                                                 <input type="hidden" class="day-input" name="days[]"
                                                        value="{{ $dayIdx }}"
                                                        id="dayInput_{{ $enforcer->id }}_{{ $dayIdx }}"
@@ -501,7 +517,7 @@
                                             </div>
                                         @endforeach
                                     </div>
-                                    <small class="text-muted">Click a day to toggle duty. Green border = on duty.</small>
+                                    <small class="text-muted">Select the days this enforcer is on duty.</small>
                                 </div>
                             </div>
                         </div>
@@ -559,16 +575,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Schedule editor: day pill toggle (on duty = green border)
+    // Schedule editor: day select toggle (segmented buttons)
     window.toggleDayPill = function(dayIdx, enforcerId) {
-        const pill = document.getElementById('dayPill_' + enforcerId + '_' + dayIdx);
+        const checkbox = document.getElementById('daySelect_' + enforcerId + '_' + dayIdx);
         const dayInput = document.getElementById('dayInput_' + enforcerId + '_' + dayIdx);
         const activeInput = document.getElementById('dayActiveInput_' + enforcerId + '_' + dayIdx);
-        if (!pill || !dayInput || !activeInput) return;
+        if (!checkbox || !dayInput || !activeInput) return;
 
-        const isOn = pill.classList.toggle('active');
-        dayInput.disabled = !isOn;
-        activeInput.disabled = !isOn;
+        dayInput.disabled = !checkbox.checked;
+        activeInput.disabled = !checkbox.checked;
     };
 
     // Schedule editor: time validation (start must be before end)

@@ -225,9 +225,7 @@ class User extends Authenticatable
                                 $dayOfWeek = now()->dayOfWeek;
                                 $time = now()->format('H:i:s');
                                 $q3->whereJsonContains('days', $dayOfWeek)
-                                    ->where(function ($q4) use ($dayOfWeek) {
-                                        $q4->whereJsonContains('is_active_days->' . $dayOfWeek, true);
-                                    })
+                                    ->whereJsonContains('is_active_days', [(string) $dayOfWeek => true])
                                     ->where('start_time', '<=', $time)
                                     ->where('end_time', '>', $time);
                             });
@@ -244,9 +242,7 @@ class User extends Authenticatable
         $time = now()->format('H:i:s');
         return $this->enforcerSchedules()
             ->whereJsonContains('days', $dayOfWeek)
-            ->where(function ($q) use ($dayOfWeek) {
-                $q->whereJsonContains('is_active_days->' . $dayOfWeek, true);
-            })
+            ->whereJsonContains('is_active_days', [(string) $dayOfWeek => true])
             ->where('start_time', '<=', $time)
             ->where('end_time', '>', $time)
             ->orderBy('start_time')

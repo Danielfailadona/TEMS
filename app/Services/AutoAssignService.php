@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\Role;
+use App\Models\EnforcerSchedule;
 use App\Models\User;
 
 class AutoAssignService
@@ -50,13 +51,10 @@ class AutoAssignService
         $time = now()->format('H:i:s');
 
         return EnforcerSchedule::where('enforcer_id', $enforcer->id)
-            ->where('is_active', true)
-            ->whereJsonContains('days', now()->dayOfWeek)
-            ->where(function ($q) {
-                $q->whereJsonContains('is_active_days->' . now()->dayOfWeek, true);
-            })
-            ->where('start_time', '<=', now()->format('H:i:s'))
-            ->where('end_time', '>', now()->format('H:i:s'))
+            ->whereJsonContains('days', $dayOfWeek)
+            ->whereJsonContains('is_active_days', [(string) $dayOfWeek => true])
+            ->where('start_time', '<=', $time)
+            ->where('end_time', '>', $time)
             ->exists();
     }
 }

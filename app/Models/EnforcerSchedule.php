@@ -20,9 +20,23 @@ class EnforcerSchedule extends Model
         return [
             'days' => 'array',
             'is_active_days' => 'array',
-            'start_time' => 'datetime:H:i',
-            'end_time' => 'datetime:H:i',
         ];
+    }
+
+    /**
+     * Start time formatted as H:i for display.
+     */
+    public function getStartTimeShortAttribute(): string
+    {
+        return $this->start_time ? substr($this->start_time, 0, 5) : '';
+    }
+
+    /**
+     * End time formatted as H:i for display.
+     */
+    public function getEndTimeShortAttribute(): string
+    {
+        return $this->end_time ? substr($this->end_time, 0, 5) : '';
     }
 
     public function enforcer(): BelongsTo
@@ -40,10 +54,7 @@ class EnforcerSchedule extends Model
 
         return static::where('enforcer_id', $enforcerId)
             ->whereJsonContains('days', $dayOfWeek)
-            ->where(function ($q) use ($dayOfWeek) {
-                // Check per-day active toggle
-                $q->whereJsonContains('is_active_days->' . $dayOfWeek, true);
-            })
+            ->whereJsonContains('is_active_days', [(string) $dayOfWeek => true])
             ->where('start_time', '<=', $time)
             ->where('end_time', '>', $time)
             ->exists();
