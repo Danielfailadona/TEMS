@@ -53,8 +53,8 @@ class EnforcerScheduleTest extends TestCase
         $this->assertSame([3, 4, 5, 6], $schedule->days);
         $this->assertTrue($schedule->isDayActive(5));
         $this->assertFalse($schedule->isDayActive(0));
-        $this->assertSame('06:00', $schedule->start_time_short);
-        $this->assertSame('12:00', $schedule->end_time_short);
+        $this->assertSame('06:00 AM', $schedule->start_time_short);
+        $this->assertSame('12:00 PM', $schedule->end_time_short);
     }
 
     public function test_schedule_is_within_schedule_on_active_day_within_hours(): void

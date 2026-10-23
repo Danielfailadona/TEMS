@@ -199,8 +199,8 @@ class EnforcerDutyStatusTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('My Schedule');
-        $response->assertSee('07:30');
-        $response->assertSee('16:30');
+        $response->assertSee('07:30 AM');
+        $response->assertSee('04:30 PM');
     }
 
     public function test_non_enforcer_profile_does_not_show_schedule_card(): void

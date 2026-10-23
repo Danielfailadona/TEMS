@@ -120,28 +120,56 @@
     }
     .task-mgmt .modal-full .modal-dialog { max-width: 900px; }
     .task-mgmt .day-select-group {
-        display: inline-flex; border: 1px solid #d1d5db; border-radius: 0.5rem;
-        overflow: hidden; background: #f8fafc;
+        display: flex;
+        flex-wrap: wrap;
+        flex-direction: row;
+        gap: 0.375rem;
+        width: 100%;
     }
-    .task-mgmt .day-select-item { position: relative; }
+    .task-mgmt .day-select-item { position: relative; flex: 0 0 auto; }
     .task-mgmt .day-select-check {
         position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;
     }
     .task-mgmt .day-select-label {
-        display: flex; align-items: center; justify-content: center;
-        min-width: 52px; padding: 0.5rem 0.75rem; cursor: pointer;
-        font-weight: 600; font-size: 0.8125rem; color: #6b7280;
-        background: #f8fafc; border-right: 1px solid #e5e7eb;
-        transition: background 0.15s ease, color 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+        min-width: 64px;
+        padding: 0.375rem 0.75rem;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.8125rem;
+        color: #6b7280;
+        background: #fff;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
         user-select: none;
+        white-space: nowrap;
     }
-    .task-mgmt .day-select-item:last-child .day-select-label { border-right: none; }
-    .task-mgmt .day-select-label:hover { background: #eef2f7; color: #374151; }
+    .task-mgmt .day-select-label::before {
+        content: "\F26E";
+        font-family: "bootstrap-icons";
+        font-size: 0.875rem;
+        display: none;
+    }
+    .task-mgmt .day-select-label:hover {
+        background: #f8fafc;
+        color: #374151;
+        border-color: #9ca3af;
+    }
     .task-mgmt .day-select-check:checked + .day-select-label {
-        background: #198754; color: #fff;
+        background: #198754;
+        color: #fff;
+        border-color: #198754;
+    }
+    .task-mgmt .day-select-check:checked + .day-select-label::before {
+        display: inline-block;
     }
     .task-mgmt .day-select-check:focus-visible + .day-select-label {
-        outline: 2px solid #198754; outline-offset: -2px;
+        box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+        outline: none;
     }
     .task-mgmt .empty-state { text-align: center; padding: 3rem; color: #9ca3af; }
     .task-mgmt .empty-state i { font-size: 3rem; margin-bottom: 1rem; display: block; }
@@ -335,7 +363,7 @@
                         </div>
                     </div>
 
-                    <div class="p-3 border-top bg-gray-soft rounded-bottom d-flex flex-wrap gap-2 justify-content-between">
+                    <div class="p-3 border-top bg-white rounded-bottom d-flex flex-wrap gap-2 justify-content-between">
                         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#detailModal-{{ $enforcer->id }}">
                             <i class="bi bi-eye me-1"></i>View Details
                         </button>

@@ -24,19 +24,58 @@ class EnforcerSchedule extends Model
     }
 
     /**
-     * Start time formatted as H:i for display.
+     * Start time formatted as h:i A for display.
      */
     public function getStartTimeShortAttribute(): string
     {
-        return $this->start_time ? substr($this->start_time, 0, 5) : '';
+        if (! $this->start_time) {
+            return '';
+        }
+
+        $time = $this->start_time;
+
+        if (is_string($time) && strlen($time) >= 8 && str_contains($time, ':')) {
+            $parts = explode(':', $time);
+            if (count($parts) >= 2) {
+                $carbon = \Illuminate\Support\Carbon::createFromTime((int) $parts[0], (int) $parts[1]);
+
+                return $carbon->format('h:i A');
+            }
+        }
+
+        if (is_string($time) && strlen($time) >= 5 && str_contains($time, ':')) {
+            $parts = explode(':', $time);
+            if (count($parts) >= 2) {
+                $carbon = \Illuminate\Support\Carbon::createFromTime((int) $parts[0], (int) $parts[1]);
+
+                return $carbon->format('h:i A');
+            }
+        }
+
+        return (string) $time;
     }
 
     /**
-     * End time formatted as H:i for display.
+     * End time formatted as h:i A for display.
      */
     public function getEndTimeShortAttribute(): string
     {
-        return $this->end_time ? substr($this->end_time, 0, 5) : '';
+        if (! $this->end_time) {
+            return '';
+        }
+
+        $time = $this->end_time;
+
+        if (is_string($time) && strlen($time) >= 5 && str_contains($time, ':')) {
+            $parts = explode(':', $time);
+            if (count($parts) >= 2) {
+                $carbon = \Illuminate\Support\Carbon::createFromTime((int) $parts[0], (int) $parts[1]);
+
+                return $carbon->format('h:i A');
+            }
+        }
+
+        return (string) $time;
     }
 
     public function enforcer(): BelongsTo
