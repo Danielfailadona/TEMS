@@ -163,16 +163,24 @@ class TaskManagementController extends Controller
             'is_active_days.*' => 'boolean',
         ]);
 
+        // Treat submitted days as the source of truth; keep is_active_days in sync
+        $days = array_values(array_unique(array_map('intval', $validated['days'])));
+        sort($days);
+        $isActiveDays = [];
+        foreach ($days as $day) {
+            $isActiveDays[$day] = true;
+        }
+
         // Delete existing schedules
         $enforcer->enforcerSchedules()->delete();
 
         // Create new single schedule with days array and per-day active status
         EnforcerSchedule::create([
             'enforcer_id' => $enforcer->id,
-            'days' => array_values(array_unique($validated['days'])),
+            'days' => $days,
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
-            'is_active_days' => $validated['is_active_days'] ?? [],
+            'is_active_days' => $isActiveDays,
         ]);
 
         return back()->with('success', 'Schedule updated successfully.');

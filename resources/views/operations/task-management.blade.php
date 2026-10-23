@@ -119,20 +119,14 @@
         display: inline-block; margin-right: 0.5rem;
     }
     .task-mgmt .modal-full .modal-dialog { max-width: 900px; }
-    .task-mgmt .schedule-editor .day-row {
-        display: flex; align-items: center; gap: 0.75rem;
-        padding: 0.75rem; background: #f8fafc; border-radius: 0.5rem;
-        margin-bottom: 0.5rem;
+    .task-mgmt .day-pill {
+        padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;
+        border: 2px solid #d1d5db; background: #f8fafc; color: #6b7280;
+        font-weight: 600; font-size: 0.875rem; transition: all 0.15s ease;
     }
-    .task-mgmt .schedule-editor .day-row .day-label {
-        min-width: 100px; font-weight: 500; color: #374151;
-    }
-    .task-mgmt .schedule-editor .time-inputs { display: flex; align-items: center; gap: 0.5rem; flex: 1; }
-    .task-mgmt .schedule-editor .time-inputs input[type="time"] {
-        padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;
-    }
-    .task-mgmt .schedule-editor .remove-btn {
-        color: #ef4444; background: none; border: none; padding: 0.25rem; cursor: pointer;
+    .task-mgmt .day-pill:hover { border-color: #9ca3af; }
+    .task-mgmt .day-pill.active {
+        border-color: #198754; background: #f0fdf4; color: #198754;
     }
     .task-mgmt .empty-state { text-align: center; padding: 3rem; color: #9ca3af; }
     .task-mgmt .empty-state i { font-size: 3rem; margin-bottom: 1rem; display: block; }
@@ -482,40 +476,32 @@
 
                                 <div class="mb-4">
                                     <label class="form-label fw-semibold small mb-2">Days of Week</label>
-                                    <div class="d-flex flex-wrap gap-2">
+                                    <div class="d-flex flex-wrap gap-2 day-pill-group" id="dayGroup_{{ $enforcer->id }}">
                                         @php
                                             $dayNamesShort = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-                                            $dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
                                             $isActiveDays = $schedule?->is_active_days ?? [];
                                         @endphp
-                                        @foreach ($dayNamesShort as $i => $dayShort)
-                                            @php
-                                                $dayIdx = $i;
-                                                $dayName = $dayNames[$i];
-                                                $isChecked = in_array($dayIdx, $schedule?->days ?? []);
-                                                $isActive = $isActiveDays[$dayIdx] ?? false;
-                                            @endphp
-                                            <div class="day-toggle-group me-2 mb-2">
-                                                <input type="checkbox" class="form-check-input day-checkbox" 
-                                                       id="day_{{ $enforcer->id }}_{{ $dayIdx }}" 
-                                                       name="days[]" value="{{ $dayIdx }}"
-                                                       {{ $isChecked ? 'checked' : '' }}
-                                                       onchange="toggleDay({{ $dayIdx }}, this, {{ $enforcer->id }})">
-                                                <label class="form-check-label day-label" for="day_{{ $enforcer->id }}_{{ $dayIdx }}">
+                                        @foreach ($dayNamesShort as $dayIdx => $dayShort)
+                                            @php $isActive = (bool) ($isActiveDays[$dayIdx] ?? false); @endphp
+                                            <div class="day-pill-wrapper" data-day="{{ $dayIdx }}">
+                                                <button type="button"
+                                                        class="day-pill {{ $isActive ? 'active' : '' }}"
+                                                        id="dayPill_{{ $enforcer->id }}_{{ $dayIdx }}"
+                                                        onclick="toggleDayPill({{ $dayIdx }}, {{ $enforcer->id }})">
                                                     {{ $dayShort }}
-                                                </label>
-                                                <input type="hidden" name="is_active_days[{{ $dayIdx }}]" value="0">
-                                                <button type="button" 
-                                                        class="btn btn-sm active-toggle {{ $isActive ? 'btn-success' : 'btn-outline-secondary' }} ms-1"
-                                                        id="active_{{ $enforcer->id }}_{{ $dayIdx }}"
-                                                        onclick="toggleActive({{ $dayIdx }}, this, {{ $enforcer->id }})"
-                                                        {{ !$isChecked ? 'disabled' : '' }}>
-                                                    <i class="bi bi-check"></i>
                                                 </button>
+                                                <input type="hidden" class="day-input" name="days[]"
+                                                       value="{{ $dayIdx }}"
+                                                       id="dayInput_{{ $enforcer->id }}_{{ $dayIdx }}"
+                                                       {{ $isActive ? '' : 'disabled' }}>
+                                                <input type="hidden" class="day-active-input" name="is_active_days[{{ $dayIdx }}]"
+                                                       value="1"
+                                                       id="dayActiveInput_{{ $enforcer->id }}_{{ $dayIdx }}"
+                                                       {{ $isActive ? '' : 'disabled' }}>
                                             </div>
                                         @endforeach
                                     </div>
-                                    <small class="text-muted">Click day to include/exclude. Click active button to toggle active/inactive.</small>
+                                    <small class="text-muted">Click a day to toggle duty. Green border = on duty.</small>
                                 </div>
                             </div>
                         </div>
@@ -573,70 +559,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Schedule editor: time validation
-    document.querySelectorAll('.schedule-editor .day-row').forEach(row => {
-        const timeInputs = row.querySelectorAll('input[type="time"]');
-        timeInputs.forEach(input => {
-            input.addEventListener('change', () => {
-                const start = row.querySelector('input[name$="[start_time]"]');
-                const end = row.querySelector('input[name$="[end_time]"]');
-                if (start && end && start.value && end.value && start.value >= end.value) {
-                    end.setCustomValidity('End time must be after start time');
-                } else {
-                    end.setCustomValidity('');
-                }
-            });
-        });
-    });
+    // Schedule editor: day pill toggle (on duty = green border)
+    window.toggleDayPill = function(dayIdx, enforcerId) {
+        const pill = document.getElementById('dayPill_' + enforcerId + '_' + dayIdx);
+        const dayInput = document.getElementById('dayInput_' + enforcerId + '_' + dayIdx);
+        const activeInput = document.getElementById('dayActiveInput_' + enforcerId + '_' + dayIdx);
+        if (!pill || !dayInput || !activeInput) return;
 
-    // Schedule editor: day checkbox and active toggle functionality
-    window.toggleDay = function(dayIdx, checkbox, enforcerId) {
-        const activeBtn = document.getElementById('active_' + enforcerId + '_' + dayIdx);
-        if (checkbox.checked) {
-            activeBtn.disabled = false;
-            activeBtn.classList.remove('btn-outline-secondary');
-            activeBtn.classList.add('btn-success');
-        } else {
-            activeBtn.disabled = true;
-            activeBtn.classList.remove('btn-success');
-            activeBtn.classList.add('btn-outline-secondary');
-        }
-        // Update hidden checkbox for day inclusion
-        const dayCheckbox = checkbox; // The day checkbox itself
-        // The value is handled by the checkbox itself
+        const isOn = pill.classList.toggle('active');
+        dayInput.disabled = !isOn;
+        activeInput.disabled = !isOn;
     };
 
-    window.toggleActive = function(dayIdx, button, enforcerId) {
-        const dayCheckbox = document.getElementById('day_' + enforcerId + '_' + dayIdx);
-        if (!dayCheckbox.checked) return; // Only allow if day is selected
-
-        const isActive = button.classList.contains('btn-success');
-        if (isActive) {
-            button.classList.remove('btn-success');
-            button.classList.add('btn-outline-secondary');
-            button.innerHTML = '<i class="bi bi-x"></i>';
-        } else {
-            button.classList.remove('btn-outline-secondary');
-            button.classList.add('btn-success');
-            button.innerHTML = '<i class="bi bi-check"></i>';
-        }
-        // The hidden is_active_days input will be updated via form submission
-    };
-
-    // Schedule editor: time validation
-    document.querySelectorAll('.schedule-editor .day-row').forEach(row => {
-        const timeInputs = row.querySelectorAll('input[type="time"]');
-        timeInputs.forEach(input => {
-            input.addEventListener('change', () => {
-                const start = row.querySelector('input[name$="[start_time]"]');
-                const end = row.querySelector('input[name$="[end_time]"]');
-                if (start && end && start.value && end.value && start.value >= end.value) {
-                    end.setCustomValidity('End time must be after start time');
-                } else {
-                    end.setCustomValidity('');
-                }
-            });
-        });
+    // Schedule editor: time validation (start must be before end)
+    document.querySelectorAll('.schedule-editor').forEach(editor => {
+        const form = editor.closest('form');
+        if (!form) return;
+        const start = form.querySelector('input[name="start_time"]');
+        const end = form.querySelector('input[name="end_time"]');
+        if (!start || !end) return;
+        const validate = () => {
+            end.setCustomValidity(start.value && end.value && start.value >= end.value
+                ? 'End time must be after start time' : '');
+        };
+        start.addEventListener('change', validate);
+        end.addEventListener('change', validate);
     });
 });
 </script>
