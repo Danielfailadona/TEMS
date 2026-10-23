@@ -148,11 +148,9 @@
         user-select: none;
         white-space: nowrap;
     }
-    .task-mgmt .day-select-label::before {
-        content: "\F26E";
-        font-family: "bootstrap-icons";
+    .task-mgmt .day-select-label .bi-check {
         font-size: 0.875rem;
-        display: none;
+        line-height: 1;
     }
     .task-mgmt .day-select-label:hover {
         background: #f8fafc;
@@ -164,7 +162,7 @@
         color: #fff;
         border-color: #198754;
     }
-    .task-mgmt .day-select-check:checked + .day-select-label::before {
+    .task-mgmt .day-select-check:checked + .day-select-label .bi-check {
         display: inline-block;
     }
     .task-mgmt .day-select-check:focus-visible + .day-select-label {
@@ -514,12 +512,12 @@
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold small">Start Time</label>
                                         <input type="time" name="start_time" class="form-control" 
-                                               value="{{ $startTime }}" required>
+                                               value="{{ $schedule?->start_time ?? '' }}" required>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold small">End Time</label>
                                         <input type="time" name="end_time" class="form-control" 
-                                               value="{{ $endTime }}" required>
+                                               value="{{ $schedule?->end_time ?? '' }}" required>
                                     </div>
                                 </div>
 
@@ -539,6 +537,7 @@
                                                        onchange="toggleDayPill({{ $dayIdx }}, {{ $enforcer->id }})">
                                                 <label class="day-select-label" for="daySelect_{{ $enforcer->id }}_{{ $dayIdx }}">
                                                     {{ $dayShort }}
+                                                    <i class="bi bi-check ms-1 d-none"></i>
                                                 </label>
                                                 <input type="hidden" class="day-input" name="days[]"
                                                        value="{{ $dayIdx }}"
