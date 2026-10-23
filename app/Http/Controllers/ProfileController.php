@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Role;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -13,7 +14,30 @@ class ProfileController extends Controller
 {
     public function edit(): View
     {
-        return view('profile.edit', ['user' => auth()->user()]);
+        $user = auth()->user();
+        $schedules = collect();
+        $weeklySchedule = [];
+
+        if ($user->isRole(Role::Enforcer)) {
+            $schedules = $user->enforcerSchedules()->get();
+
+            for ($day = 0; $day <= 6; $day++) {
+                $weeklySchedule[$day] = $schedules
+                    ->filter(fn ($schedule) => $schedule->isDayActive($day))
+                    ->map(fn ($schedule) => [
+                        'start' => $schedule->start_time_short,
+                        'end' => $schedule->end_time_short,
+                    ])
+                    ->values()
+                    ->all();
+            }
+        }
+
+        return view('profile.edit', [
+            'user' => $user,
+            'schedules' => $schedules,
+            'weeklySchedule' => $weeklySchedule,
+        ]);
     }
 
     public function update(Request $request): RedirectResponse

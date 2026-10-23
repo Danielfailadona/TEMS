@@ -83,6 +83,7 @@ class NavigationComposer
             if ($user->isRole(Role::Enforcer)) {
                 $operations[] = ['label' => 'My Archives', 'route' => 'archives.index', 'icon' => 'archive'];
                 $operations[] = ['label' => 'My Zone', 'route' => 'enforcer.zone', 'icon' => 'geo-alt-fill'];
+                array_unshift($operations, ['label' => 'My Schedule', 'route' => 'profile.edit', 'icon' => 'calendar-week']);
             }
 
             if ($user->isRole(Role::FrontDesk)) {

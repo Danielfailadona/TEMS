@@ -32,6 +32,8 @@ class User extends Authenticatable
         'last_login_ip',
         'is_online',
         'is_available',
+        'availability_override',
+        'last_duty_state',
         'preferences',
     ];
 
@@ -207,6 +209,50 @@ class User extends Authenticatable
     public function isScheduleAssignable(): bool
     {
         return $this->isWithinSchedule() && (bool) $this->is_online;
+    }
+
+    /**
+     * Current duty state: on duty (online), on duty (offline), or off duty.
+     */
+    public function dutyState(): string
+    {
+        if (! $this->isWithinSchedule()) {
+            return 'off_duty';
+        }
+
+        return $this->is_online ? 'on_duty_online' : 'on_duty_offline';
+    }
+
+    /**
+     * Whether the enforcer has any schedule configured.
+     */
+    public function hasSchedule(): bool
+    {
+        return $this->enforcerSchedules()->exists();
+    }
+
+    /**
+     * Human-readable label for the current duty state.
+     */
+    public function getDutyStateLabelAttribute(): string
+    {
+        return match ($this->dutyState()) {
+            'on_duty_online' => 'On Duty',
+            'on_duty_offline' => 'On Duty (Offline)',
+            default => $this->hasSchedule() ? 'Off Duty' : 'No Schedule',
+        };
+    }
+
+    /**
+     * Bootstrap badge classes for the current duty state.
+     */
+    public function getDutyStateClassAttribute(): string
+    {
+        return match ($this->dutyState()) {
+            'on_duty_online' => 'bg-success-soft text-success',
+            'on_duty_offline' => 'bg-warning-soft text-warning',
+            default => $this->hasSchedule() ? 'bg-danger-soft text-danger' : 'bg-gray-soft text-gray',
+        };
     }
 
     /**

@@ -23,7 +23,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/location', function (Request $r) {
         $r->validate(['latitude' => 'required|numeric', 'longitude' => 'required|numeric', 'accuracy_m' => 'nullable|numeric']);
 
-        return EnforcerLocation::updateOrCreate(
+        $location = EnforcerLocation::updateOrCreate(
             ['user_id' => $r->user()->id],
             [
                 'latitude' => $r->latitude,
@@ -33,10 +33,21 @@ Route::middleware('auth:sanctum')->group(function () {
                 'last_seen_at' => now(),
             ]
         );
+
+        $user = $r->user();
+        $user->forceFill(['is_online' => true])->saveQuietly();
+        \App\Services\EnforcerDutyNotifier::sync($user->fresh());
+
+        return $location;
     });
 
     Route::post('/location/offline', function (Request $r) {
         EnforcerLocation::where('user_id', $r->user()->id)->update(['status' => 'offline']);
+
+        $user = $r->user();
+        $user->forceFill(['is_online' => false])->saveQuietly();
+        \App\Services\EnforcerDutyNotifier::sync($user->fresh());
+
         return response()->json(['status' => 'offline']);
     });
 

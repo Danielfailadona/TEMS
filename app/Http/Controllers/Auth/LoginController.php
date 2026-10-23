@@ -79,6 +79,8 @@ class LoginController extends Controller
                     'last_seen_at' => now(),
                 ]
             );
+
+            \App\Services\EnforcerDutyNotifier::sync($user->fresh());
         }
 
         \App\Models\DeviceManager::create([
@@ -199,7 +201,12 @@ class LoginController extends Controller
         $wasPending = auth()->check() && auth()->user()->isPending();
 
         if (auth()->check()) {
-            auth()->user()->update(['is_online' => false]);
+            $user = auth()->user();
+            $user->update(['is_online' => false]);
+
+            if ($user->isRole(Role::Enforcer)) {
+                \App\Services\EnforcerDutyNotifier::sync($user->fresh());
+            }
         }
 
         $authService->logout();

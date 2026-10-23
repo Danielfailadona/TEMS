@@ -3,6 +3,53 @@
 @section('title', 'My Profile')
 
 @section('content')
+@if($user->isRole(\App\Enums\Role::Enforcer))
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <div>
+                <h5 class="fw-bold mb-1"><i class="bi bi-calendar-week me-2"></i>My Schedule</h5>
+                <p class="text-muted small mb-0">Your weekly duty schedule and current status.</p>
+            </div>
+            <span class="badge {{ $user->duty_state_class }} fs-6 px-3 py-1 rounded-pill">{{ $user->duty_state_label }}</span>
+        </div>
+
+        @php $dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']; @endphp
+
+        @if($schedules->isEmpty())
+            <div class="text-center text-muted py-4">
+                <i class="bi bi-calendar-x fs-3 d-block mb-2"></i>
+                No schedule assigned yet. Please contact an administrator.
+            </div>
+        @else
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <tbody>
+                        @for($day = 0; $day <= 6; $day++)
+                            @php $isToday = now()->dayOfWeek === $day; @endphp
+                            <tr class="{{ $isToday ? 'table-primary' : '' }}">
+                                <td class="fw-semibold" style="width: 150px;">
+                                    {{ $dayNames[$day] }}
+                                    @if($isToday)
+                                        <span class="badge bg-primary ms-1">Today</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @forelse($weeklySchedule[$day] as $slot)
+                                        <span class="badge bg-success-soft text-success me-1 mb-1">{{ $slot['start'] }} &ndash; {{ $slot['end'] }}</span>
+                                    @empty
+                                        <span class="text-muted small">Off</span>
+                                    @endforelse
+                                </td>
+                            </tr>
+                        @endfor
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </div>
+</div>
+@endif
 <div class="row g-4">
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm h-100">

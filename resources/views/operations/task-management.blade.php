@@ -264,8 +264,16 @@
                     $isScheduleAssignable = $data['is_schedule_assignable'];
                     $overrideStatus = $data['override_status'];
 
-                    $scheduleStatusClass = $isScheduleAssignable ? 'bg-success-soft text-success' : ($isWithinSchedule ? 'bg-warning-soft text-warning' : 'bg-gray-soft text-gray');
-                    $scheduleStatusText = $isScheduleAssignable ? 'Assignable' : ($isWithinSchedule ? 'On Duty (Offline)' : 'Off Duty');
+                    $scheduleStatusClass = $isScheduleAssignable
+                        ? 'bg-success-soft text-success'
+                        : ($isWithinSchedule
+                            ? 'bg-warning-soft text-warning'
+                            : ($enforcer->enforcerSchedules->isNotEmpty() ? 'bg-danger-soft text-danger' : 'bg-gray-soft text-gray'));
+                    $scheduleStatusText = $isScheduleAssignable
+                        ? 'On Duty'
+                        : ($isWithinSchedule
+                            ? 'On Duty (Offline)'
+                            : ($enforcer->enforcerSchedules->isNotEmpty() ? 'Off Duty' : 'No Schedule'));
                     $overrideClass = match($overrideStatus) {
                         'force_available' => 'bg-success-soft text-success',
                         'force_unavailable' => 'bg-danger-soft text-danger',
@@ -292,7 +300,7 @@
 
                     <div class="p-3">
                         <div class="d-flex align-items-center gap-2 mb-2">
-                            <span class="status-indicator {{ $enforcer->is_online ? 'bg-success' : 'bg-secondary' }}"></span>
+                            <span class="status-indicator {{ $enforcer->is_online ? 'bg-success' : 'bg-danger' }}"></span>
                             <small class="text-muted">{{ $enforcer->is_online ? 'Online' : 'Offline' }}</small>
                             @if ($enforcer->enforcerLocation && $enforcer->enforcerLocation->last_seen_at)
                                 <small class="text-muted">· seen {{ $enforcer->enforcerLocation->last_seen_at->diffForHumans() }}</small>
@@ -376,12 +384,10 @@
                             </span>
                         </div>
                         <div class="col-md-6"><strong class="text-muted d-block">Online Status</strong>
-                            <span class="badge {{ $enforcer->is_online ? 'bg-success' : 'bg-secondary' }}">{{ $enforcer->is_online ? 'Online' : 'Offline' }}</span>
+                            <span class="badge {{ $enforcer->is_online ? 'bg-success' : 'bg-danger' }}">{{ $enforcer->is_online ? 'Online' : 'Offline' }}</span>
                         </div>
-                        <div class="col-md-6"><strong class="text-muted d-block">Schedule Assignable</strong>
-                            <span class="badge {{ $enforcer->isScheduleAssignable() ? 'bg-success' : 'bg-secondary' }}">
-                                {{ $enforcer->isScheduleAssignable() ? 'Yes' : 'No' }}
-                            </span>
+                        <div class="col-md-6"><strong class="text-muted d-block">Duty Status</strong>
+                            <span class="badge {{ $enforcer->duty_state_class }}">{{ $enforcer->duty_state_label }}</span>
                         </div>
                     </div>
 

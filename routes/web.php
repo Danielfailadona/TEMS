@@ -227,7 +227,7 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
         $request->validate(['latitude' => 'required|numeric', 'longitude' => 'required|numeric', 'accuracy_m' => 'nullable|numeric']);
         $user = auth()->user();
         if ($user->isRole(\App\Enums\Role::Enforcer)) {
-            return \App\Models\EnforcerLocation::updateOrCreate(
+            $location = \App\Models\EnforcerLocation::updateOrCreate(
                 ['user_id' => $user->id],
                 [
                     'latitude' => $request->latitude,
@@ -237,6 +237,11 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
                     'last_seen_at' => now(),
                 ]
             );
+
+            $user->forceFill(['is_online' => true])->saveQuietly();
+            \App\Services\EnforcerDutyNotifier::sync($user->fresh());
+
+            return $location;
         }
         return response()->json(['error' => 'Unauthorized'], 403);
     })->name('location.update');
@@ -245,6 +250,10 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
         $user = auth()->user();
         if ($user->isRole(\App\Enums\Role::Enforcer)) {
             \App\Models\EnforcerLocation::where('user_id', $user->id)->update(['status' => 'offline']);
+
+            $user->forceFill(['is_online' => false])->saveQuietly();
+            \App\Services\EnforcerDutyNotifier::sync($user->fresh());
+
             return response()->json(['status' => 'offline']);
         }
         return response()->json(['error' => 'Unauthorized'], 403);
@@ -256,6 +265,7 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
         abort_unless($user?->isRole(\App\Enums\Role::Enforcer), 403);
 
         $user->update(['is_available' => ! $user->is_available]);
+        \App\Services\EnforcerDutyNotifier::sync($user->fresh());
 
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'is_available' => $user->is_available]);

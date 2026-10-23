@@ -1164,6 +1164,24 @@ body::before {
     background: #fef2f2;
 }
 
+/* Soft status badge backgrounds (green/amber/red/gray) */
+.bg-success-soft {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+    color: #047857 !important;
+}
+.bg-warning-soft {
+    background-color: rgba(245, 158, 11, 0.16) !important;
+    color: #92400e !important;
+}
+.bg-danger-soft {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+    color: #b91c1c !important;
+}
+.bg-gray-soft {
+    background-color: rgba(100, 116, 139, 0.15) !important;
+    color: #475569 !important;
+}
+
 /* Status tag color coding (rule: green/blue/red/amber/gray) */
 .tag-green { background-color: #10B981; color: #fff; }
 .tag-blue { background-color: #1473F9; color: #fff; }
