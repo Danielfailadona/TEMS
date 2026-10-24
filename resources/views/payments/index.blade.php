@@ -3,7 +3,7 @@
 @section('title', 'Payments')
 
 @php
-    $qs = request()->only(['search', 'category', 'payment_method', 'date_from', 'date_to', 'online']);
+    $qs = request()->only(['search', 'category', 'payment_method', 'status', 'date_from', 'date_to', 'online']);
     $qs = array_filter($qs, fn ($v) => $v !== null && $v !== '');
     $baseUrl = fn (array $drop) => route('payments.index', array_filter(array_diff_key($qs, array_flip($drop))));
 
@@ -11,6 +11,14 @@
     if (($qs['category'] ?? null) !== null) {
         $label = \Illuminate\Support\Str::headline($qs['category']);
         $activeFilters[] = ['label' => $label, 'href' => $baseUrl(['category'])];
+    }
+    if (($qs['status'] ?? null) !== null) {
+        $statusLabels = [
+            'paid' => 'Paid', 'pending' => 'Pending', 'unpaid' => 'Unpaid', 'issued' => 'Issued',
+            'overdue' => 'Overdue', 'clamped' => 'Clamped', 'impounded' => 'Impounded',
+            'awaiting_payment' => 'Awaiting Payment',
+        ];
+        $activeFilters[] = ['label' => $statusLabels[$qs['status']] ?? \Illuminate\Support\Str::headline($qs['status']), 'href' => $baseUrl(['status'])];
     }
     if (($qs['payment_method'] ?? null) !== null) {
         $activeFilters[] = ['label' => \App\Enums\PaymentMethod::tryFrom($qs['payment_method'])?->label() ?? $qs['payment_method'], 'href' => $baseUrl(['payment_method'])];
@@ -256,7 +264,25 @@
                             <option value="">All Categories</option>
                             <option value="citation" {{ request('category') === 'citation' ? 'selected' : '' }}>Citation Fine</option>
                             <option value="clamping" {{ request('category') === 'clamping' ? 'selected' : '' }}>Clamping Fee</option>
-                            <option value="impounding" {{ request('category') === 'impounding' ? 'selected' : '' }}>Impounding Fee</option>
+                                <option value="impounding" {{ request('category') === 'impounding' ? 'selected' : '' }}>Impounding Fee</option>
+                        </select>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                    </div>
+                </fieldset>
+
+                <fieldset class="pym-field">
+                    <label class="pym-field__label" for="pymStatus">Status</label>
+                    <div class="pym-select">
+                        <select id="pymStatus" name="status">
+                            <option value="">All Statuses</option>
+                            <option value="paid" {{ request('status') === 'paid' ? 'selected' : '' }}>Paid</option>
+                            <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="unpaid" {{ request('status') === 'unpaid' ? 'selected' : '' }}>Unpaid</option>
+                            <option value="issued" {{ request('status') === 'issued' ? 'selected' : '' }}>Issued</option>
+                            <option value="overdue" {{ request('status') === 'overdue' ? 'selected' : '' }}>Overdue</option>
+                            <option value="clamped" {{ request('status') === 'clamped' ? 'selected' : '' }}>Clamped</option>
+                            <option value="impounded" {{ request('status') === 'impounded' ? 'selected' : '' }}>Impounded</option>
+                            <option value="awaiting_payment" {{ request('status') === 'awaiting_payment' ? 'selected' : '' }}>Awaiting Payment</option>
                         </select>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
                     </div>
@@ -270,11 +296,11 @@
                             <div class="pym-input-wrap">
                                 <input class="pym-input" id="pymFromText" type="text" inputmode="numeric"
                                        placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off" value="{{ $fromText }}">
-                                <button class="pym-input-wrap__btn" type="button" data-date-picker="pymFromText" aria-label="Pick start date">
+                                <button class="pym-input-wrap__btn" type="button" data-date-picker="pymFromText" data-native-for="pymFromNative" aria-label="Pick start date">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>
                                 </button>
                                 <input class="pym-date-native" type="date" name="date_from" id="pymFromNative"
-                                       tabindex="-1" aria-hidden="true" data-native-for="pymFromText" value="{{ $fromYmd }}">
+                                       tabindex="-1" aria-hidden="true" value="{{ $fromYmd }}">
                             </div>
                         </div>
                         <span class="pym-date-range__dash" aria-hidden="true"></span>
@@ -283,11 +309,11 @@
                             <div class="pym-input-wrap">
                                 <input class="pym-input" id="pymToText" type="text" inputmode="numeric"
                                        placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off" value="{{ $toText }}">
-                                <button class="pym-input-wrap__btn" type="button" data-date-picker="pymToText" aria-label="Pick end date">
+                                <button class="pym-input-wrap__btn" type="button" data-date-picker="pymToText" data-native-for="pymToNative" aria-label="Pick end date">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>
                                 </button>
                                 <input class="pym-date-native" type="date" name="date_to" id="pymToNative"
-                                       tabindex="-1" aria-hidden="true" data-native-for="pymToText" value="{{ $toYmd }}">
+                                       tabindex="-1" aria-hidden="true" value="{{ $toYmd }}">
                             </div>
                         </div>
                     </div>
@@ -501,8 +527,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     form.querySelectorAll('[data-date-picker]').forEach((btn) => {
-        const text = document.getElementById(btn.dataset.datePicker);
-        const native = document.getElementById(btn.dataset.nativeFor);
+        const wrap = btn.closest('.pym-input-wrap');
+        const text = document.getElementById(btn.dataset.datePicker) || wrap?.querySelector('.pym-input');
+        const native = document.getElementById(btn.dataset.nativeFor) || wrap?.querySelector('.pym-date-native');
+        if (!text || !native) return;
         btn.addEventListener('click', () => {
             const parsed = parseInputDate(text.value);
             native.value = parsed ? `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}` : '';

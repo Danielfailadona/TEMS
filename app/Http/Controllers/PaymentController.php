@@ -99,6 +99,20 @@ class PaymentController extends Controller
 
         $all = $receipts->concat($pending)->sortByDesc('date')->values();
 
+        // Status filter: matches the label shown in the Status column. Receipts
+        // use their derived status (paid/pending/unpaid); outstanding rows use
+        // the payable enum value (issued|overdue|clamped|impounded|awaiting_payment).
+        if ($request->filled('status')) {
+            $status = $request->status;
+            $all = $all->filter(function ($row) use ($status) {
+                $key = $row['kind'] === 'receipt'
+                    ? ($row['payment']->paid_at ? 'paid' : ($row['payment']->isOnlinePayment() ? 'pending' : 'unpaid'))
+                    : $row['payable']->status->value;
+
+                return $key === $status;
+            })->values();
+        }
+
         $perPage = 5;
         $page = max(1, (int) $request->input('page', 1));
         $items = $all->forPage($page, $perPage)->values();
@@ -123,8 +137,13 @@ class PaymentController extends Controller
     protected function pendingRows(Request $request): Collection
     {
         // Unpaid rows have no payment method and are never online payments, so
-        // those filters can never match them.
-        if ($request->filled('payment_method') || $request->filled('online')) {
+        // those filters can never match them. Receipt-only statuses (paid,
+        // pending, unpaid) likewise never apply to outstanding rows.
+        if (
+            $request->filled('payment_method')
+            || $request->filled('online')
+            || in_array($request->input('status'), ['paid', 'pending', 'unpaid'], true)
+        ) {
             return collect();
         }
 

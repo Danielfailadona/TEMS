@@ -7,8 +7,8 @@ use App\Enums\ClampingStatus;
 use App\Http\Requests\StoreClampingRequest;
 use App\Models\Archive;
 use App\Models\Citation;
-use App\Models\ClampingRecord;
 use App\Models\CitizenReport;
+use App\Models\ClampingRecord;
 use App\Models\SystemNotification;
 use App\Models\User;
 use App\Models\VehicleRelease;
@@ -47,7 +47,7 @@ class ClampingController extends Controller
             $query->whereBetween('clamped_at', [$dateFrom, $dateTo]);
         }
 
-        $records = $query->latest('clamped_at')->paginate(12)->withQueryString();
+        $grid = $query->latest('clamped_at')->paginate(5)->withQueryString();
 
         $pendingRequests = CitizenReport::where('status', 'pending')
             ->latest()
@@ -63,7 +63,7 @@ class ClampingController extends Controller
                 ->get();
         }
 
-        return view('clamping.index', compact('records', 'pendingRequests', 'overdueCitations'));
+        return view('clamping.index', compact('grid', 'pendingRequests', 'overdueCitations'));
     }
 
     public function create(Request $request): View

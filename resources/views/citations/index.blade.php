@@ -66,9 +66,13 @@
     .cit-dash .cit-table tbody tr { height: 78px; border-bottom: 2px solid #e8edf2; }
     .cit-dash .cit-table tbody tr:last-child { border-bottom: 0; }
     .cit-dash .cit-table td { padding: 0 16px; white-space: nowrap; font-size: 14px; color: var(--cit-ink); }
+.cit-dash .cit-table td:nth-child(3) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
     .cit-dash .cit-table th:nth-child(1), .cit-dash .cit-table td:nth-child(1) { width: 24%; }
-    .cit-dash .cit-table th:nth-child(2), .cit-dash .cit-table td:nth-child(2) { width: 22%; }
-    .cit-dash .cit-table th:nth-child(3), .cit-dash .cit-table td:nth-child(3) { width: 11%; }
+.cit-dash .cit-table th:nth-child(2), .cit-dash .cit-table td:nth-child(2) { width: 18%; }
+.cit-dash .cit-table th:nth-child(3), .cit-dash .cit-table td:nth-child(3) { width: 15%; }
     .cit-dash .cit-table th:nth-child(4), .cit-dash .cit-table td:nth-child(4) { width: 12%; }
     .cit-dash .cit-table th:nth-child(5), .cit-dash .cit-table td:nth-child(5) { width: 14%; }
     .cit-dash .cit-table th:nth-child(6), .cit-dash .cit-table td:nth-child(6) { width: 9%; }
