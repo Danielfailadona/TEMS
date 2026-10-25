@@ -89,7 +89,9 @@ class ImpoundingController extends Controller
             'evidence.max' => 'The evidence photo must be 5 MB or smaller.',
         ]);
 
-        $existingImpound = ImpoundingRecord::where('vehicle_plate', $validated['vehicle_plate'])
+        $existingImpound = ImpoundingRecord::whereHas('citation', function ($query) use ($validated) {
+            $query->where('vehicle_plate', $validated['vehicle_plate']);
+        })
             ->whereIn('status', [ImpoundingStatus::Impounded, ImpoundingStatus::AwaitingPayment, ImpoundingStatus::Paid, ImpoundingStatus::WaitingRelease])
             ->exists();
 
@@ -125,7 +127,9 @@ class ImpoundingController extends Controller
                 ->first();
         }
         if (! $clampingRecord) {
-            $clampingRecord = ClampingRecord::where('vehicle_plate', $validated['vehicle_plate'])
+            $clampingRecord = ClampingRecord::whereHas('citation', function ($query) use ($validated) {
+                $query->where('vehicle_plate', $validated['vehicle_plate']);
+            })
                 ->where('status', '!=', ClampingStatus::Released)
                 ->latest('clamped_at')
                 ->first();

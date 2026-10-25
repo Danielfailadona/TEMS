@@ -219,7 +219,39 @@
 
 @include('components.alerts')
 
-<div class="container py-4 py-lg-5">
+    @if ($reference)
+        <div class="modal fade" id="referenceModal" tabindex="-1" aria-labelledby="referenceModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="referenceModalLabel">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>Report Submitted Successfully
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                        </div>
+                        <h5 class="mb-3">Report Submitted Successfully</h5>
+                        <p class="text-muted mb-3">Your parking violation report has been submitted. Save your reference ID:</p>
+                        <div class="input-group mb-4">
+                            <input type="text" class="form-control text-center fw-bold text-primary fs-5" id="referenceInput" value="{{ $reference }}" readonly aria-label="Reference ID">
+                            <button class="btn btn-outline-primary" type="button" id="copyReferenceBtn" data-clipboard-target="#referenceInput">
+                                <i class="bi bi-clipboard me-1"></i>Copy
+                            </button>
+                        </div>
+                        <p class="text-muted small mb-0">Save this reference ID to track your report status.</p>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-primary" onclick="handleOkClick()">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <div class="container py-4 py-lg-5">
     @if (session('error'))
         <div class="alert alert-danger alert-dismissible fade show animate-on-load" role="alert">
             <i class="bi bi-exclamation-circle me-2"></i>{{ session('error') }}
@@ -513,6 +545,40 @@ function previewPhoto(event) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    const modalEl = document.getElementById('referenceModal');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
+        modal.show();
+
+        // Copy button functionality
+        const copyBtn = document.getElementById('copyReferenceBtn');
+        const input = document.getElementById('referenceInput');
+        if (copyBtn && input) {
+            copyBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(input.value).then(() => {
+                    const original = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<i class="bi bi-check me-1"></i>Copied!';
+                    copyBtn.classList.replace('btn-outline-primary', 'btn-success');
+                    setTimeout(() => {
+                        copyBtn.innerHTML = original;
+                        copyBtn.classList.replace('btn-success', 'btn-outline-primary');
+                    }, 2000);
+                }).catch(() => {
+                    // Fallback for older browsers
+                    input.select();
+                    document.execCommand('copy');
+                    const original = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<i class="bi bi-check me-1"></i>Copied!';
+                    copyBtn.classList.replace('btn-outline-primary', 'btn-success');
+                    setTimeout(() => {
+                        copyBtn.innerHTML = original;
+                        copyBtn.classList.replace('btn-success', 'btn-outline-primary');
+                    }, 2000);
+                });
+            });
+        }
+    }
+
     const container = document.getElementById('location-map');
     if (container && container.offsetHeight === 0) {
         container.style.height = '400px';
@@ -542,21 +608,18 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
         new bs.Tooltip(el);
     });
+    
+    // Handle OK button click - dismiss modal and redirect to clean URL
+    window.handleOkClick = function() {
+        const modalEl = document.getElementById('referenceModal');
+        const modal = bootstrap.Modal.getInstance(document.getElementById('referenceModal'));
+        if (modal) {
+            modal.hide();
+        }
+        // Redirect to clean URL without reference parameter
+        window.location.href = window.location.origin + '/citizen/report-parking';
+    };
 });
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const bs = window.bootstrap;
-    if (!bs) return;
-
-    const navCollapse = document.getElementById('navbarNav');
-    if (navCollapse && !bs.Collapse.getInstance(navCollapse)) {
-        new bs.Collapse(navCollapse, { toggle: false });
-    }
-
-    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
-        new bs.Tooltip(el);
-    });
 </script>
 </body>
 </html>

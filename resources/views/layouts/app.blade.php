@@ -134,9 +134,7 @@
 
 @yield('modals')
 
-@stack('scripts')
-
-@if ($isEnforcerMobile ?? false)
+    @if ($isEnforcerMobile ?? false)
 <nav class="enforcer-tab-bar" aria-label="Enforcer quick nav">
   <a href="{{ route('dashboard') }}" class="tab-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
     <i class="material-symbols-outlined sidebar-nav-icon">dashboard</i><span>Dashboard</span>

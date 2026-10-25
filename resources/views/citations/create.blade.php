@@ -105,29 +105,10 @@
                                     <input type="number" step="0.01" min="0" name="penalty_amount" id="customPenaltyAmount" class="form-control form-control-sm" value="{{ old('penalty_amount') }}" placeholder="e.g. 500.00">
                                     @error('penalty_amount')<small class="text-danger">{{ $message }}</small>@enderror
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-2" id="impoundableInfoPanel" style="display:none;">
-                    <div class="card border-warning bg-warning-subtle">
-                        <div class="card-body py-2">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <small class="fw-semibold">This violation is eligible for impounding.</small>
-                                    <div class="small mt-1">
-                                        <strong>Violations Eligible for Impounding:</strong>
-                                        <ul class="mb-0 mt-1 ps-3">
-                                            <li>Unregistered or Delinquent Vehicles: Driving with expired, invalid, or missing registration (₱10,000 fine plus impoundment until properly registered and inspected).</li>
-                                            <li>Unauthorized Modifications: Changing color, body, engine/chassis without prior LTO approval and registration update.</li>
-                                            <li>Tampered or Improvised Plates: Using unauthorized, fake, or improperly attached plates, or illegal transfer of plates/stickers.</li>
-                                            <li>Suspended or Revoked CR/OR: Operating while CR/OR is suspended or revoked.</li>
-                                            <li>Defective or Missing Parts: Operating with missing/unsafe required parts that pose public safety hazard.</li>
-                                            <li>Colorum Operations: Operating PUVs without valid CPC or franchise.</li>
-                                            <li>Fake Driver's Licenses or Documents: Presenting fraudulent licenses, fake OR/CR, or tampered franchising documents.</li>
-                                            <li>Major Driving &amp; Crime Violations: Using vehicle in commission of crime or severe offenses upon court conviction.</li>
-                                        </ul>
 </div>
+            </div>
+        </div>
+    </div>
             </div>
 
             <div class="row g-3 mt-2" id="violationDetailsPanels" style="display:none;">
@@ -172,7 +153,7 @@
                                             <li>Bicycle Lanes: Straddling or completely obstructing a designated active transport lane.</li>
                                             <li>Double Parking: Parked on the roadside of any legally parked vehicle.</li>
                                             <li>Bridges: Parked at the foot or directly on top of a bridge.</li>
-                                        </ul>
+</ul>
                                     </div>
                                 </div>
                             </div>
@@ -180,31 +161,33 @@
                     </div>
                 </div>
             </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12">
+
+            <div class="col-md-6">
                 <label class="form-label">Location <span class="text-danger">*</span></label>
                 <input type="text" name="location" class="form-control" value="{{ old('location') }}" placeholder="Violation location" required>
             </div>
-            <div class="col-md-4">
-                <label class="form-label">Latitude</label>
-                <input type="number" step="0.0000001" name="latitude" id="latitude" class="form-control" value="{{ old('latitude') }}" placeholder="e.g. 15.4872">
+            <div class="col-md-6">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label">Latitude</label>
+                        <input type="number" step="0.0000001" name="latitude" id="latitude" class="form-control" value="{{ old('latitude') }}" placeholder="e.g. 15.4872">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Longitude</label>
+                        <input type="number" step="0.0000001" name="longitude" id="longitude" class="form-control" value="{{ old('longitude') }}" placeholder="e.g. 120.9762">
+                    </div>
+                    <div class="col-6 d-flex align-items-end">
+                        <button type="button" id="btnCurrentLocation" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-crosshair me-1"></i>Get Current Location
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="col-md-4">
-                <label class="form-label">Longitude</label>
-                <input type="number" step="0.0000001" name="longitude" id="longitude" class="form-control" value="{{ old('longitude') }}" placeholder="e.g. 120.9762">
-            </div>
-            <div class="col-md-4 d-flex align-items-end">
-                <button type="button" id="btnCurrentLocation" class="btn btn-outline-primary w-100">
-                    <i class="bi bi-crosshair me-1"></i>Get Current Location
-                </button>
-            </div>
-            <div class="col-12">
+            <div class="col-md-6">
                 <label class="form-label">Notes</label>
                 <textarea name="notes" class="form-control" rows="3">{{ old('notes') }}</textarea>
             </div>
-            <div class="col-12">
+            <div class="col-md-6">
                 <label class="form-label">Evidence Photos <span class="text-danger">*</span></label>
                 <div class="evidence-capture" id="evidenceCapture">
                     <input type="file" name="evidence[]" id="evidenceCamera" accept="image/*" capture="environment" class="d-none" multiple>
@@ -222,7 +205,7 @@
                     @error('evidence')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
                 </div>
             </div>
-            <div class="col-12" id="impoundingSection" style="display:none;">
+            <div class="col-md-6" id="impoundingSection" style="display:none;">
                 <div class="card border-danger">
                     <div class="card-header bg-danger-subtle">
                         <strong><i class="bi bi-truck-front me-2"></i>Impounding Details</strong>

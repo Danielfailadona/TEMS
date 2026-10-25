@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Enums\AppealStatus;
 use App\Enums\CitationStatus;
 use App\Enums\ClampingStatus;
+use App\Enums\ImpoundingStatus;
+use App\Enums\ReportStatus;
 use App\Enums\Role;
 use App\Models\Appeal;
 use App\Models\Citation;
 use App\Models\ClampingRecord;
 use App\Models\CitizenReport;
+use App\Models\ImpoundingRecord;
 use App\Models\Payment;
 use App\Models\ViolationType;
 use App\Models\Zone;
@@ -23,7 +26,7 @@ class DashboardController extends Controller
     {
     }
 
-    public function index(): View
+public function index(): View
     {
         $user = auth()->user();
 
@@ -51,6 +54,14 @@ class DashboardController extends Controller
             'revenue_today' => Payment::whereDate('paid_at', today())->sum('amount'),
             'active_clamps' => ClampingRecord::where('status', ClampingStatus::AwaitingPayment)->count(),
             'pending_appeals' => Appeal::whereIn('status', [AppealStatus::Submitted, AppealStatus::UnderReview])->count(),
+            'reports_resolved_today' => ClampingRecord::where('status', ClampingStatus::Released)
+                ->whereDate('updated_at', today())->count()
+                + ImpoundingRecord::where('status', ImpoundingStatus::Released)
+                ->whereDate('updated_at', today())->count()
+                + CitizenReport::whereIn('status', [ReportStatus::Resolved, ReportStatus::Accepted])
+                ->whereDate('resolved_at', today())->count(),
+            'payments_recorded_today' => Payment::whereDate('paid_at', today())->count(),
+            'total_revenue_today' => Payment::whereDate('paid_at', today())->sum('amount'),
         ];
 
         // Week-over-week trends
@@ -80,6 +91,28 @@ class DashboardController extends Controller
                     ->whereBetween('created_at', [now()->subWeek(), now()])->count(),
                 fn () => Appeal::whereIn('status', [AppealStatus::Submitted, AppealStatus::UnderReview])
                     ->whereBetween('created_at', [now()->subWeeks(2), now()->subWeek()])->count(),
+            ),
+            'reports_resolved_today' => $this->trend(
+                fn () => ClampingRecord::where('status', ClampingStatus::Released)
+                    ->whereDate('updated_at', '>=', now()->subWeek())->count()
+                    + ImpoundingRecord::where('status', ImpoundingStatus::Released)
+                    ->whereDate('updated_at', '>=', now()->subWeek())->count()
+                    + CitizenReport::whereIn('status', [ReportStatus::Resolved, ReportStatus::Accepted])
+                    ->whereDate('resolved_at', '>=', now()->subWeek())->count(),
+                fn () => ClampingRecord::where('status', ClampingStatus::Released)
+                    ->whereBetween('updated_at', [now()->subWeeks(2), now()->subWeek()])->count()
+                    + ImpoundingRecord::where('status', ImpoundingStatus::Released)
+                    ->whereBetween('updated_at', [now()->subWeeks(2), now()->subWeek()])->count()
+                    + CitizenReport::whereIn('status', [ReportStatus::Resolved, ReportStatus::Accepted])
+                    ->whereBetween('resolved_at', [now()->subWeeks(2), now()->subWeek()])->count(),
+            ),
+            'payments_recorded_today' => $this->trend(
+                fn () => Payment::whereBetween('paid_at', [now()->subWeek(), now()])->count(),
+                fn () => Payment::whereBetween('paid_at', [now()->subWeeks(2), now()->subWeek()])->count(),
+            ),
+            'total_revenue_today' => $this->trend(
+                fn () => Payment::whereBetween('paid_at', [now()->subWeek(), now()])->sum('amount'),
+                fn () => Payment::whereBetween('paid_at', [now()->subWeeks(2), now()->subWeek()])->sum('amount'),
             ),
         ];
 
@@ -310,6 +343,28 @@ class DashboardController extends Controller
                     ->whereBetween('created_at', [now()->subWeek(), now()])->count(),
                 fn () => Appeal::whereIn('status', [AppealStatus::Submitted, AppealStatus::UnderReview])
                     ->whereBetween('created_at', [now()->subWeeks(2), now()->subWeek()])->count(),
+            ),
+            'reports_resolved_today' => $this->trend(
+                fn () => ClampingRecord::where('status', ClampingStatus::Released)
+                    ->whereDate('updated_at', '>=', now()->subWeek())->count()
+                    + ImpoundingRecord::where('status', ImpoundingStatus::Released)
+                    ->whereDate('updated_at', '>=', now()->subWeek())->count()
+                    + CitizenReport::whereIn('status', [ReportStatus::Resolved, ReportStatus::Accepted])
+                    ->whereDate('resolved_at', '>=', now()->subWeek())->count(),
+fn () => ClampingRecord::where('status', ClampingStatus::Released)
+                    ->whereBetween('updated_at', [now()->subWeeks(2), now()->subWeek()])->count()
+                    + ImpoundingRecord::where('status', ImpoundingStatus::Released)
+                    ->whereBetween('updated_at', [now()->subWeeks(2), now()->subWeek()])->count()
+                    + CitizenReport::whereIn('status', [ReportStatus::Resolved, ReportStatus::Accepted])
+                    ->whereBetween('resolved_at', [now()->subWeeks(2), now()->subWeek()])->count(),
+            ),
+            'payments_recorded_today' => $this->trend(
+                fn () => Payment::whereBetween('paid_at', [now()->subWeek(), now()])->count(),
+                fn () => Payment::whereBetween('paid_at', [now()->subWeeks(2), now()->subWeek()])->count(),
+            ),
+            'total_revenue_today' => $this->trend(
+                fn () => Payment::whereBetween('paid_at', [now()->subWeek(), now()])->sum('amount'),
+                fn () => Payment::whereBetween('paid_at', [now()->subWeeks(2), now()->subWeek()])->sum('amount'),
             ),
         ];
 

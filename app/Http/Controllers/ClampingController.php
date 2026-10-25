@@ -86,7 +86,9 @@ class ClampingController extends Controller
     {
         $this->authorize('create', ClampingRecord::class);
 
-        $existingClamp = ClampingRecord::where('vehicle_plate', $request->vehicle_plate)
+        $existingClamp = ClampingRecord::whereHas('citation', function ($query) use ($request) {
+            $query->where('vehicle_plate', $request->vehicle_plate);
+        })
             ->where('status', ClampingStatus::AwaitingPayment)
             ->exists();
 

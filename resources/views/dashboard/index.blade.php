@@ -47,9 +47,6 @@
     </div>
 </div>
 
-{{-- Per-user contribution KPIs --}}
-@include('dashboard.partials.my-contribution')
-
 {{-- Needs attention --}}
 <div class="section-label">Needs attention</div>
 <div class="tier1-row animate-on-load">
@@ -58,13 +55,16 @@
             ['icon' => 'bi-lock', 'label' => 'Active Clamps', 'value' => $stats['active_clamps'], 'key' => 'active_clamps', 'red' => 4],
             ['icon' => 'bi-chat-square-text', 'label' => 'Pending Appeals', 'value' => $stats['pending_appeals'], 'key' => 'pending_appeals', 'red' => 10],
             ['icon' => 'bi-exclamation-circle', 'label' => 'Unpaid Citations', 'value' => $stats['unpaid_citations'], 'key' => 'unpaid_citations', 'red' => 50],
+            ['icon' => 'bi-receipt', 'label' => 'Citations Issued', 'value' => $stats['total_citations'], 'key' => 'total_citations', 'red' => 3, 'amber_min' => 1],
         ];
     @endphp
     @foreach ($attention as $a)
         @php
             $state = $a['value'] === 0
                 ? 'state-green'
-                : ($a['value'] >= $a['red'] ? 'state-red' : 'state-amber');
+                : (isset($a['amber_min']) && $a['value'] >= $a['amber_min'] && $a['value'] < $a['red']
+                    ? 'state-amber'
+                    : ($a['value'] >= $a['red'] ? 'state-red' : 'state-amber'));
             $stateText = ['state-green' => 'Clear', 'state-amber' => 'Monitor', 'state-red' => 'Action needed'][$state];
             $t = $trends[$a['key']] ?? ['direction' => 'flat', 'percent' => 0];
         @endphp
@@ -182,12 +182,16 @@
 <div class="section-label">Overview</div>
 <div class="tier3-row animate-on-load">
     <div class="stat-card--quiet">
-        <div class="stat-label">Total Citations</div>
-        <div class="stat-value">{{ number_format($stats['total_citations']) }}</div>
+        <div class="stat-label">Reports Resolved</div>
+        <div class="stat-value">{{ number_format($stats['reports_resolved_today']) }}</div>
     </div>
     <div class="stat-card--quiet">
-        <div class="stat-label">Payments Today</div>
-        <div class="stat-value">₱{{ number_format($stats['revenue_today'], 2) }}</div>
+        <div class="stat-label">Payments Recorded</div>
+        <div class="stat-value">{{ number_format($stats['payments_recorded_today']) }}</div>
+    </div>
+    <div class="stat-card--quiet">
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-value">₱{{ number_format($stats['total_revenue_today'], 2) }}</div>
     </div>
 </div>
 
