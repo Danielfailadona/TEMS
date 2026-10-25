@@ -185,7 +185,8 @@
             </div>
             <div class="col-md-6">
                 <label class="form-label">Notes</label>
-                <textarea name="notes" class="form-control" rows="3">{{ old('notes') }}</textarea>
+                <textarea name="notes" class="form-control" rows="3" placeholder="Driver behavior, weather, officer observations, etc.">{{ old('notes') }}</textarea>
+                <small class="form-text text-muted">General citation context (not impounding-specific)</small>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Evidence Photos <span class="text-danger">*</span></label>
@@ -213,8 +214,9 @@
                     <div class="card-body">
                         <div class="mb-3">
                             <label class="form-label">Impounding Notes (optional)</label>
-                            <textarea name="impounding_notes" rows="3" class="form-control" placeholder="e.g. Vehicle parked obstructing traffic">{{ old('impounding_notes') }}</textarea>
+                            <textarea name="impounding_notes" rows="3" class="form-control" placeholder="Tow reason, storage location, release conditions, etc.">{{ old('impounding_notes') }}</textarea>
                             @error('impounding_notes')<small class="text-danger">{{ $message }}</small>@enderror
+                            <small class="form-text text-muted">Impounding-specific details (separate from general Notes above)</small>
                         </div>
                         <small class="form-text text-muted">Impounding evidence will reuse the citation evidence photos submitted above.</small>
                     </div>

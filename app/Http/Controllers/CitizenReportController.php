@@ -60,7 +60,7 @@ class CitizenReportController extends Controller
             });
         }
 
-        $reports = $query->latest()->paginate(10)->withQueryString();
+        $reports = $query->latest()->paginate(5)->withQueryString();
 
         $statsQuery = CitizenReport::query();
         if ($isRestricted) {
@@ -79,7 +79,7 @@ class CitizenReportController extends Controller
         ];
 
         $pending = $stats['pending'];
-        $stats['pending_state'] = $pending >= 4 ? 'red' : ($pending >= 1 ? 'amber' : 'green');
+        $stats['pending_state'] = $pending === 0 ? 'green' : ($pending <= 2 ? 'amber' : 'red');
 
         return view('citizen-reports.index', compact('reports', 'stats'));
     }
