@@ -77,7 +77,7 @@ class TaskManagementController extends Controller
             $query->where('availability_override', $request->override);
         }
 
-        $enforcers = $query->get()->map(function ($enforcer) {
+        $enforcers = $query->paginate(5)->withQueryString()->through(function ($enforcer) {
             $dayOfWeek = now()->dayOfWeek;
             $time = now()->format('H:i:s');
             
@@ -104,6 +104,16 @@ class TaskManagementController extends Controller
         });
 
         // Stats
+        $forceAvailable = User::where('role', Role::Enforcer->value)
+            ->where('account_status', 'approved')
+            ->where('availability_override', 'force_available')
+            ->count();
+
+        $forceUnavailable = User::where('role', Role::Enforcer->value)
+            ->where('account_status', 'approved')
+            ->where('availability_override', 'force_unavailable')
+            ->count();
+
         $stats = [
             'total_enforcers' => User::where('role', Role::Enforcer->value)
                 ->where('account_status', 'approved')
@@ -112,12 +122,10 @@ class TaskManagementController extends Controller
                 ->where('account_status', 'approved')
                 ->scheduleAssignable()
                 ->count(),
-            'force_available' => User::where('role', Role::Enforcer->value)
-                ->where('availability_override', 'force_available')
-                ->count(),
-            'force_unavailable' => User::where('role', Role::Enforcer->value)
-                ->where('availability_override', 'force_unavailable')
-                ->count(),
+            'force_available' => $forceAvailable,
+            'force_unavailable' => $forceUnavailable,
+            'force_available_state' => $forceAvailable === 0 ? 'red' : ($forceAvailable <= 2 ? 'amber' : 'green'),
+            'force_unavailable_state' => $forceUnavailable === 0 ? 'green' : ($forceUnavailable <= 2 ? 'amber' : 'red'),
         ];
 
         $zones = \App\Models\Team::whereHas('members', function ($q) {

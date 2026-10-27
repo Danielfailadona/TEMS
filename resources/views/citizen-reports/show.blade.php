@@ -181,19 +181,19 @@
                         @endif
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <div class="section-group">
                         <div class="section-group-label"><i class="bi bi-palette me-1"></i>Color</div>
                         <div class="fw-semibold">{{ $request->vehicle_color ?? '—' }}</div>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <div class="section-group">
                         <div class="section-group-label"><i class="bi bi-car-front me-1"></i>Make</div>
                         <div class="fw-semibold">{{ $request->vehicle_make ?? '—' }}</div>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <div class="section-group">
                         <div class="section-group-label"><i class="bi bi-car-front me-1"></i>Model</div>
                         <div class="fw-semibold">{{ $request->vehicle_model ?? '—' }}</div>
