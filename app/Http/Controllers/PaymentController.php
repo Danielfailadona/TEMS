@@ -405,7 +405,7 @@ class PaymentController extends Controller
                 return back()->withErrors(['clamping_id' => 'This clamping notice has already been paid.'])->withInput();
             }
 
-            $payment = $recorder->recordClamping($clamping, $data->toArray(), $cashierId);
+            $payment = $recorder->recordClamping($clamping, $data, $cashierId);
         } elseif ($category === 'impounding') {
             $impounding = ImpoundingRecord::with(['officer', 'citation'])->findOrFail($request->impounding_id);
 
@@ -417,7 +417,7 @@ class PaymentController extends Controller
                 return back()->withErrors(['impounding_id' => 'This impounding notice has already been paid.'])->withInput();
             }
 
-            $payment = $recorder->recordImpounding($impounding, $data->toArray(), $cashierId);
+            $payment = $recorder->recordImpounding($impounding, $data, $cashierId);
         } else {
             $citation = Citation::with('payment')->findOrFail($request->citation_id);
 
@@ -435,7 +435,7 @@ class PaymentController extends Controller
             }
 
             $payment = $recorder->recordCitation($citation, [
-                ...$data->toArray(),
+                ...$data,
                 'amount' => $citation->penalty_amount,
             ], $cashierId);
         }

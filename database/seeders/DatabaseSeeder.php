@@ -39,7 +39,7 @@ class DatabaseSeeder extends Seeder
             ['code' => 'DUI', 'name' => 'Driving Under Influence', 'description' => 'Driving under the influence of alcohol or drugs', 'penalty_amount' => 10000, 'is_impoundable' => true, 'is_clampable' => false],
             ['code' => 'NO-SEATBELT', 'name' => 'No Seat Belt', 'description' => 'Failure to wear a seat belt while driving', 'penalty_amount' => 1000, 'is_impoundable' => false, 'is_clampable' => false],
             ['code' => 'NO-HELMET', 'name' => 'No Motorcycle Helmet', 'description' => 'Riding without a standard protective helmet', 'penalty_amount' => 1500, 'is_impoundable' => false, 'is_clampable' => false],
-            ['code' => 'NO-PARK', 'name' => 'Illegal Parking', 'description' => 'Parking in a no-parking zone or obstruction', 'penalty_amount' => 1000, 'is_impoundable' => true, 'is_clampable' => true],
+            ['code' => 'NO-PARK', 'name' => 'Illegal Parking', 'description' => 'Parking in a no-parking zone or obstruction', 'penalty_amount' => 1000, 'is_impoundable' => false, 'is_clampable' => true],
             ['code' => 'RED-LIGHT', 'name' => 'Red Light Violation', 'description' => 'Running a red traffic light', 'penalty_amount' => 1500, 'is_impoundable' => false, 'is_clampable' => false],
             ['code' => 'OBSTRUCTION', 'name' => 'Obstruction of Traffic', 'description' => 'Obstructing the free flow of traffic', 'penalty_amount' => 1000, 'is_impoundable' => true, 'is_clampable' => true],
             ['code' => 'COLORUM', 'name' => 'Colorum Vehicle', 'description' => 'Operating a public utility vehicle without a franchise', 'penalty_amount' => 5000, 'is_impoundable' => true, 'is_clampable' => false],

@@ -179,6 +179,9 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
     Route::get('users/{user}/devices', [UserController::class, 'devices'])->name('users.devices');
     Route::delete('devices/{device}/force-logout', [UserController::class, 'forceLogout'])->name('devices.force-logout');
     Route::post('users/batch-action', [UserController::class, 'batchAction'])->name('users.batch-action');
+Route::post('users/batch', [UserController::class, 'batchAction'])->name('users.batch');
+Route::post('users/{user}/suspend', [UserController::class, 'toggleStatus'])->name('users.suspend');
+Route::post('users/{user}/unsuspend', [UserController::class, 'toggleStatus'])->name('users.unsuspend');
 
     // Notifications
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');

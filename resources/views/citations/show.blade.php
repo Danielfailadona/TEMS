@@ -25,12 +25,17 @@
 @endpush
 
 @section('content')
-<div class="d-flex justify-content-between align-items-start mb-4">
-    <div>
-        <h1 class="h3 mb-1">{{ $citation->citation_number }}</h1>
-        <p class="text-muted mb-0">{{ $citation->violationLabel() }}</p>
+<div class="mb-4">
+    <a href="{{ route('citations.index') }}" class="btn btn-outline-secondary btn-sm" style="margin-bottom: 1.5rem;">
+        <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h1 class="h3 mb-1">{{ $citation->citation_number }}</h1>
+            <p class="text-muted mb-0">{{ $citation->violationLabel() }}</p>
+        </div>
+        <span class="badge {{ $citation->status->badgeClass() }} fs-6">{{ $citation->status->label() }}</span>
     </div>
-    <span class="badge {{ $citation->status->badgeClass() }} fs-6">{{ $citation->status->label() }}</span>
 </div>
 
 <div class="row g-4">

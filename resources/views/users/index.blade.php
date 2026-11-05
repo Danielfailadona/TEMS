@@ -1,675 +1,698 @@
-@php
-    $totalUsers = \App\Models\User::count();
-    $pendingUsers = \App\Models\User::where('account_status', 'pending')->count();
-    $approvedUsers = \App\Models\User::where('account_status', 'approved')->count();
-    $rejectedUsers = \App\Models\User::where('account_status', 'rejected')->count();
-    $suspendedUsers = \App\Models\User::where('account_status', 'suspended')->count();
-    $activeToday = \App\Models\User::where('last_login_at', '>=', now()->subDay())->count();
-@endphp
-
 @extends('layouts.app')
 
 @section('title', 'Users')
 
+@push('styles')
+<style>
+    :root {
+        --cr-navy: #0d2b49;
+        --cr-blue: #176ff2;
+        --cr-ink: #182235;
+        --cr-muted: #78869a;
+        --cr-line: #dfe5eb;
+        --cr-blue: #176ff2;
+        --cr-blue-soft: #eaf3ff;
+    }
+    .cr-dash .cr-toolbar { display: flex; align-items: center; gap: 16px; width: 100%; flex-wrap: wrap; }
+    .cr-dash .cr-filter-wrap { position: relative; flex: 0 0 128px; }
+    .cr-dash .cr-filter-wrap .form-select {
+        width: 100%;
+        height: 38px;
+        border: 1px solid #d7dee7;
+        border-radius: 4px;
+        font-size: 14px;
+        color: #111827;
+        background: #fff;
+    }
+    .cr-dash .cr-filter-wrap .form-select:focus {
+        border-color: #176ff2;
+        box-shadow: 0 0 0 0.2rem rgba(23, 111, 242, 0.25);
+    }
+    .cr-dash .cr-filter-button { 
+        height: 38px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; 
+        background: #fff; border: 1px solid #d7dee7; color: #111827; font-weight: 650; font-size: 16px; 
+        border-radius: 4px; cursor: pointer; 
+    }
+    .cr-dash .cr-filter-button svg { width: 15px; height: 15px; }
+    .cr-dash .cr-filter-button[aria-expanded="true"] svg { transform: rotate(180deg); }
+    .cr-dash .cr-caret { transition: transform .18s ease; }
+
+    .cr-dash .cr-filter-panel {
+        display: none; position: absolute; top: calc(100% + 8px); left: 0; z-index: 30;
+        width: 421px; max-width: min(421px, 88vw); padding: 22px 18px 28px;
+        background: #fff; border: 1px solid #dfe5eb; border-radius: 8px;
+        box-shadow: 0 12px 32px rgba(13, 43, 72, .16), 0 2px 6px rgba(13, 43, 72, .08);
+    }
+    .cr-dash .cr-filter-panel.open { display: grid; gap: 22px; }
+    .cr-dash .cr-field { border: 0; padding: 0; margin: 0; min-width: 0; }
+    .cr-dash .cr-field__label { font-size: 16px; font-weight: 700; color: #000; padding: 0; margin-bottom: 10px; display: block; }
+
+    .cr-dash .cr-select { position: relative; }
+    .cr-dash .cr-select select {
+        appearance: none; -webkit-appearance: none; width: 100%; height: 46px; padding: 0 44px 0 16px;
+        background: #fff; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; color: var(--cr-ink);
+    }
+    .cr-dash .cr-select select:focus { border-color: #3b82f6; outline: 2px solid rgba(59,130,246,.25); outline-offset: 0; }
+    .cr-dash .cr-select svg {
+        position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+        width: 16px; height: 16px; color: var(--cr-ink); pointer-events: none;
+    }
+
+    .cr-dash .cr-panel-actions { display: flex; gap: 14px; margin-top: 4px; }
+    .cr-dash .cr-btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+        height: 40px; padding: 0 14px; border-radius: 4px; border: 1px solid transparent;
+        font-size: 11px; font-weight: 700; text-decoration: none; white-space: nowrap; cursor: pointer;
+    }
+    .cr-dash .cr-btn svg { width: 14px; height: 14px; }
+    .cr-dash .cr-btn--primary { background: var(--cr-blue); color: #fff; }
+    .cr-dash .cr-btn--primary:hover { background: #075edb; color: #fff; }
+    .cr-dash .cr-btn--neutral { background: #6b7280; color: #fff; }
+    .cr-dash .cr-btn--neutral:hover { background: #565d6a; color: #fff; }
+
+    .cr-dash .cr-search-box { display: flex; height: 38px; min-width: 100px; flex: 1; }
+    .cr-dash .cr-search-submit {
+        display: grid; place-items: center; width: 34px; flex: 0 0 34px; background: #fff;
+        color: var(--cr-blue); border: 1px solid var(--cr-blue); border-radius: 4px 0 0 4px; cursor: pointer;
+    }
+    .cr-dash .cr-search-submit svg { width: 19px; height: 19px; stroke: currentColor; }
+    .cr-dash .cr-search-box input {
+        min-width: 0; width: 100%; border: 1px solid #d7dee7; border-left: 0; padding: 0 22px;
+        outline: none; background: #fff; color: #263247; font-size: 16px; border-radius: 0 4px 4px 0;
+    }
+    .cr-dash .cr-search-box input:focus { border-color: #7aa9f8; box-shadow: inset 0 0 0 1px #7aa9f8; }
+
+    .cr-dash .cr-primary-btn {
+        height: 38px; border: 0; background: var(--cr-blue); color: #fff; border-radius: 16px;
+        padding: 0 16px; font-weight: 650; white-space: nowrap; display: inline-flex; align-items: center;
+        gap: 6px; text-decoration: none; font-size: 14px;
+    }
+    .cr-dash .cr-primary-btn:hover { background: #075edb; color: #fff; }
+
+    .cr-dash .cr-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .cr-dash .cr-chip {
+        display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 6px 0 10px;
+        background: #eef5ff; border: 1px solid #cfe0fb; border-radius: 13px;
+        font-size: 12px; color: #1473F9; text-decoration: none;
+    }
+    .cr-dash .cr-chip:hover { background: #e2eeff; color: #145fc8; }
+    .cr-dash .cr-chip__x { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; color: inherit; }
+    .cr-dash .cr-chip__x svg { width: 11px; height: 11px; stroke: currentColor; stroke-width: 2.2; }
+
+    .cr-dash .cr-table-wrap { margin-top: 24px; overflow: visible; background: #fff; border: 1px solid var(--cr-line); border-radius: 12px; }
+    .cr-dash .cr-table { width: 100%; border-collapse: collapse; table-layout: fixed; background: #fff; }
+
+    /* KPI Cards */
+    .cr-dash .cr-kpi-card {
+        background: #fff;
+        border: 1px solid var(--cr-line);
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .cr-dash .cr-kpi-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--cr-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .cr-dash .cr-kpi-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--cr-ink);
+        line-height: 1;
+    }
+    .cr-kpi-value.pending-green { color: #10b981; }
+    .cr-kpi-value.pending-amber { color: #f59e0b; }
+    .cr-kpi-value.pending-red { color: #ef4444; }
+
+    /* Filter panel - force hidden by default */
+    .cr-dash .cr-filter-panel {
+        display: none !important;
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        z-index: 30;
+        width: 421px;
+        max-width: min(421px, 88vw);
+        padding: 22px 18px 28px;
+        background: #fff;
+        border: 1px solid var(--cr-line);
+        border-radius: 8px;
+        box-shadow: 0 12px 32px rgba(13, 43, 72, .16), 0 2px 6px rgba(13, 43, 72, .08);
+    }
+    .cr-dash .cr-filter-panel.open {
+        display: grid !important;
+        gap: 22px;
+    }
+    .cr-dash .cr-table thead th {
+        height: 51px; text-align: left; font-size: 14px; font-weight: 600; padding: 0 16px;
+        border-bottom: 2px solid #e8edf2; white-space: nowrap; color: var(--cr-ink);
+    }
+    .cr-dash .cr-table tbody tr { height: 78px; border-bottom: 2px solid #e8edf2; }
+    .cr-dash .cr-table tbody tr:last-child { border-bottom: 0; }
+    .cr-dash .cr-table tbody td, .cr-dash .cr-table tbody th { padding: 0 16px; white-space: nowrap; font-size: 14px; color: var(--cr-ink); overflow: hidden; text-overflow: ellipsis; }
+    .cr-dash .cr-table tbody th { font-weight: 600; text-align: left; }
+    .cr-dash .cr-table th:nth-child(1), .cr-dash .cr-table td:nth-child(1) { width: 6% !important; }
+    .cr-dash .cr-table th:nth-child(2), .cr-dash .cr-table td:nth-child(2) { width: 22% !important; }
+    .cr-dash .cr-table th:nth-child(3), .cr-dash .cr-table td:nth-child(3) { width: 22% !important; }
+    .cr-dash .cr-table th:nth-child(4), .cr-dash .cr-table td:nth-child(4) { width: 14% !important; }
+    .cr-dash .cr-table th:nth-child(5), .cr-dash .cr-table td:nth-child(5) { width: 15% !important; }
+    .cr-dash .cr-table th:nth-child(6), .cr-dash .cr-table td:nth-child(6) { width: 13% !important; overflow: visible; position: relative; }
+
+    .cr-dash .cr-pill {
+        display: inline-block; font-size: 11px; font-weight: 700; line-height: 24px; padding: 0 10px;
+        border-radius: 7px; min-width: 40px; text-align: center; white-space: nowrap;
+    }
+    .cr-dash .cr-actions { display: inline-flex; align-items: center; gap: 2px; position: relative; }
+    .cr-dash .cr-actions-menu-btn {
+        background: #f8f9fc;
+        border: 1px solid #d1d5db;
+        border-radius: 20px;
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+    }
+    .cr-dash .cr-actions-menu-btn svg {
+        width: 16px;
+        height: 16px;
+        stroke-width: 2;
+    }
+    .cr-dash .cr-actions-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        right: 0;
+        z-index: 50;
+        min-width: 140px;
+        background: #fff;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 4px 0;
+        display: none;
+        list-style: none;
+        margin: 0;
+    }
+    .cr-dash .cr-actions-menu.open {
+        display: block;
+    }
+    .cr-dash .cr-actions-menu-item {
+        display: block;
+        padding: 8px 16px;
+        color: #374151;
+        text-decoration: none;
+        font-size: 14px;
+    }
+    .cr-dash .cr-actions-menu-item:hover {
+        background: #eff6ff;
+    }
+    .cr-dash .cr-actions-menu-item svg {
+        width: 14px;
+        height: 14px;
+        margin-right: 8px;
+        stroke-width: 2;
+    }
+    .cr-dash .cr-actions-menu-item.suspend-action {
+        color: #d97706;
+    }
+    .cr-dash .cr-actions-menu-item.suspend-action svg {
+        stroke: #d97706;
+    }
+    .cr-dash .cr-pill-btn {
+        height: 30px; min-width: 40px; border-radius: 15px; display: inline-grid; place-items: center;
+        text-decoration: none; border: 1px solid var(--pym-blue); color: var(--pym-blue); background: #fff;
+    }
+    .cr-dash .cr-pill-btn svg { width: 16px; height: 16px; stroke: currentColor; }
+    .cr-dash .cr-pill-btn:hover { background: #edf5ff; }
+    .cr-dash .cr-pill-btn--edit { border-color: #d0d7de; color: #4b5563; }
+    .cr-dash .cr-pill-btn--edit:hover { background: #f8fafc; }
+
+    .cr-dash .cr-collect-btn {
+        height: 30px; padding: 0 14px; border-radius: 15px; border: 1px solid var(--pym-blue);
+        background: var(--pym-blue); color: #fff; font-size: 11px; font-weight: 700;
+        display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+    }
+    .cr-dash .cr-collect-btn:hover { background: #075edb; color: #fff; }
+    .cr-dash .cr-collect-btn svg { width: 14px; height: 14px; }
+
+    .cr-dash .cr-empty { padding: 45px 20px; text-align: center; color: #738197; }
+    .cr-dash .cr-table-footer {
+        min-height: 42px; display: flex; justify-content: space-between; align-items: center; gap: 16px;
+        color: #74839a; font-size: 11px; padding: 12px 4px 0; flex-wrap: wrap;
+    }
+    .cr-dash .pagination { display: flex; align-items: center; gap: 0; margin-bottom: 0; }
+    .cr-dash .pagination .page-link {
+        width: 38px; height: 30px; background: #fff; border: 1px solid #dce3eb; color: #176ff2;
+        margin-left: -1px; display: grid; place-items: center; font-size: 13px; border-radius: 0;
+        padding: 0; text-decoration: none;
+    }
+    .cr-dash .pagination .page-item:first-child .page-link { border-radius: 5px 0 0 5px; color: #60728a; }
+    .cr-dash .pagination .page-item:last-child .page-link { border-radius: 0 5px 5px 0; color: #60728a; }
+    .cr-dash .pagination .page-item.active .page-link { background: #176ff2; border-color: #176ff2; color: #fff; }
+    .cr-dash .pagination .page-item.disabled .page-link { background: #fff; color: #c3cdd9; }
+
+    .cr-kpi-value.pending-green { color: #10b981; }
+    .cr-kpi-value.pending-amber { color: #f59e0b; }
+    .cr-kpi-value.pending-red { color: #ef4444; }
+</style>
+@endpush
+
 @section('content')
-<div class="mb-4 text-end">
-    <a href="{{ route('users.create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add User</a>
-</div>
-
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="rounded-circle bg-primary bg-opacity-10 p-3">
-                    <i class="bi bi-people text-primary fs-4"></i>
-                </div>
-                <div>
-                    <div class="text-muted small">Total Users</div>
-                    <div class="fs-4 fw-bold">{{ $totalUsers }}</div>
-                </div>
+<div class="cr-dash">
+    {{-- KPI Cards Row --}}
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="cr-kpi-card">
+                <div class="cr-kpi-label">Total Users</div>
+                <div class="cr-kpi-value">{{ number_format($totalUsers) }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="cr-kpi-card">
+                <div class="cr-kpi-label">Pending Approval</div>
+                <div class="cr-kpi-value pending-{{ $pendingState }}">{{ number_format($pending) }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="cr-kpi-card">
+                <div class="cr-kpi-label">Active Today</div>
+                <div class="cr-kpi-value">{{ number_format($activeToday) }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="cr-kpi-card">
+                <div class="cr-kpi-label">Suspended</div>
+                <div class="cr-kpi-value">{{ number_format($suspendedUsers) }}</div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="rounded-circle bg-warning bg-opacity-10 p-3">
-                    <i class="bi bi-hourglass-split text-warning fs-4"></i>
-                </div>
-                <div>
-                    <div class="text-muted small">Pending Approval</div>
-                    <div class="fs-4 fw-bold">{{ $pendingUsers }}</div>
+
+    {{-- Toolbar --}}
+    <div class="cr-toolbar mb-4">
+        {{-- Filters Dropdown (Payments-style) --}}
+        <div class="cr-filter-wrap">
+            <button type="button" class="cr-filter-button" id="crFilterBtn" aria-expanded="false" aria-haspopup="dialog" aria-controls="crFilterPanel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                <span>Filters</span>
+            </button>
+            <div class="cr-filter-panel" id="crFilterPanel" role="dialog" aria-label="Filter users">
+                <fieldset class="cr-field">
+                    <legend class="cr-field__label">Role</legend>
+                    <div class="cr-select">
+                        <select name="role" id="crRoleSelect">
+                            <option value="">All Roles</option>
+                            @foreach (\App\Enums\Role::cases() as $role)
+                                <option value="{{ $role->value }}" {{ request('role') === $role->value ? 'selected' : '' }}>{{ $role->label() }}</option>
+                            @endforeach
+                        </select>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                </fieldset>
+                <fieldset class="cr-field">
+                    <legend class="cr-field__label">Status</legend>
+                    <div class="cr-select">
+                        <select name="account_status" id="crStatusSelect">
+                            <option value="">All Status</option>
+                            <option value="pending" {{ request('account_status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="approved" {{ request('account_status') === 'approved' ? 'selected' : '' }}>Approved</option>
+                            <option value="rejected" {{ request('account_status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                            <option value="suspended" {{ request('account_status') === 'suspended' ? 'selected' : '' }}>Suspended</option>
+                        </select>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                </fieldset>
+                <div class="cr-panel-actions">
+                    <button type="button" class="cr-btn cr-btn--primary" id="crApplyBtn">Apply</button>
+                    <a href="{{ $urlClearFilters }}" class="cr-btn cr-btn--neutral">Clear</a>
                 </div>
             </div>
         </div>
+
+        {{-- Search --}}
+        <form action="{{ route('users.index') }}" method="GET" class="cr-search-box" role="search">
+            <button type="submit" class="cr-search-submit" aria-label="Search users">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </button>
+            <input type="search" name="search" placeholder="Search users..." value="{{ request('search') }}" aria-label="Search users">
+            @foreach (array_diff_key(request()->except('search'), ['search' => '']) as $key => $value)
+                <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+            @endforeach
+        </form>
+
+        {{-- Add User Button --}}
+        <a href="{{ route('users.create') }}" class="cr-primary-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add User
+        </a>
     </div>
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="rounded-circle bg-success bg-opacity-10 p-3">
-                    <i class="bi bi-activity text-success fs-4"></i>
-                </div>
-                <div>
-                    <div class="text-muted small">Active Today</div>
-                    <div class="fs-4 fw-bold">{{ $activeToday }}</div>
-                </div>
+
+    {{-- Active Filter Chips --}}
+    @if (!empty($activeFilters))
+    <div class="cr-chips" id="crActiveFilters">
+        @foreach ($activeFilters as $filter)
+            <a href="{{ $filter['href'] }}" class="cr-chip">
+                {{ $filter['label'] }}
+                <span class="cr-chip__x" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </span>
+            </a>
+        @endforeach
+    </div>
+    @endif
+
+    {{-- Batch Actions Toolbar --}}
+    <form action="{{ route('users.batch') }}" method="POST" id="usersBatchForm" class="d-none">
+        @csrf
+        <input type="hidden" name="action" id="batchAction">
+        <input type="hidden" name="user_ids" id="batchUserIds">
+    </form>
+
+    <div class="cr-batch-toolbar d-none mb-3" id="crBatchToolbar">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="selectAllUsers" aria-label="Select all users">
+            </div>
+            <span class="text-muted small" id="crSelectedCount">0 selected</span>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Batch Actions
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" data-action="approve">Approve Selected</a></li>
+                    <li><a class="dropdown-item" href="#" data-action="reject">Reject Selected</a></li>
+                    <li><a class="dropdown-item" href="#" data-action="suspend">Suspend Selected</a></li>
+                    <li><a class="dropdown-item" href="#" data-action="unsuspend">Unsuspend Selected</a></li>
+                </ul>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="rounded-circle bg-secondary bg-opacity-10 p-3">
-                    <i class="bi bi-lock text-secondary fs-4"></i>
-                </div>
-                <div>
-                    <div class="text-muted small">Suspended</div>
-                    <div class="fs-4 fw-bold">{{ $suspendedUsers }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-@php
-    $activeStatusFilter = request('account_status');
-@endphp
-
-<nav class="user-mgmt-tabs mb-3" id="status-tabs">
-    <a href="#" class="user-mgmt-tab {{ $activeStatusFilter === null || $activeStatusFilter === '' ? 'active' : '' }}" data-filter="all">
-        <i class="bi bi-people-fill me-1"></i> All Users
-        <span class="tab-count">{{ $totalUsers }}</span>
-    </a>
-    <a href="#" class="user-mgmt-tab tab-pending {{ $activeStatusFilter === 'pending' ? 'active' : '' }}" data-filter="pending">
-        <i class="bi bi-hourglass-split me-1"></i> Pending
-        @if ($pendingUsers > 0)
-            <span class="tab-count tab-count-alert">{{ $pendingUsers }}</span>
-        @else
-            <span class="tab-count">{{ $pendingUsers }}</span>
-        @endif
-    </a>
-    <a href="#" class="user-mgmt-tab tab-approved {{ $activeStatusFilter === 'approved' ? 'active' : '' }}" data-filter="approved">
-        <i class="bi bi-check-circle-fill me-1"></i> Approved
-        <span class="tab-count">{{ $approvedUsers }}</span>
-    </a>
-    <a href="#" class="user-mgmt-tab tab-rejected {{ $activeStatusFilter === 'rejected' ? 'active' : '' }}" data-filter="rejected">
-        <i class="bi bi-x-circle-fill me-1"></i> Rejected
-        <span class="tab-count">{{ $rejectedUsers }}</span>
-    </a>
-    <a href="#" class="user-mgmt-tab tab-suspended {{ $activeStatusFilter === 'suspended' ? 'active' : '' }}" data-filter="suspended">
-        <i class="bi bi-lock-fill me-1"></i> Suspended
-        <span class="tab-count">{{ $suspendedUsers }}</span>
-    </a>
-</nav>
-
-<form class="row g-2 mb-3" method="GET" id="user-filter-form" action="{{ route('users.index') }}">
-  <input type="hidden" name="account_status" id="filter-status-input" value="{{ request('account_status') }}">
-  <div class="col-md-3">
-    <input type="search" name="search" class="form-control" aria-label="Search users by name or email" placeholder="Search by name or email..." value="{{ request('search') }}">
-  </div>
-  <div class="col-md-2">
-    <select name="role" class="form-select" aria-label="Filter by role" onchange="this.form.submit()">
-      <option value="">All Roles</option>
-      @foreach ($roles as $role)
-        <option value="{{ $role->value }}" {{ request('role') === $role->value ? 'selected' : '' }}>{{ $role->label() }}</option>
-      @endforeach
-    </select>
-  </div>
-  <div class="col-auto">
-    <button class="btn btn-outline-secondary me-1" type="submit"><i class="bi bi-funnel"></i> Filter</button>
-    <a href="{{ route('users.index') }}" class="btn btn-link">Clear</a>
-  </div>
-</form>
-
-<div id="users-card">
-  @include('users.partials.batch-toolbar')
-  <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0" id="users-table">
-      <thead class="table-light">
-        <tr>
-          <th width="40"><input type="checkbox" id="select-all" aria-label="Select all users" class="form-check-input"></th>
-          <th>User</th>
-          <th>Role</th>
-          <th>Status</th>
-          <th>Active</th>
-          <th>Last Login</th>
-          <th width="80"></th>
-        </tr>
-      </thead>
-      <tbody>
-                @forelse ($users as $user)
-                    @php
-                        $initial = strtoupper(substr($user->name, 0, 1));
-                        $colors = ['primary', 'success', 'warning', 'danger', 'info', 'secondary', 'dark'];
-                        $colorIndex = crc32($user->email) % count($colors);
-                        $avatarColor = $colors[$colorIndex];
-                        $statusBadge = match ($user->account_status) {
-                            'approved' => ['tag-green', 'Approved'],
-                            'pending' => ['tag-amber', 'Pending'],
-                            'rejected' => ['tag-red', 'Rejected'],
-                            'suspended' => ['tag-gray', 'Suspended'],
-                            default => ['tag-gray', ucfirst($user->account_status ?? 'Unknown')],
-                        };
-                        $roleBadge = match ($user->role->value) {
-                            'super_admin' => 'bg-dark',
-                            'administrator' => 'bg-danger',
-                            'enforcer' => 'bg-primary',
-                            'cashier' => 'bg-success',
-                            'front_desk' => 'bg-info',
-                            'vehicle_owner' => 'bg-info text-dark',
-                            default => 'bg-secondary',
-                        };
-                    @endphp
-                    <tr class="{{ $user->account_status === 'pending' ? 'table-warning' : ($user->account_status === 'rejected' ? 'table-danger' : '') }}">
-                        <td><input type="checkbox" class="form-check-input row-checkbox" value="{{ $user->id }}"></td>
+    {{-- Users Table --}}
+    <div class="cr-table-wrap">
+        @if ($users->isNotEmpty())
+            <table class="cr-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAllUsersHeader" aria-label="Select all users on this page"></th>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Active</th>
+                        <th>Last Login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($users as $user)
+                    <tr data-user-id="{{ $user->id }}">
+                        <td><input type="checkbox" class="user-checkbox" value="{{ $user->id }}" name="user_ids[]"></td>
                         <td>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="avatar-initial rounded-circle bg-{{ $avatarColor }} bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width:36px;height:36px">
-                                    <span class="fw-bold text-{{ $avatarColor }} small">{{ $initial }}</span>
-                                </span>
-                                <div>
-                                    <div class="fw-semibold">{{ $user->name }}</div>
-                                    <div class="small text-muted">{{ $user->email }}</div>
+                            <strong>{{ $user->name }}</strong><br>
+                            <small class="text-muted">{{ $user->email }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ $user->role->label() }}</span>
+                        </td>
+                        <td>
+                            @php
+                                $statusClasses = [
+                                    'pending' => 'tag-amber',
+                                    'approved' => 'tag-green',
+                                    'rejected' => 'tag-red',
+                                    'suspended' => 'tag-gray',
+                                ];
+                                $statusClass = $statusClasses[$user->account_status] ?? 'tag-gray';
+                            @endphp
+                            <span class="cr-pill {{ $statusClass }}">{{ \App\Enums\AccountStatus::tryFrom($user->account_status)?->label() ?? ucfirst($user->account_status) }}</span>
+                        </td>
+                        <td>
+                            @if ($user->is_active)
+                                <span class="cr-pill tag-green">Active</span>
+                            @else
+                                <span class="cr-pill tag-gray">Inactive</span>
+                            @endif
+                        </td>
+                        <td>{{ $user->last_login_at ? $user->last_login_at->format('M d, Y H:i') : 'Never' }}</td>
+                        <td>
+                            <div class="cr-actions">
+                                <button type="button" class="cr-actions-menu-btn" aria-expanded="false" aria-haspopup="menu" aria-label="Actions">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="1"></circle>
+                                        <circle cx="12" cy="5" r="1"></circle>
+                                        <circle cx="12" cy="19" r="1"></circle>
+                                    </svg>
+                                </button>
+                                <div class="cr-actions-menu" id="actionsMenu{{ $user->id }}" role="menu" aria-label="User actions">
+                                    <a href="{{ route('users.edit', $user) }}" class="cr-actions-menu-item" role="menuitem">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        Edit
+                                    </a>
+                                    @if ($user->account_status === 'suspended')
+                                        <a href="{{ route('users.unsuspend', $user) }}" class="cr-actions-menu-item suspend-action" role="menuitem" data-confirm="Unsuspend this user?">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                            Unsuspend
+                                        </a>
+                                    @else
+                                        <a href="{{ route('users.suspend', $user) }}" class="cr-actions-menu-item suspend-action" role="menuitem" data-confirm="Suspend this user?">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                                            Suspend
+                                        </a>
+                                    @endif
+                                    <a href="{{ route('users.devices', $user) }}" class="cr-actions-menu-item" role="menuitem">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                                        Devices
+                                    </a>
+                                </div>
+                            </div>
+
+                            {{-- Reject Modal (per-row) --}}
+                            <div class="modal fade" id="rejectModal{{ $user->id }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ $user->id }}" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="rejectModalLabel{{ $user->id }}">Reject User</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <form action="{{ route('users.reject', $user) }}" method="POST">
+                                            @csrf
+                                            <div class="modal-body">
+                                                <p>Are you sure you want to reject <strong>{{ $user->name }}</strong>?</p>
+                                                <div class="mb-3">
+                                                    <label for="rejectReason{{ $user->id }}" class="form-label">Reason (required)</label>
+                                                    <textarea class="form-control" id="rejectReason{{ $user->id }}" name="reason" rows="3" required></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-danger">Reject</button>
+                                            </div>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </td>
-                        <td><span class="badge {{ $roleBadge }}">{{ $user->role->label() }}</span></td>
-                        <td>
-                            <span class="badge rounded-pill {{ $statusBadge[0] }}">{{ $statusBadge[1] }}</span>
-                        </td>
-                        <td>
-                            <div class="form-check form-switch mb-0">
-                                <input type="checkbox" class="form-check-input toggle-active" data-user-id="{{ $user->id }}" {{ $user->is_active ? 'checked' : '' }}>
-                            </div>
-                        </td>
-                        <td class="small text-muted">
-                            @if ($user->last_login_at)
-                                {{ $user->last_login_at->diffForHumans() }}
-                            @else
-                                <span class="text-muted">Never</span>
-                            @endif
-                        </td>
-                        <td>
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown"><i class="bi bi-three-dots-vertical"></i></button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    @if ($user->account_status === 'pending')
-                                        <li>
-                                            <form method="POST" action="{{ route('users.approve', $user) }}" class="d-inline">
-                                                @csrf
-                                                <button class="dropdown-item text-success"><i class="bi bi-check-lg"></i> Approve</button>
-                                            </form>
-                                        </li>
-                                        <li>
-                                            <button class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#rejectModal-{{ $user->id }}"><i class="bi bi-x-lg"></i> Reject</button>
-                                        </li>
-                                        <li><hr class="dropdown-divider"></li>
-                                    @endif
-                                    <li><a href="{{ route('users.edit', $user) }}" class="dropdown-item"><i class="bi bi-pencil"></i> Edit</a></li>
-                                    @if ($user->account_status !== 'pending')
-                                        <li>
-                                            <form method="POST" action="{{ route('users.toggle-status', $user) }}" class="d-inline">
-                                                @csrf
-                                                <button class="dropdown-item {{ $user->account_status === 'suspended' ? 'text-success' : 'text-warning' }}">
-                                                    <i class="bi {{ $user->account_status === 'suspended' ? 'bi-unlock' : 'bi-lock' }}"></i>
-                                                    {{ $user->account_status === 'suspended' ? 'Unsuspend' : 'Suspend' }}
-                                                </button>
-                                            </form>
-                                        </li>
-                                    @endif
-                                    <li><a href="{{ route('users.devices', $user) }}" class="dropdown-item"><i class="bi bi-phone"></i> Devices</a></li>
-                                </ul>
-                            </div>
-                        </td>
                     </tr>
-
-                    @if ($user->account_status === 'pending')
-                        {{-- Reject modal rendered outside table to prevent stagger on AJAX refresh --}}
-                    @endif
-                @empty
-                    <tr><td colspan="7" class="text-center text-muted py-4">No users found.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
+                    @endforeach
+                </tbody>
+            </table>
+        @else
+            <div class="cr-empty">No users found.</div>
+        @endif
     </div>
-    @if ($users->hasPages())
-        <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center py-3">
-            <small class="text-muted">Showing {{ $users->firstItem() }}-{{ $users->lastItem() }} of {{ $users->total() }}</small>
-            {{ $users->links() }}
-        </div>
-    @endif
-</div>
-</div>
-@endsection
 
-@push('scripts')
-{{-- Reject Modals for ALL pending users (so they exist regardless of filter) --}}
-@php
-    $allPendingUsers = \App\Models\User::where('account_status', 'pending')->get();
-@endphp
-@if ($allPendingUsers->isNotEmpty())
-<div style="display: none;">
-    @foreach ($allPendingUsers as $user)
-        <div class="modal fade user-reject-modal" id="rejectModal-{{ $user->id }}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <form method="POST" action="{{ route('users.reject', $user) }}" class="modal-content">
+    {{-- Pagination Footer --}}
+    <div class="cr-table-footer">
+        <span>Showing {{ $users->firstItem() ?? 0 }} to {{ $users->lastItem() ?? 0 }} of {{ $users->total() }} entries</span>
+        {{ $users->withQueryString()->links() }}
+    </div>
+
+    {{-- Batch Reject Modal --}}
+    <div class="modal fade" id="batchRejectModal" tabindex="-1" aria-labelledby="batchRejectModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="batchRejectModalLabel">Reject Selected Users</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ route('users.batch') }}" method="POST">
                     @csrf
-                    <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title"><i class="bi bi-x-circle me-2"></i>Reject User: {{ $user->name }}</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
+                    <input type="hidden" name="action" value="reject">
+                    <input type="hidden" name="user_ids" id="batchRejectUserIds">
                     <div class="modal-body">
-                        <label class="form-label fw-semibold" for="rejection-reason-{{ $user->id }}">Reason for rejection <span class="text-danger">*</span></label>
-                        <textarea name="rejection_reason" id="rejection-reason-{{ $user->id }}" class="form-control" rows="4" required placeholder="Explain why this registration was rejected..."></textarea>
-                        <div class="form-text">This will set the user's account status to <strong>Rejected</strong>.</div>
+                        <p>Are you sure you want to reject the selected users?</p>
+                        <div class="mb-3">
+                            <label for="batchRejectReason" class="form-label">Reason (required)</label>
+                            <textarea class="form-control" id="batchRejectReason" name="reason" rows="3" required></textarea>
+                        </div>
                     </div>
-                    <div class="modal-footer border-0 pt-0">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="bi bi-x me-1"></i> Cancel</button>
-                        <button type="submit" class="btn btn-danger"><i class="bi bi-x-lg me-1"></i> Reject User</button>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Reject All</button>
                     </div>
                 </form>
             </div>
         </div>
-    @endforeach
-</div>
-@endif
-
-{{-- Batch Reject Modal (always available) --}}
-<div class="modal fade" id="batchRejectModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <form method="POST" action="{{ route('users.batch-action') }}" class="modal-content">
-            @csrf
-            <input type="hidden" name="action" value="reject">
-            <input type="hidden" name="user_ids" id="batch-reject-ids">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="bi bi-x-circle me-2"></i>Batch Reject Users</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p class="mb-3"><strong>Selected users:</strong> <span id="batch-reject-count" class="text-danger"></span></p>
-                <label class="form-label fw-semibold" for="batch-rejection-reason">Shared rejection reason <span class="text-danger">*</span></label>
-                <textarea name="rejection_reason" id="batch-rejection-reason" class="form-control" rows="4" required placeholder="Enter the shared reason for rejecting all selected users..."></textarea>
-                <div class="form-text">All selected users will be rejected with this same reason.</div>
-            </div>
-            <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="bi bi-x me-1"></i> Cancel</button>
-                <button type="submit" class="btn btn-danger"><i class="bi bi-x-lg me-1"></i> Reject All Selected</button>
-            </div>
-        </form>
     </div>
 </div>
-@endpush
-
-@push('styles')
-<style>
-    @media (min-width: 992px) {
-        .table-responsive { overflow: visible; }
-    }
-
-    .user-mgmt-tabs {
-        display: flex;
-        gap: 0;
-        border-bottom: 2px solid #e2e8f0;
-        overflow-x: auto;
-        scrollbar-width: none;
-    }
-    .user-mgmt-tabs::-webkit-scrollbar { display: none; }
-
-    .user-mgmt-tab {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        padding: 0.7rem 1.1rem;
-        font-size: 0.82rem;
-        font-weight: 600;
-        color: #64748b;
-        text-decoration: none;
-        border-bottom: 2px solid transparent;
-        margin-bottom: -2px;
-        white-space: nowrap;
-        transition: color 0.15s, border-color 0.15s, background 0.15s;
-    }
-    .user-mgmt-tab:hover {
-        color: #1e293b;
-        background: rgba(0, 0, 0, 0.02);
-    }
-    .user-mgmt-tab.active {
-        color: #2563eb;
-        border-bottom-color: #2563eb;
-    }
-
-    .tab-count {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 1.5rem;
-        height: 1.3rem;
-        padding: 0 0.4rem;
-        border-radius: 999px;
-        font-size: 0.68rem;
-        font-weight: 700;
-        background: #f1f5f9;
-        color: #64748b;
-    }
-    .user-mgmt-tab.active .tab-count {
-        background: #dbeafe;
-        color: #2563eb;
-    }
-    .tab-count-alert {
-        background: #fef3c7;
-        color: #d97706;
-    }
-    .user-mgmt-tab.active .tab-count-alert {
-        background: #fef3c7;
-        color: #d97706;
-    }
-
-    .tab-pending.active { color: #d97706; border-bottom-color: #f59e0b; }
-    .tab-approved.active { color: #16a34a; border-bottom-color: #22c55e; }
-    .tab-rejected.active { color: #dc2626; border-bottom-color: #ef4444; }
-    .tab-suspended.active { color: #64748b; border-bottom-color: #94a3b8; }
-
-    .batch-actions-toolbar {
-        transition: opacity 0.15s ease, visibility 0.15s ease;
-    }
-    .batch-actions-toolbar.d-none {
-        display: none !important;
-    }
-    #batch-actions-toolbar .btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-    #batch-actions-toolbar #batch-pending-group,
-    #batch-actions-toolbar #batch-status-group {
-        background: transparent !important;
-    }
-    @media (max-width: 575.98px) {
-        #batch-actions-toolbar .btn-sm {
-            font-size: 0.8rem;
-            padding: 0.3rem 0.55rem;
-        }
-        #batch-deselect-btn {
-            flex-basis: 100%;
-            margin-left: 0 !important;
-            text-align: center;
-        }
-    }
-    #batch-actions-toolbar [data-bs-toggle="tooltip"] {
-        cursor: not-allowed;
-    }
-    #batch-actions-toolbar .btn:not(:disabled)[data-bs-toggle="tooltip"] {
-        cursor: pointer;
-    }
-</style>
-@endpush
+@endsection
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const tableCard = document.getElementById('users-card');
-    const form = document.getElementById('user-filter-form');
-    const statusInput = document.getElementById('filter-status-input');
-    
-    // Initialize Bootstrap modals once on page load
-    document.querySelectorAll('.user-reject-modal, #batchRejectModal').forEach(modal => {
-        new bootstrap.Modal(modal);
-    });
-    
-    // Initialize tooltips
-    initTooltips();
+document.addEventListener('DOMContentLoaded', function () {
+    // Filters panel (Payments-style)
+    const filterBtn = document.getElementById('crFilterBtn');
+    const filterPanel = document.getElementById('crFilterPanel');
+    const applyBtn = document.getElementById('crApplyBtn');
 
-    // Helper to get fresh batch action elements (they get replaced on AJAX refresh)
-    function getBatchElements() {
-        return {
-            batchToolbar: document.getElementById('batch-actions-toolbar'),
-            selectAllCb: document.getElementById('select-all'),
-            selectedCountEl: document.getElementById('batch-selected-count'),
-            batchRejectBtn: document.getElementById('batch-reject-btn'),
-            batchApproveBtn: document.getElementById('batch-approve-btn'),
-            batchSuspendBtn: document.getElementById('batch-suspend-btn'),
-            batchUnsuspendBtn: document.getElementById('batch-unsuspend-btn'),
-            batchRejectIds: document.getElementById('batch-reject-ids'),
-            batchApproveIds: document.getElementById('batch-approve-ids'),
-            batchSuspendIds: document.getElementById('batch-suspend-ids'),
-            batchUnsuspendIds: document.getElementById('batch-unsuspend-ids'),
-            batchRejectCountEl: document.getElementById('batch-reject-count'),
-            batchRejectCountDisplay: document.getElementById('batch-selected-count'),
-            batchPendingGroup: document.getElementById('batch-pending-group'),
-            batchStatusGroup: document.getElementById('batch-status-group'),
-        };
-    }
+    if (filterBtn && filterPanel) {
+        filterBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const expanded = this.getAttribute('aria-expanded') === 'true';
+            this.setAttribute('aria-expanded', !expanded);
+            filterPanel.classList.toggle('open');
+        });
 
-    // Initialize Bootstrap tooltips
-    function initTooltips() {
-        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-        tooltipTriggerList.forEach(tooltipTriggerEl => {
-            if (!tooltipTriggerEl._bsTooltip) {
-                new bootstrap.Tooltip(tooltipTriggerEl);
+        document.addEventListener('click', function (e) {
+            if (!filterBtn.contains(e.target) && !filterPanel.contains(e.target)) {
+                filterBtn.setAttribute('aria-expanded', 'false');
+                filterPanel.classList.remove('open');
             }
         });
-    }
 
-    function submitFilter() {
-        const url = new URL(form.action.split('?')[0], window.location.origin);
-        new FormData(form).forEach((v, k) => {
-            if (v !== '') url.searchParams.set(k, v);
-        });
-        history.replaceState({}, '', url.toString());
-        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(r => r.text())
-            .then(html => {
-                const doc = new DOMParser().parseFromString(html, 'text/html');
-                const newCard = doc.getElementById('users-card');
-                if (newCard) tableCard.innerHTML = newCard.innerHTML;
-                // Modals are now always in main template - no need to append from AJAX
-                // Just re-initialize any new modals that might have been added
-                doc.querySelectorAll('.user-reject-modal, #batchRejectModal').forEach(modal => {
-                    if (!modal._bsModal) new bootstrap.Modal(modal);
-                });
-                // Re-initialize tooltips for new toolbar buttons
-                initTooltips();
-                // Selection is gone after the refresh; keep the toolbar in sync
-                updateBatchToolbar();
-            })
-            .catch(() => { window.location.href = url.toString(); });
-    }
-
-    // Batch actions toolbar logic
-    function updateBatchToolbar() {
-        const el = getBatchElements();
-        const checkedRows = document.querySelectorAll('#users-table .row-checkbox:checked');
-        const count = checkedRows.length;
-        const selectedIds = Array.from(checkedRows).map(cb => cb.value);
-        
-        if (count > 0) {
-            el.batchToolbar.classList.remove('d-none');
-            el.selectedCountEl.textContent = `${count} selected`;
-        } else {
-            el.batchToolbar.classList.add('d-none');
-        }
-        
-        // Update hidden inputs with selected IDs
-        const idsString = selectedIds.join(',');
-        [el.batchRejectIds, el.batchApproveIds, el.batchSuspendIds, el.batchUnsuspendIds].forEach(input => {
-            if (input) input.value = idsString;
-        });
-        
-        if (count === 0) {
-            return;
-        }
-        
-        // Analyze selected users' statuses for context-aware actions
-        const rows = document.querySelectorAll('#users-table tbody tr');
-        let hasPending = false, hasApproved = false, hasSuspended = false, hasRejected = false;
-        
-        rows.forEach(row => {
-            const cb = row.querySelector('.row-checkbox');
-            if (cb && cb.checked) {
-                const statusCell = row.querySelector('td:nth-child(4) .badge');
-                if (statusCell) {
-                    const statusText = statusCell.textContent.trim().toLowerCase();
-                    if (statusText === 'pending') hasPending = true;
-                    else if (statusText === 'approved') hasApproved = true;
-                    else if (statusText === 'suspended') hasSuspended = true;
-                    else if (statusText === 'rejected') hasRejected = true;
-                }
-            }
-        });
-        
-        // Enable/disable buttons based on context
-        el.batchApproveBtn.disabled = !hasPending;
-        el.batchRejectBtn.disabled = !hasPending;
-        
-        // Suspend/Unsuspend smart toggle
-        const hasApprovedOrPending = hasApproved || hasPending;
-        const hasSuspendedOnly = hasSuspended && !hasApproved && !hasPending && !hasRejected;
-        
-        if (hasSuspendedOnly) {
-            el.batchSuspendBtn.disabled = true;
-            el.batchUnsuspendBtn.disabled = false;
-        } else if (hasApprovedOrPending && !hasSuspended) {
-            el.batchSuspendBtn.disabled = false;
-            el.batchUnsuspendBtn.disabled = true;
-        } else {
-            el.batchSuspendBtn.disabled = true;
-            el.batchUnsuspendBtn.disabled = true;
-        }
-        
-        // Show/hide groups based on whether they have any enabled buttons
-        const pendingGroupHasEnabled = hasPending;
-        const statusGroupHasEnabled = !el.batchSuspendBtn.disabled || !el.batchUnsuspendBtn.disabled;
-        
-        if (el.batchPendingGroup) {
-            el.batchPendingGroup.style.display = pendingGroupHasEnabled ? 'flex' : 'none';
-        }
-        if (el.batchStatusGroup) {
-            el.batchStatusGroup.style.display = statusGroupHasEnabled ? 'flex' : 'none';
-        }
-        
-        // Update tooltips for disabled buttons
-        const disabledButtons = [el.batchApproveBtn, el.batchRejectBtn, el.batchSuspendBtn, el.batchUnsuspendBtn].filter(b => b && b.disabled);
-        disabledButtons.forEach(btn => {
-            if (btn && !btn.hasAttribute('data-bs-original-title')) {
-                btn.setAttribute('data-bs-original-title', btn.getAttribute('title') || '');
-            }
-        });
-        
-        // Re-initialize tooltips
-        initTooltips();
-        
-        // Update reject modal count
-        if (el.batchRejectCountEl) {
-            const pendingCount = selectedIds.filter((_, i) => {
-                const row = document.querySelector(`#users-table tbody tr .row-checkbox[value="${selectedIds[i]}"]`);
-                if (!row) return false;
-                const statusCell = row.closest('tr').querySelector('td:nth-child(4) .badge');
-                return statusCell && statusCell.textContent.trim().toLowerCase() === 'pending';
-            }).length;
-            el.batchRejectCountEl.textContent = `${pendingCount} pending user${pendingCount !== 1 ? 's' : ''} will be rejected`;
-        }
-    }
-
-    // Handle checkbox changes
-    tableCard.addEventListener('change', function (e) {
-        if (e.target.id === 'select-all') {
-            document.querySelectorAll('#users-table .row-checkbox').forEach(cb => cb.checked = e.target.checked);
-            updateBatchToolbar();
-            return;
-        }
-        
-        if (e.target.matches('.row-checkbox')) {
-            updateBatchToolbar();
-            return;
-        }
-        
-        const cb = e.target.closest('.toggle-active');
-        if (!cb) return;
-        const userId = cb.dataset.userId;
-        const isActive = cb.checked;
-        fetch(`/users/${userId}/toggle-active`, {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ is_active: isActive })
-        }).catch(() => { cb.checked = !isActive; });
-    });
-
-    // Handle batch action form submissions (delegated so it survives AJAX replacement)
-    const busyState = {
-        approve: { label: 'Approving...', html: '<span class="spinner-border spinner-border-sm me-1"></span>Approving...', reset: '<i class="bi bi-check-lg me-1"></i> Approve', fail: 'Failed to approve users' },
-        suspend: { label: 'Suspending...', html: '<span class="spinner-border spinner-border-sm me-1"></span>Suspending...', reset: '<i class="bi bi-lock me-1"></i> Suspend', fail: 'Failed to suspend users' },
-        unsuspend: { label: 'Unsuspending...', html: '<span class="spinner-border spinner-border-sm me-1"></span>Unsuspending...', reset: '<i class="bi bi-unlock me-1"></i> Unsuspend', fail: 'Failed to unsuspend users' },
-    };
-
-    document.addEventListener('submit', async (e) => {
-        const form = e.target;
-        const action = form.id?.replace('batch-', '').replace('-form', '');
-        if (!form.id || !busyState[action]) return;
-
-        e.preventDefault();
-        const btn = form.querySelector('button[type="submit"]');
-        const state = busyState[action];
-        const originalHtml = btn.innerHTML;
-
-        btn.disabled = true;
-        btn.innerHTML = state.html;
-
-        try {
-            const res = await fetch(form.action, {
-                method: 'POST',
-                body: new FormData(form),
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        if (applyBtn) {
+            applyBtn.addEventListener('click', function () {
+                const role = document.getElementById('crRoleSelect').value;
+                const status = document.getElementById('crStatusSelect').value;
+                const url = new URL(window.location.href);
+                if (role) url.searchParams.set('role', role); else url.searchParams.delete('role');
+                if (status) url.searchParams.set('account_status', status); else url.searchParams.delete('account_status');
+                window.location.href = url.toString();
             });
-            if (res.ok) {
-                window.location.reload();
-                return;
-            }
-            alert(state.fail);
-        } catch (err) {
-            alert('Error: ' + err.message);
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml || state.reset;
         }
-    });
+    }
 
-    // Update batch reject modal with selected count (delegated)
-    document.addEventListener('click', (e) => {
-        const rejectBtn = e.target.closest('#batch-reject-btn');
-        if (rejectBtn) {
-            const checkedRows = document.querySelectorAll('#users-table .row-checkbox:checked');
-            const pendingCount = Array.from(checkedRows).filter(cb => {
-                const statusCell = cb.closest('tr').querySelector('td:nth-child(4) .badge');
-                return statusCell && statusCell.textContent.trim().toLowerCase() === 'pending';
-            }).length;
-            const el = getBatchElements();
-            if (el.batchRejectCountEl) {
-                el.batchRejectCountEl.textContent = `${pendingCount} pending user${pendingCount !== 1 ? 's' : ''} will be rejected`;
-            }
-        }
-
-        // Deselect all (closes toolbar)
-        if (e.target.closest('#batch-deselect-btn')) {
-            document.querySelectorAll('#users-table .row-checkbox').forEach(cb => cb.checked = false);
-            const selectAll = document.getElementById('select-all');
-            if (selectAll) selectAll.checked = false;
-            updateBatchToolbar();
-        }
-    });
-
-    // Status tab clicks
-    document.querySelectorAll('#status-tabs .user-mgmt-tab').forEach(tab => {
-        tab.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.querySelectorAll('#status-tabs .user-mgmt-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            statusInput.value = tab.dataset.filter === 'all' ? '' : tab.dataset.filter;
-            submitFilter();
+    // Actions menu toggle (per-row)
+    document.querySelectorAll('.cr-actions-menu-btn').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const menu = this.closest('tr').querySelector('.cr-actions-menu');
+            const expanded = this.getAttribute('aria-expanded') === 'true';
+            // Close all other menus
+            document.querySelectorAll('.cr-actions-menu.open').forEach(m => {
+                m.classList.remove('open');
+                const mb = m.closest('tr').querySelector('.cr-actions-menu-btn');
+                if (mb) mb.setAttribute('aria-expanded', 'false');
+            });
+            this.setAttribute('aria-expanded', !expanded);
+            menu.classList.toggle('open');
         });
     });
 
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        submitFilter();
+    // Close actions menus on click outside
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.cr-actions')) {
+            document.querySelectorAll('.cr-actions-menu.open').forEach(m => {
+                m.classList.remove('open');
+                const mb = m.closest('tr').querySelector('.cr-actions-menu-btn');
+                if (mb) mb.setAttribute('aria-expanded', 'false');
+            });
+        }
+    });
+
+    // Search debounce (300ms)
+    const searchInput = document.querySelector('.cr-search-box input[name="search"]');
+    let searchTimer = null;
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(function () {
+                searchInput.closest('form').submit();
+            }, 300);
+        });
+    }
+
+    // Escape key closes dropdowns/panels
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            if (filterPanel) { filterPanel.classList.remove('open'); filterBtn?.setAttribute('aria-expanded', 'false'); }
+            document.querySelectorAll('.cr-actions-menu.open').forEach(m => {
+                m.classList.remove('open');
+                const mb = m.closest('tr').querySelector('.cr-actions-menu-btn');
+                if (mb) mb.setAttribute('aria-expanded', 'false');
+            });
+        }
+    });
+
+    // Batch actions toolbar
+    const selectAllHeader = document.getElementById('selectAllUsersHeader');
+    const userCheckboxes = document.querySelectorAll('.user-checkbox');
+    const batchToolbar = document.getElementById('crBatchToolbar');
+    const selectedCount = document.getElementById('crSelectedCount');
+    const batchForm = document.getElementById('usersBatchForm');
+    const batchActionInput = document.getElementById('batchAction');
+    const batchUserIdsInput = document.getElementById('batchUserIds');
+    const batchRejectModal = document.getElementById('batchRejectModal');
+    const batchRejectUserIdsInput = document.getElementById('batchRejectUserIds');
+
+    function updateBatchToolbar() {
+        const checked = document.querySelectorAll('.user-checkbox:checked');
+        const count = checked.length;
+        if (count > 0) {
+            batchToolbar.classList.remove('d-none');
+            selectedCount.textContent = count + ' selected';
+        } else {
+            batchToolbar.classList.add('d-none');
+        }
+        if (selectAllHeader) selectAllHeader.checked = count > 0 && count === userCheckboxes.length;
+    }
+
+    if (selectAllHeader) {
+        selectAllHeader.addEventListener('change', function () {
+            userCheckboxes.forEach(cb => cb.checked = this.checked);
+            updateBatchToolbar();
+        });
+    }
+
+    userCheckboxes.forEach(cb => {
+        cb.addEventListener('change', updateBatchToolbar);
+    });
+
+    document.querySelectorAll('#crBatchToolbar [data-action]').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            const action = this.dataset.action;
+            const checked = document.querySelectorAll('.user-checkbox:checked');
+            const ids = Array.from(checked).map(cb => cb.value);
+
+            if (ids.length === 0) return;
+
+            if (action === 'reject') {
+                batchRejectUserIdsInput.value = ids.join(',');
+                const modal = new bootstrap.Modal(batchRejectModal);
+                modal.show();
+            } else {
+                batchActionInput.value = action;
+                batchUserIdsInput.value = ids.join(',');
+                batchForm.submit();
+            }
+        });
+    });
+
+    // Row action confirmations
+    document.querySelectorAll('.cr-pill-btn[data-confirm]').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            if (!confirm(this.dataset.confirm)) {
+                e.preventDefault();
+            }
+        });
     });
 });
 </script>

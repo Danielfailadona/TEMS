@@ -31,20 +31,64 @@
         border-radius: 4px; cursor: pointer;
     }
     .tm-dash .tm-filter-button svg { width: 15px; height: 15px; }
-    .tm-dash .tm-filter-button[aria-expanded="true"] svg { transform: rotate(180deg); }
+    .tm-dash .tm-filter-button[aria-expanded="true"] .tm-caret { transform: rotate(180deg); }
     .tm-dash .tm-caret { transition: transform .18s ease; }
-    .tm-dash .tm-status-menu {
-        display: none; position: absolute; top: calc(100% + 1px); left: 0; width: 285px;
-        max-width: min(285px, 85vw); z-index: 20; background: #fff; border: 1px solid #dfe5eb;
-        border-radius: 4px; box-shadow: 0 8px 24px rgba(20, 39, 62, 0.16); overflow: hidden;
+
+    .tm-dash .tm-filter-panel {
+        display: none; position: absolute; top: calc(100% + 8px); left: 0; z-index: 30;
+        width: 421px; max-width: min(421px, 88vw); padding: 22px 18px 28px;
+        background: #fff; border: 1px solid #dfe5eb; border-radius: 8px;
+        box-shadow: 0 12px 32px rgba(13, 43, 72, .16), 0 2px 6px rgba(13, 43, 72, .08);
     }
-    .tm-dash .tm-status-menu.open { display: block; }
-    .tm-dash .tm-status-option {
-        width: 100%; height: 46px; text-align: left; padding: 0 28px; border: 0;
-        border-bottom: 1px solid #dfe5eb; background: #fff; color: #263247; cursor: pointer;
+    .tm-dash .tm-filter-panel.open { display: grid; gap: 22px; }
+    .tm-dash .tm-field { border: 0; padding: 0; margin: 0; min-width: 0; }
+    .tm-dash .tm-field__label { font-size: 16px; font-weight: 700; color: #000; padding: 0; margin-bottom: 10px; display: block; }
+
+    .tm-dash .tm-select { position: relative; }
+    .tm-dash .tm-select select {
+        appearance: none; -webkit-appearance: none; width: 100%; height: 46px; padding: 0 44px 0 16px;
+        background: #fff; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; color: var(--tm-ink);
     }
-    .tm-dash .tm-status-option:last-child { border-bottom: 0; }
-    .tm-dash .tm-status-option:hover, .tm-dash .tm-status-option[aria-selected="true"] { background: #f0f6ff; color: #145fc8; }
+    .tm-dash .tm-select select:focus { border-color: #3b82f6; outline: 2px solid rgba(59,130,246,.25); outline-offset: 0; }
+    .tm-dash .tm-select svg {
+        position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+        width: 16px; height: 16px; color: var(--tm-ink); pointer-events: none;
+    }
+
+    .tm-dash .tm-panel-actions { display: flex; gap: 14px; margin-top: 4px; }
+    .tm-dash .tm-btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+        height: 40px; padding: 0 14px; border-radius: 4px; border: 1px solid transparent;
+        font-size: 11px; font-weight: 700; text-decoration: none; white-space: nowrap; cursor: pointer;
+    }
+    .tm-dash .tm-btn svg { width: 14px; height: 14px; }
+    .tm-dash .tm-btn--primary { background: var(--tm-blue); color: #fff; }
+    .tm-dash .tm-btn--primary:hover { background: #075edb; color: #fff; }
+    .tm-dash .tm-btn--neutral { background: #6b7280; color: #fff; }
+    .tm-dash .tm-btn--neutral:hover { background: #565d6a; color: #fff; }
+
+    .tm-dash .tm-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .tm-dash .tm-chip {
+        display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 6px 0 10px;
+        background: #eef5ff; border: 1px solid #cfe0fb; border-radius: 13px;
+        font-size: 12px; color: #1b4fa8; text-decoration: none;
+    }
+    .tm-dash .tm-chip:hover { background: #e2eeff; color: #145fc8; }
+    .tm-dash .tm-chip__x { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; color: inherit; }
+    .tm-dash .tm-chip__x svg { width: 11px; height: 11px; stroke: currentColor; stroke-width: 2.2; }
+
+    .tm-dash .enforcer-avatar {
+        width: 2rem; height: 2rem; font-size: 1rem; border-radius: 50%;
+        display: grid; place-items: center; background: transparent; color: var(--tm-ink);
+        border: 2px solid #000; flex-shrink: 0;
+    }
+
+    .tm-dash .tm-primary-btn {
+        height: 38px; border: 0; background: var(--tm-blue); color: #fff; border-radius: 16px;
+        padding: 0 16px; font-weight: 650; white-space: nowrap; display: inline-flex; align-items: center;
+        gap: 6px; text-decoration: none; font-size: 14px;
+    }
+    .tm-dash .tm-primary-btn:hover { background: #075edb; color: #fff; }
     .tm-dash .tm-search-box { display: flex; height: 38px; min-width: 100px; flex: 1; }
     .tm-dash .tm-search-submit {
         display: grid; place-items: center; width: 34px; flex: 0 0 34px; background: #fff;
@@ -65,14 +109,14 @@
     .tm-dash .tm-table tbody tr { height: 78px; border-bottom: 2px solid #e8edf2; }
     .tm-dash .tm-table tbody tr:last-child { border-bottom: 0; }
     .tm-dash .tm-table td { padding: 0 16px; white-space: nowrap; font-size: 14px; color: var(--tm-ink); }
-    .tm-dash .tm-table th:nth-child(1), .tm-dash .tm-table td:nth-child(1) { width: 25%; }
+    .tm-dash .tm-table th:nth-child(1), .tm-dash .tm-table td:nth-child(1) { width: 20%; }
     .tm-dash .tm-table th:nth-child(2), .tm-dash .tm-table td:nth-child(2) { width: 10%; }
-    .tm-dash .tm-table th:nth-child(3), .tm-dash .tm-table td:nth-child(3) { width: 15%; }
-    .tm-dash .tm-table th:nth-child(4), .tm-dash .tm-table td:nth-child(4) { width: 15%; }
+    .tm-dash .tm-table th:nth-child(3), .tm-dash .tm-table td:nth-child(3) { width: 13%; }
+    .tm-dash .tm-table th:nth-child(4), .tm-dash .tm-table td:nth-child(4) { width: 13%; }
     .tm-dash .tm-table th:nth-child(5), .tm-dash .tm-table td:nth-child(5) { width: 10%; }
     .tm-dash .tm-table th:nth-child(6), .tm-dash .tm-table td:nth-child(6) { width: 10%; }
-    .tm-dash .tm-table th:nth-child(7), .tm-dash .tm-table td:nth-child(7) { width: 15%; }
-    .tm-dash .tm-table th:last-child, .tm-dash .tm-table td:last-child { width: 10%; text-align: center; }
+    .tm-dash .tm-table th:nth-child(7), .tm-dash .tm-table td:nth-child(7) { width: 12%; }
+    .tm-dash .tm-table th:nth-child(8), .tm-dash .tm-table td:nth-child(8) { width: 20%; text-align: center; }
     .tm-dash .tm-pill {
         display: inline-block; font-size: 11px; font-weight: 700; line-height: 24px; padding: 0 10px;
         border-radius: 7px; min-width: 40px; text-align: center;
@@ -150,53 +194,66 @@
 
     {{-- Toolbar --}}
     <form id="tmForm" method="GET" class="tm-toolbar" aria-label="Task management controls">
-        <input type="hidden" name="availability" id="tmAvailability" value="{{ request('availability') }}">
-        <input type="hidden" name="zone" id="tmZone" value="{{ request('zone') }}">
-        <input type="hidden" name="override" id="tmOverride" value="{{ request('override') }}">
-
         <div class="tm-filter-wrap">
-            <button type="button" class="tm-filter-button" id="tmFilterBtn" aria-haspopup="listbox" aria-expanded="false">
-                {{ $statusLabel }}
-                <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M2 12.5 8 3l6 9.5H2Z"/></svg>
+            <button type="button" class="tm-filter-button" id="tmFilterBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="tmFilterPanel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+                Filters
+                <svg class="tm-caret" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M2 12.5 8 3l6 9.5H2Z"/></svg>
             </button>
-            <div class="tm-status-menu" id="tmStatusMenu" role="listbox" aria-label="Filter by availability">
-                <button type="button" class="tm-status-option" role="option"
-                        aria-selected="{{ request('availability') === '' || request('availability') === null ? 'true' : 'false' }}"
-                        data-availability="" data-label="All Status">All Status</button>
-                <button type="button" class="tm-status-option" role="option"
-                        aria-selected="{{ request('availability') === 'schedule_assignable' ? 'true' : 'false' }}"
-                        data-availability="schedule_assignable" data-label="Schedule Assignable">Schedule Assignable</button>
-                <button type="button" class="tm-status-option" role="option"
-                        aria-selected="{{ request('availability') === 'available' ? 'true' : 'false' }}"
-                        data-availability="available" data-label="Available">Available</button>
-                <button type="button" class="tm-status-option" role="option"
-                        aria-selected="{{ request('availability') === 'unavailable' ? 'true' : 'false' }}"
-                        data-availability="unavailable" data-label="Unavailable">Unavailable</button>
-                <button type="button" class="tm-status-option" role="option"
-                        aria-selected="{{ request('availability') === 'force_available' ? 'true' : 'false' }}"
-                        data-availability="force_available" data-label="Force Available">Force Available</button>
-                <button type="button" class="tm-status-option" role="option"
-                        aria-selected="{{ request('availability') === 'force_unavailable' ? 'true' : 'false' }}"
-                        data-availability="force_unavailable" data-label="Force Unavailable">Force Unavailable</button>
+
+            <div class="tm-filter-panel" id="tmFilterPanel" role="dialog" aria-label="Task management filters">
+                <fieldset class="tm-field">
+                    <label class="tm-field__label" for="tmAvailabilitySelect">Status</label>
+                    <div class="tm-select">
+                        <select name="availability" id="tmAvailabilitySelect">
+                            <option value="">All Status</option>
+                            <option value="schedule_assignable" {{ request('availability') === 'schedule_assignable' ? 'selected' : '' }}>Schedule Assignable</option>
+                            <option value="available" {{ request('availability') === 'available' ? 'selected' : '' }}>Available</option>
+                            <option value="unavailable" {{ request('availability') === 'unavailable' ? 'selected' : '' }}>Unavailable</option>
+                            <option value="force_available" {{ request('availability') === 'force_available' ? 'selected' : '' }}>Force Available</option>
+                            <option value="force_unavailable" {{ request('availability') === 'force_unavailable' ? 'selected' : '' }}>Force Unavailable</option>
+                        </select>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                    </div>
+                </fieldset>
+
+                <fieldset class="tm-field">
+                    <label class="tm-field__label" for="tmZoneSelect">Zone / Team</label>
+                    <div class="tm-select">
+                        <select name="zone" id="tmZoneSelect">
+                            <option value="">All Zones</option>
+                            @foreach ($zones as $zone)
+                                <option value="{{ $zone->id }}" {{ request('zone') == $zone->id ? 'selected' : '' }}>{{ $zone->name }}</option>
+                            @endforeach
+                        </select>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                    </div>
+                </fieldset>
+
+                <fieldset class="tm-field">
+                    <label class="tm-field__label" for="tmOverrideSelect">Override</label>
+                    <div class="tm-select">
+                        <select name="override" id="tmOverrideSelect">
+                            <option value="">All Overrides</option>
+                            <option value="auto" {{ request('override') === 'auto' ? 'selected' : '' }}>Auto</option>
+                            <option value="force_available" {{ request('override') === 'force_available' ? 'selected' : '' }}>Force Available</option>
+                            <option value="force_unavailable" {{ request('override') === 'force_unavailable' ? 'selected' : '' }}>Force Unavailable</option>
+                        </select>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                    </div>
+                </fieldset>
+
+                <div class="tm-panel-actions">
+                    <button type="button" class="tm-btn tm-btn--primary" id="tmApplyBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+                        Apply Filter
+                    </button>
+                    <a class="tm-btn tm-btn--neutral" href="{{ route('operations.task-management.index') }}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                        Clear Filter
+                    </a>
+                </div>
             </div>
-        </div>
-
-        <div class="tm-filter-wrap" style="flex: 0 0 150px;">
-            <select name="zone" id="tmZoneSelect" class="form-select form-select-sm" onchange="document.getElementById('tmZone').value = this.value; document.getElementById('tmForm').submit();">
-                <option value="">All Zones</option>
-                @foreach ($zones as $zone)
-                    <option value="{{ $zone->id }}" {{ request('zone') == $zone->id ? 'selected' : '' }}>{{ $zone->name }}</option>
-                @endforeach
-            </select>
-        </div>
-
-        <div class="tm-filter-wrap" style="flex: 0 0 150px;">
-            <select name="override" id="tmOverrideSelect" class="form-select form-select-sm" onchange="document.getElementById('tmOverride').value = this.value; document.getElementById('tmForm').submit();">
-                <option value="">All Overrides</option>
-                <option value="auto" {{ request('override') === 'auto' ? 'selected' : '' }}>Auto</option>
-                <option value="force_available" {{ request('override') === 'force_available' ? 'selected' : '' }}>Force Available</option>
-                <option value="force_unavailable" {{ request('override') === 'force_unavailable' ? 'selected' : '' }}>Force Unavailable</option>
-            </select>
         </div>
 
         <label class="tm-search-box" aria-label="Search enforcers">
@@ -236,11 +293,11 @@
     @endphp
 
     @if (!empty($activeFilters))
-        <div class="pym-dash pym-chips" style="margin-top: 12px;">
+        <div class="tm-chips" aria-live="polite">
             @foreach ($activeFilters as $chip)
-                <a href="{{ $chip['href'] }}" class="pym-dash pym-chip">
+                <a href="{{ $chip['href'] }}" class="tm-chip">
                     {{ $chip['label'] }}
-                    <span class="pym-chip__x" aria-hidden="true">
+                    <span class="tm-chip__x" aria-hidden="true">
                         <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                     </span>
                 </a>
@@ -253,14 +310,14 @@
         <table class="tm-table">
             <thead>
                 <tr>
-                    <th scope="col">Enforcer</th>
-                    <th scope="col">Badge ID</th>
-                    <th scope="col">Zone/Team</th>
-                    <th scope="col">Today's Shift</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Override</th>
-                    <th scope="col">Open Reports</th>
-                    <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    <th scope="col" style="width: 20%;">Enforcer</th>
+                    <th scope="col" style="width: 10%;">Badge ID</th>
+                    <th scope="col" style="width: 13%;">Zone/Team</th>
+                    <th scope="col" style="width: 13%;">Today's Shift</th>
+                    <th scope="col" style="width: 10%;">Status</th>
+                    <th scope="col" style="width: 10%;">Override</th>
+                    <th scope="col" style="width: 12%;">Open Reports</th>
+                    <th scope="col" style="width: 20%;"><span class="visually-hidden">Actions</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -386,38 +443,33 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!form) return;
 
     const filterBtn = document.getElementById('tmFilterBtn');
-    const menu = document.getElementById('tmStatusMenu');
-    const availabilityInput = document.getElementById('tmAvailability');
+    const panel = document.getElementById('tmFilterPanel');
+    const applyBtn = document.getElementById('tmApplyBtn');
     const searchInput = document.getElementById('tmSearchInput');
-    const chevron = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M2 12.5 8 3l6 9.5H2Z"/></svg>';
+    const availabilitySelect = document.getElementById('tmAvailabilitySelect');
+    const zoneSelect = document.getElementById('tmZoneSelect');
+    const overrideSelect = document.getElementById('tmOverrideSelect');
 
-    const closeFilter = () => {
-        menu.classList.remove('open');
+    const closePanel = () => {
+        panel.classList.remove('open');
         filterBtn.setAttribute('aria-expanded', 'false');
     };
 
     filterBtn.addEventListener('click', (event) => {
         event.stopPropagation();
-        const open = menu.classList.toggle('open');
+        const open = panel.classList.toggle('open');
         filterBtn.setAttribute('aria-expanded', String(open));
     });
 
     document.addEventListener('click', (event) => {
-        if (!event.target.closest('.tm-filter-wrap')) closeFilter();
+        if (!event.target.closest('.tm-filter-wrap')) closePanel();
     });
 
     document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') closeFilter();
+        if (event.key === 'Escape') closePanel();
     });
 
-    menu.addEventListener('click', (event) => {
-        const option = event.target.closest('[data-availability]');
-        if (!option) return;
-        availabilityInput.value = option.dataset.availability;
-        menu.querySelectorAll('[data-availability]').forEach(el => el.setAttribute('aria-selected', String(el === option)));
-        const label = option.dataset.label || 'Filters';
-        filterBtn.innerHTML = label + ' ' + chevron;
-        closeFilter();
+    applyBtn.addEventListener('click', () => {
         form.submit();
     });
 
