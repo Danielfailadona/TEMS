@@ -154,11 +154,11 @@
     }
     .cr-dash .cr-table tbody tr { height: 78px; border-bottom: 2px solid #e8edf2; }
     .cr-dash .cr-table tbody tr:last-child { border-bottom: 0; }
-    .cr-dash .cr-table tbody td, .cr-dash .cr-table tbody th { padding: 0 16px; white-space: nowrap; font-size: 14px; color: var(--cr-ink); overflow: hidden; text-overflow: ellipsis; }
+    .cr-dash .cr-table tbody td, .cr-dash .cr-table tbody th { padding: 0 16px; white-space: nowrap; font-size: 14px; color: var(--cr-ink); overflow: visible; text-overflow: ellipsis; }
     .cr-dash .cr-table tbody th { font-weight: 600; text-align: left; }
     .cr-dash .cr-table th:nth-child(1), .cr-dash .cr-table td:nth-child(1) { width: 6% !important; }
-    .cr-dash .cr-table th:nth-child(2), .cr-dash .cr-table td:nth-child(2) { width: 22% !important; }
-    .cr-dash .cr-table th:nth-child(3), .cr-dash .cr-table td:nth-child(3) { width: 22% !important; }
+    .cr-dash .cr-table th:nth-child(2), .cr-dash .cr-table td:nth-child(2) { width: 20% !important; }
+    .cr-dash .cr-table th:nth-child(3), .cr-dash .cr-table td:nth-child(3) { width: 20% !important; }
     .cr-dash .cr-table th:nth-child(4), .cr-dash .cr-table td:nth-child(4) { width: 14% !important; }
     .cr-dash .cr-table th:nth-child(5), .cr-dash .cr-table td:nth-child(5) { width: 15% !important; }
     .cr-dash .cr-table th:nth-child(6), .cr-dash .cr-table td:nth-child(6) { width: 13% !important; overflow: visible; position: relative; }
@@ -189,7 +189,8 @@
     .cr-dash .cr-actions-menu {
         position: absolute;
         top: calc(100% + 4px);
-        right: 0;
+        left: 100%;
+        transform: translateX(0);
         z-index: 50;
         min-width: 140px;
         background: #fff;
@@ -434,17 +435,19 @@
                             <span class="cr-pill {{ $statusClass }}">{{ \App\Enums\AccountStatus::tryFrom($user->account_status)?->label() ?? ucfirst($user->account_status) }}</span>
                         </td>
                         <td>
-                            @if ($user->is_active)
-                                <span class="cr-pill tag-green">Active</span>
-                            @else
-                                <span class="cr-pill tag-gray">Inactive</span>
-                            @endif
-                        </td>
+                            <form action="{{ route('users.toggle-active', $user) }}" method="POST" style="display: inline;">
+                                @csrf
+                                <input type="hidden" name="is_active" value="{{ $user->is_active ? '0' : '1' }}">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="toggle_active" {{ $user->is_active ? 'checked' : '' }} onchange="this.closest('form').submit()">
+                                    <label class="form-check-label">{{ $user->is_active ? 'Active' : 'Inactive' }}</label>
+                                </div>
+                            </form>
                         <td>{{ $user->last_login_at ? $user->last_login_at->format('M d, Y H:i') : 'Never' }}</td>
                         <td>
                             <div class="cr-actions">
                                 <button type="button" class="cr-actions-menu-btn" aria-expanded="false" aria-haspopup="menu" aria-label="Actions">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <circle cx="12" cy="12" r="1"></circle>
                                         <circle cx="12" cy="5" r="1"></circle>
                                         <circle cx="12" cy="19" r="1"></circle>
@@ -452,22 +455,22 @@
                                 </button>
                                 <div class="cr-actions-menu" id="actionsMenu{{ $user->id }}" role="menu" aria-label="User actions">
                                     <a href="{{ route('users.edit', $user) }}" class="cr-actions-menu-item" role="menuitem">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                         Edit
                                     </a>
                                     @if ($user->account_status === 'suspended')
                                         <a href="{{ route('users.unsuspend', $user) }}" class="cr-actions-menu-item suspend-action" role="menuitem" data-confirm="Unsuspend this user?">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                                             Unsuspend
                                         </a>
                                     @else
                                         <a href="{{ route('users.suspend', $user) }}" class="cr-actions-menu-item suspend-action" role="menuitem" data-confirm="Suspend this user?">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
                                             Suspend
                                         </a>
                                     @endif
                                     <a href="{{ route('users.devices', $user) }}" class="cr-actions-menu-item" role="menuitem">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
                                         Devices
                                     </a>
                                 </div>
