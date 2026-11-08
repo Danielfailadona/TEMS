@@ -420,6 +420,125 @@
                             </div>
                         </td>
                     </tr>
+
+                    {{-- View Details Modal --}}
+                    <div class="modal fade" id="detailModal-{{ $enforcer->id }}" tabindex="-1" aria-labelledby="detailModalLabel{{ $enforcer->id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="detailModalLabel{{ $enforcer->id }}">User Details — {{ $enforcer->name }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted d-block">Name</label>
+                                        <p class="mb-0 fw-semibold">{{ $enforcer->name }}</p>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted d-block">Email</label>
+                                        <p class="mb-0">{{ $enforcer->email }}</p>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted d-block">Badge ID</label>
+                                        <p class="mb-0">{{ $enforcer->badge_id ?? '—' }}</p>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted d-block">Role</label>
+                                        <p class="mb-0">{{ $enforcer->role ?? '—' }}</p>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted d-block">Status</label>
+                                        <span class="tm-pill {{ $onlineClass }}">{{ $onlineText }}</span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted d-block">Zone / Team</label>
+                                        <p class="mb-0">
+                                            @if ($enforcer->teams->isNotEmpty())
+                                                {{ $enforcer->teams->pluck('name')->implode(', ') }}
+                                            @else
+                                                <span class="text-muted">—</span>
+                                            @endif
+                                        </p>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted d-block">Today's Shift</label>
+                                        <p class="mb-0">
+                                            @if ($todaysSchedule)
+                                                {{ $todaysSchedule->start_time_short }} - {{ $todaysSchedule->end_time_short }}
+                                            @else
+                                                <span class="text-muted">No shift scheduled</span>
+                                            @endif
+                                        </p>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted d-block">Override</label>
+                                        <p class="mb-0"><span class="tm-pill {{ $overrideClass }}">{{ $overrideText }}</span></p>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted d-block">Open Reports</label>
+                                        <p class="mb-0">
+                                            @if ($enforcer->open_reports_count > 0)
+                                                {{ $enforcer->open_reports_count }}
+                                            @else
+                                                0
+                                            @endif
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Edit Schedule Modal --}}
+                    <div class="modal fade" id="scheduleModal-{{ $enforcer->id }}" tabindex="-1" aria-labelledby="scheduleModalLabel{{ $enforcer->id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="scheduleModalLabel{{ $enforcer->id }}">Edit Schedule — {{ $enforcer->name }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted d-block">Current Shift</label>
+                                        <p class="mb-0">
+                                            @if ($todaysSchedule)
+                                                {{ $todaysSchedule->start_time_short }} - {{ $todaysSchedule->end_time_short }}
+                                            @else
+                                                <span class="text-muted">No shift scheduled</span>
+                                            @endif
+                                        </p>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small text-muted d-block">Current Override</label>
+                                        <p class="mb-0"><span class="tm-pill {{ $overrideClass }}">{{ $overrideText }}</span></p>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label" for="scheduleStart{{ $enforcer->id }}">Shift Start Time</label>
+                                        <input type="time" name="shift_start" class="form-control" id="scheduleStart{{ $enforcer->id }}" value="{{ old('shift_start_' . $enforcer->id, $todaysSchedule->start_time ?? '') }}">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label" for="scheduleEnd{{ $enforcer->id }}">Shift End Time</label>
+                                        <input type="time" name="shift_end" class="form-control" id="scheduleEnd{{ $enforcer->id }}" value="{{ old('shift_end_' . $enforcer->id, $todaysSchedule->end_time ?? '') }}">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label" for="availabilityOverride{{ $enforcer->id }}">Availability Override</label>
+                                        <select name="availability_override" class="form-select" id="availabilityOverride{{ $enforcer->id }}">
+                                            <option value="auto" {{ $overrideStatus === 'auto' ? 'selected' : '' }}>Auto</option>
+                                            <option value="force_available" {{ $overrideStatus === 'force_available' ? 'selected' : '' }}>Force Available</option>
+                                            <option value="force_unavailable" {{ $overrideStatus === 'force_unavailable' ? 'selected' : '' }}>Force Unavailable</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="button" class="btn btn-primary">Save Changes</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 @empty
                     <tr><td colspan="8" class="tm-empty">No enforcers found.</td></tr>
                 @endforelse
