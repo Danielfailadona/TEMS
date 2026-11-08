@@ -189,7 +189,7 @@
     .cr-dash .cr-actions-menu {
         position: absolute;
         top: calc(100% + 4px);
-        left: 100%;
+        right: 20%;
         transform: translateX(0);
         z-index: 50;
         min-width: 140px;
@@ -588,11 +588,13 @@ document.addEventListener('DOMContentLoaded', function () {
             e.stopPropagation();
             const menu = this.closest('tr').querySelector('.cr-actions-menu');
             const expanded = this.getAttribute('aria-expanded') === 'true';
-            // Close all other menus
+            // Close all OTHER menus (not this one)
             document.querySelectorAll('.cr-actions-menu.open').forEach(m => {
-                m.classList.remove('open');
-                const mb = m.closest('tr').querySelector('.cr-actions-menu-btn');
-                if (mb) mb.setAttribute('aria-expanded', 'false');
+                if (m !== menu) {
+                    m.classList.remove('open');
+                    const mb = m.closest('tr').querySelector('.cr-actions-menu-btn');
+                    if (mb) mb.setAttribute('aria-expanded', 'false');
+                }
             });
             this.setAttribute('aria-expanded', !expanded);
             menu.classList.toggle('open');
