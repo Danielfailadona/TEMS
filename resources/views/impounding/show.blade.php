@@ -113,44 +113,34 @@
         <div class="card stat-card mb-4">
             <div class="card-header bg-white"><strong>Impounding Fee Breakdown</strong></div>
             <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="card stat-card-sm text-center">
-                            <div class="stat-value text-danger">{{ $impounding->towing_fee ? '₱' . number_format($impounding->towing_fee, 2) : '—' }}</div>
-                            <div class="stat-label">Towing Fee</div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card stat-card-sm text-center">
-                            <div class="stat-value text-warning">{{ $impounding->storage_fee_per_day ? '₱' . number_format($impounding->storage_fee_per_day, 2) : '—' }}</div>
-                            <div class="stat-label">Storage/Day</div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card stat-card-sm text-center">
-                            <div class="stat-value text-info">{{ $impounding->admin_fee ? '₱' . number_format($impounding->admin_fee, 2) : '—' }}</div>
-                            <div class="stat-label">Admin Fee</div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card stat-card-sm text-center">
-                            <div class="stat-value text-primary">{{ $impounding->getStorageDays() }}</div>
-                            <div class="stat-label">Storage Days</div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card stat-card-sm text-center">
-                            <div class="stat-value text-success">₱{{ number_format($impounding->getTotalFees(), 2) }}</div>
-                            <div class="stat-label"><strong>Total Due</strong></div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card stat-card-sm text-center">
-                            <div class="stat-value text-muted">{{ $impounding->grace_until ? $impounding->grace_until->format('M d, Y H:i') : '—' }}</div>
-                            <div class="stat-label">Grace Until</div>
-                        </div>
-                    </div>
-                </div>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <td class="label">Storage Days</td>
+                            <td class="value">{{ $impounding->getStorageDays() }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Grace Until</td>
+                            <td class="value">{{ $impounding->grace_until ? $impounding->grace_until->format('M d, Y H:i') : '—' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Towing Fee</td>
+                            <td class="value">{{ $impounding->towing_fee ? '₱' . number_format($impounding->towing_fee, 2) : '—' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Storage/Day</td>
+                            <td class="value">{{ $impounding->storage_fee_per_day ? '₱' . number_format($impounding->storage_fee_per_day, 2) : '—' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Admin Fee</td>
+                            <td class="value">{{ $impounding->admin_fee ? '₱' . number_format($impounding->admin_fee, 2) : '—' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="label"><strong>Total Fees</strong></td>
+                            <td class="value"><strong>₱{{ number_format($impounding->getTotalFees(), 2) }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -171,14 +161,6 @@
                         @if ($payment->reference_number)
                             <div class="col-md-6"><div class="text-muted small d-block">Reference</div>{{ $payment->reference_number }}</div>
                         @endif
-                        <div class="col-12">
-                            <a href="{{ route('payments.show', $payment) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-eye me-1"></i>View Receipt
-                            </a>
-                            <a href="{{ route('payments.print', $payment) }}" class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-printer me-1"></i>Print
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -251,7 +233,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Record Payment — {{ $impounding->vehicle_plate }}</h5>
-                        <button class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <p class="mb-3">Amount due: <strong>₱{{ number_format($impounding->getTotalFees(), 2) }}</strong></p>
@@ -286,7 +268,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Process Release — {{ $impounding->vehicle_plate }}</h5>
-                        <button class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <p>Confirm release of vehicle <strong>{{ $impounding->vehicle_plate }}</strong>?</p>
