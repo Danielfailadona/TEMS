@@ -105,11 +105,11 @@
 {{-- Overview --}}
 <div class="section-label">Overview</div>
 <div class="tier3-row animate-on-load">
-    <div class="stat-card--quiet">
+    <div class="stat-card--quiet" style="width: 50%; flex: 0 0 50%;">
         <div class="stat-label">Total Citations</div>
         <div class="stat-value">{{ number_format($stats['total_citations']) }}</div>
     </div>
-    <div class="stat-card--quiet">
+    <div class="stat-card--quiet" style="width: 50%; flex: 0 0 50%;">
         <div class="stat-label">Payments Today</div>
         <div class="stat-value">₱{{ number_format($stats['revenue_today'], 2) }}</div>
     </div>
