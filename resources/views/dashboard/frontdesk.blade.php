@@ -57,51 +57,37 @@
     </div>
 </div>
 
-{{-- KPI Cards (5) --}}
+{{-- KPI Cards (3) --}}
 <div class="tier1-row animate-on-load">
     @php
         $attention = [
-            ['icon' => 'bi-receipt', 'label' => 'Total Citations', 'value' => $stats['total_citations'], 'key' => 'total_citations', 'black' => true],
             ['icon' => 'bi-file-earmark-x', 'label' => 'Unpaid Citations', 'value' => $stats['unpaid_citations'], 'key' => 'unpaid_citations', 'red' => 30, 'amber_min' => 5],
-            ['icon' => 'bi-cash-stack', 'label' => 'Payments Today', 'value' => $stats['revenue_today'], 'key' => 'revenue_today', 'black' => true],
             ['icon' => 'bi-lock', 'label' => 'Active Clamps', 'value' => $stats['active_clamps'], 'key' => 'active_clamps', 'red' => 5, 'amber_min' => 1],
             ['icon' => 'bi-chat-square-text', 'label' => 'Pending Appeals', 'value' => $stats['pending_appeals'], 'key' => 'pending_appeals', 'red' => 10, 'amber_min' => 1],
         ];
     @endphp
     @foreach ($attention as $a)
         @php
-            $isBlack = $a['black'] ?? false;
-            if ($isBlack) {
-                $state = '';
+            $red = $a['red'] ?? null;
+            $amberMin = $a['amber_min'] ?? null;
+            if ($a['value'] === 0) {
+                $state = 'state-green';
+            } elseif ($amberMin !== null && $a['value'] >= $amberMin && ($red === null || $a['value'] < $red)) {
+                $state = 'state-amber';
+            } elseif ($red !== null && $a['value'] >= $red) {
+                $state = 'state-red';
             } else {
-                $red = $a['red'] ?? null;
-                $amberMin = $a['amber_min'] ?? null;
-                if ($a['value'] === 0) {
-                    $state = 'state-green';
-                } elseif ($amberMin !== null && $a['value'] >= $amberMin && ($red === null || $a['value'] < $red)) {
-                    $state = 'state-amber';
-                } elseif ($red !== null && $a['value'] >= $red) {
-                    $state = 'state-red';
-                } else {
-                    $state = 'state-amber';
-                }
+                $state = 'state-amber';
             }
-            $stateClass = $isBlack ? '' : ' ' . $state;
             $t = $trends[$a['key']] ?? ['direction' => 'flat', 'percent' => 0];
         @endphp
-        <div class="stat-card{{ $stateClass }}">
+        <div class="stat-card {{ $state }}">
             <div class="stat-label">
-                @if (!$isBlack)
-                    <span class="state-dot" aria-hidden="true"></span>
-                @endif
+                <span class="state-dot" aria-hidden="true"></span>
                 <i class="bi {{ $a['icon'] }}"></i>
                 {{ $a['label'] }}
             </div>
-            @if ($a['key'] === 'revenue_today')
-                <div class="stat-value">₱{{ number_format($a['value'], 2) }}</div>
-            @else
-                <div class="stat-value">{{ number_format($a['value']) }}</div>
-            @endif
+            <div class="stat-value">{{ number_format($a['value']) }}</div>
             <div class="stat-trend">
                 @if ($t['direction'] === 'up')
                     <span class="trend-badge trend-up"><i class="bi bi-arrow-up-short"></i>{{ $t['percent'] }}%</span>
@@ -114,6 +100,19 @@
             </div>
         </div>
     @endforeach
+</div>
+
+{{-- Overview --}}
+<div class="section-label">Overview</div>
+<div class="tier3-row animate-on-load">
+    <div class="stat-card--quiet">
+        <div class="stat-label">Total Citations</div>
+        <div class="stat-value">{{ number_format($stats['total_citations']) }}</div>
+    </div>
+    <div class="stat-card--quiet">
+        <div class="stat-label">Payments Today</div>
+        <div class="stat-value">₱{{ number_format($stats['revenue_today'], 2) }}</div>
+    </div>
 </div>
 
 {{-- Analytics 2x2 Grid --}}
