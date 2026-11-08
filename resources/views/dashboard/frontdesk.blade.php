@@ -58,37 +58,55 @@
 </div>
 
 {{-- KPI Cards (5) --}}
-<div class="row g-3 mb-4 animate-on-load row-cols-2 row-cols-md-3 row-cols-xl-5">
+<div class="tier1-row animate-on-load">
     @php
-        $kpis = [
-            ['icon' => 'bi-receipt', 'label' => 'Total Citations', 'value' => number_format($stats['total_citations']), 'tone' => 'primary', 'key' => 'total_citations'],
-            ['icon' => 'bi-file-earmark-x', 'label' => 'Unpaid Citations', 'value' => number_format($stats['unpaid_citations']), 'tone' => 'warning', 'key' => 'unpaid_citations'],
-            ['icon' => 'bi-cash-stack', 'label' => 'Payments Today', 'value' => '₱'.number_format($stats['revenue_today'], 2), 'tone' => 'success', 'key' => 'revenue_today'],
-            ['icon' => 'bi-lock', 'label' => 'Active Clamps', 'value' => number_format($stats['active_clamps']), 'tone' => 'danger', 'key' => 'active_clamps'],
-            ['icon' => 'bi-chat-square-text', 'label' => 'Pending Appeals', 'value' => number_format($stats['pending_appeals']), 'tone' => 'info', 'key' => 'pending_appeals'],
+        $attention = [
+            ['icon' => 'bi-receipt', 'label' => 'Total Citations', 'value' => $stats['total_citations'], 'key' => 'total_citations', 'red' => 50, 'amber_min' => 10],
+            ['icon' => 'bi-file-earmark-x', 'label' => 'Unpaid Citations', 'value' => $stats['unpaid_citations'], 'key' => 'unpaid_citations', 'red' => 30, 'amber_min' => 5],
+            ['icon' => 'bi-cash-stack', 'label' => 'Payments Today', 'value' => $stats['revenue_today'], 'key' => 'revenue_today'],
+            ['icon' => 'bi-lock', 'label' => 'Active Clamps', 'value' => $stats['active_clamps'], 'key' => 'active_clamps', 'red' => 5, 'amber_min' => 1],
+            ['icon' => 'bi-chat-square-text', 'label' => 'Pending Appeals', 'value' => $stats['pending_appeals'], 'key' => 'pending_appeals', 'red' => 10, 'amber_min' => 1],
         ];
     @endphp
-    @foreach ($kpis as $k)
-        @php $t = $trends[$k['key']] ?? ['direction' => 'flat', 'percent' => 0]; @endphp
-        <div class="col">
-            <div class="card stat-card border-0 h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center gap-2 text-muted small mb-1">
-                        <i class="bi {{ $k['icon'] }} text-{{ $k['tone'] }}"></i>
-                        <span>{{ $k['label'] }}</span>
-                    </div>
-                    <div class="h3 mb-0 text-{{ $k['tone'] }}">{{ $k['value'] }}</div>
-                    <div class="small mt-1">
-                        @if ($t['direction'] === 'up')
-                            <span class="trend-badge trend-up"><i class="bi bi-arrow-up-short"></i>{{ $t['percent'] }}%</span>
-                        @elseif ($t['direction'] === 'down')
-                            <span class="trend-badge trend-down"><i class="bi bi-arrow-down-short"></i>{{ $t['percent'] }}%</span>
-                        @else
-                            <span class="trend-badge trend-flat"><i class="bi bi-dash"></i>0%</span>
-                        @endif
-                        <span class="text-muted ms-1">vs last week</span>
-                    </div>
-                </div>
+    @foreach ($attention as $a)
+        @php
+            $red = $a['red'] ?? null;
+            $amberMin = $a['amber_min'] ?? null;
+            if ($red === null && $amberMin === null) {
+                $state = 'state-green';
+            } elseif ($a['value'] === 0) {
+                $state = 'state-green';
+            } elseif ($amberMin !== null && $a['value'] >= $amberMin && ($red === null || $a['value'] < $red)) {
+                $state = 'state-amber';
+            } elseif ($red !== null && $a['value'] >= $red) {
+                $state = 'state-red';
+            } else {
+                $state = 'state-amber';
+            }
+            $stateText = ['state-green' => 'Clear', 'state-amber' => 'Monitor', 'state-red' => 'Action needed'][$state];
+            $t = $trends[$a['key']] ?? ['direction' => 'flat', 'percent' => 0];
+        @endphp
+        <div class="stat-card {{ $state }}">
+            <div class="stat-label">
+                <span class="state-dot" aria-hidden="true"></span>
+                <i class="bi {{ $a['icon'] }}"></i>
+                {{ $a['label'] }}
+                <span class="state-text">{{ $stateText }}</span>
+            </div>
+            @if ($a['key'] === 'revenue_today')
+                <div class="stat-value">₱{{ number_format($a['value'], 2) }}</div>
+            @else
+                <div class="stat-value">{{ number_format($a['value']) }}</div>
+            @endif
+            <div class="stat-trend">
+                @if ($t['direction'] === 'up')
+                    <span class="trend-badge trend-up"><i class="bi bi-arrow-up-short"></i>{{ $t['percent'] }}%</span>
+                @elseif ($t['direction'] === 'down')
+                    <span class="trend-badge trend-down"><i class="bi bi-arrow-down-short"></i>{{ $t['percent'] }}%</span>
+                @else
+                    <span class="trend-badge trend-flat"><i class="bi bi-dash"></i>0%</span>
+                @endif
+                <span class="text-muted ms-1">vs last week</span>
             </div>
         </div>
     @endforeach
