@@ -222,11 +222,11 @@
         font-size: 0.85rem;
         vertical-align: middle;
     }
-    .al-table th:nth-child(1), .al-table td:nth-child(1) { width: 17%; }
-    .al-table th:nth-child(2), .al-table td:nth-child(2) { width: 12%; }
-    .al-table th:nth-child(3), .al-table td:nth-child(3) { width: 16%; }
-    .al-table th:nth-child(4), .al-table td:nth-child(4) { width: 34%; }
-    .al-table th:nth-child(5), .al-table td:nth-child(5) { width: 14%; }
+    .al-table th:nth-child(1), .al-table td:nth-child(1) { width: 12%; }
+    .al-table th:nth-child(2), .al-table td:nth-child(2) { width: 16%; }
+    .al-table th:nth-child(3), .al-table td:nth-child(3) { width: 34%; }
+    .al-table th:nth-child(4), .al-table td:nth-child(4) { width: 14%; }
+    .al-table th:nth-child(5), .al-table td:nth-child(5) { width: 17%; }
     .al-table th:nth-child(6), .al-table td:nth-child(6) { width: 5%; }
     .al-time { color: #202938 !important; font-weight: 600; white-space: nowrap; }
     .al-subject { color: #9ca7b8 !important; }
@@ -402,52 +402,47 @@
         <table class="al-table">
             <thead>
                 <tr>
-                    <th>Event</th>
                     <th>Time</th>
                     <th>User</th>
                     <th>Description</th>
                     <th>Subject</th>
+                    <th>Event</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($activities as $activity)
                     <tr>
+                        <td class="al-time">{{ $activity->created_at->format('M d, H:i') }}</td>
+                        <td>{{ $activity->causer?->name ?? 'System' }}</td>
+                        <td>{{ $activity->description }}</td>
+                        <td class="al-subject">{{ class_basename($activity->subject_type ?? '') }} #{{ $activity->subject_id ?? '—' }}</td>
                         <td>
                             @php
                                 $event = $activity->event;
                                 $desc = strtolower((string) $activity->description);
                                 if ($event === 'created') {
-                                    $pillClass = 'success'; $pillText = 'Created'; $pillIcon = 'Createed.png';
+                                    $pillClass = 'success'; $pillText = 'Created';
                                 } elseif ($event === 'updated') {
-                                    $pillClass = 'neutral'; $pillText = 'Updated'; $pillIcon = 'Updated.png';
+                                    $pillClass = 'neutral'; $pillText = 'Updated';
                                 } elseif ($event === 'deleted') {
-                                    $pillClass = 'danger'; $pillText = 'Deleted'; $pillIcon = 'Deleted.png';
+                                    $pillClass = 'danger'; $pillText = 'Deleted';
                                 } elseif (str_contains($desc, 'rejected')) {
-                                    $pillClass = 'danger'; $pillText = 'Rejected'; $pillIcon = 'Rejected User.png';
+                                    $pillClass = 'danger'; $pillText = 'Rejected';
                                 } elseif (str_contains($desc, 'approved user')) {
-                                    $pillClass = 'success'; $pillText = 'Approved'; $pillIcon = 'Approved User.png';
+                                    $pillClass = 'success'; $pillText = 'Approved';
                                 } elseif (str_contains($desc, 'suspended')) {
-                                    $pillClass = 'danger'; $pillText = 'Suspended'; $pillIcon = 'Status Suspended.png';
+                                    $pillClass = 'danger'; $pillText = 'Suspended';
                                 } elseif (str_contains($desc, 'approved')) {
-                                    $pillClass = 'success'; $pillText = 'Status Approved'; $pillIcon = 'Status Approved.png';
+                                    $pillClass = 'success'; $pillText = 'Status Approved';
                                 } elseif (str_contains($desc, 'force logged out')) {
-                                    $pillClass = 'danger'; $pillText = 'Logout'; $pillIcon = 'Forced Logged out.png';
+                                    $pillClass = 'danger'; $pillText = 'Logout';
                                 } else {
-                                    $pillClass = 'neutral'; $pillText = $event ? ucfirst($event) : 'Action'; $pillIcon = null;
+                                    $pillClass = 'neutral'; $pillText = $event ? ucfirst($event) : 'Action';
                                 }
                             @endphp
-                            @if ($pillIcon)
-                                <span class="al-logo {{ $pillClass }}">
-                                    <img src="{{ asset('images/Icons/' . $pillIcon) }}" alt="">
-                                </span>
-                            @endif
                             <span class="al-event-tag {{ $pillClass }}">{{ $pillText }}</span>
                         </td>
-                        <td class="al-time">{{ $activity->created_at->format('M d, H:i') }}</td>
-                        <td>{{ $activity->causer?->name ?? 'System' }}</td>
-                        <td>{{ $activity->description }}</td>
-                        <td class="al-subject">{{ class_basename($activity->subject_type ?? '') }} #{{ $activity->subject_id ?? '—' }}</td>
                         <td>
                             @if ($activity->properties && $activity->properties->isNotEmpty())
                                 <button class="al-eye-btn" type="button" data-bs-toggle="collapse" data-bs-target="#log-{{ $activity->id }}" title="View details">
