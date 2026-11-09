@@ -44,10 +44,10 @@ class FrontDeskController extends Controller
         }
 
         // Default: paginated list with status filter
-        $citations = Citation::with(['violationType', 'payment', 'appeal'])
+        $citations = Citation::with(['violationType', 'payment', 'appeal', 'enforcer'])
             ->when($status, fn ($q) => $q->where('status', $status))
             ->latest('issued_at')
-            ->paginate(6)
+            ->paginate(5)
             ->withQueryString();
 
         return view('frontdesk.index', compact('citations', 'clamping', 'status'));
