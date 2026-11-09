@@ -40,7 +40,7 @@ class NavigationComposer
                 $operations[] = ['label' => 'Citations', 'route' => 'citations.index', 'icon' => 'file-earmark-text'];
             }
 
-            if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::Enforcer, Role::FrontDesk)) {
+            if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::FrontDesk)) {
                 $operations[] = ['label' => 'Appeals', 'route' => 'appeals.index', 'icon' => 'exclamation-circle'];
             }
 
