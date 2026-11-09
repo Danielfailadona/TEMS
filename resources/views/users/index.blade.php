@@ -459,22 +459,66 @@
                                         Edit
                                     </a>
                                     @if ($user->account_status === 'suspended')
-                                        <a href="{{ route('users.unsuspend', $user) }}" class="cr-actions-menu-item suspend-action" role="menuitem" data-confirm="Unsuspend this user?">
+                                        <button type="button" class="cr-actions-menu-item suspend-action" role="menuitem" data-bs-toggle="modal" data-bs-target="#unsuspendModal{{ $user->id }}" style="background-color: white; border: none;">
                                             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                                             Unsuspend
-                                        </a>
+                                        </button>
                                     @else
-                                        <a href="{{ route('users.suspend', $user) }}" class="cr-actions-menu-item suspend-action" role="menuitem" data-confirm="Suspend this user?">
+                                        <button type="button" class="cr-actions-menu-item suspend-action" role="menuitem" data-bs-toggle="modal" data-bs-target="#suspendModal{{ $user->id }}" style="background-color: white; border: none;">
                                             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
                                             Suspend
-                                        </a>
+                                        </button>
                                     @endif
                                     <a href="{{ route('users.devices', $user) }}" class="cr-actions-menu-item" role="menuitem">
                                         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
                                         Devices
                                     </a>
-                                </div>
                             </div>
+
+                            {{-- Suspend / Unsuspend Modal (per-row) --}}
+                            @if ($user->account_status === 'suspended')
+                                <div class="modal fade" id="unsuspendModal{{ $user->id }}" tabindex="-1" aria-labelledby="unsuspendModalLabel{{ $user->id }}" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="unsuspendModalLabel{{ $user->id }}">Unsuspend User</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form action="{{ route('users.unsuspend', $user) }}" method="POST">
+                                                @csrf
+                                                <div class="modal-body">
+                                                    <p>Are you sure you want to unsuspend <strong>{{ $user->name }}</strong>?</p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-success">Unsuspend</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            @else
+                                <div class="modal fade" id="suspendModal{{ $user->id }}" tabindex="-1" aria-labelledby="suspendModalLabel{{ $user->id }}" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="suspendModalLabel{{ $user->id }}">Suspend User</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form action="{{ route('users.suspend', $user) }}" method="POST">
+                                                @csrf
+                                                <div class="modal-body">
+                                                    <p>Are you sure you want to suspend <strong>{{ $user->name }}</strong>?</p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-warning">Suspend</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
 
                             {{-- Reject Modal (per-row) --}}
                             <div class="modal fade" id="rejectModal{{ $user->id }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ $user->id }}" aria-hidden="true">
@@ -500,6 +544,7 @@
                                         </form>
                                     </div>
                                 </div>
+                            </div>
                             </div>
                         </td>
                     </tr>

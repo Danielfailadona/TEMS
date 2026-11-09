@@ -275,6 +275,7 @@ class ImpoundingController extends Controller
             VehicleRelease::create([
                 'release_number' => $releaseNumber,
                 'impounding_record_id' => $impounding->id,
+                'clamping_record_id' => $impounding->clamping_record_id,
                 'released_by' => auth()->id(),
                 'notes' => $validated['notes'],
                 'released_at' => now(),

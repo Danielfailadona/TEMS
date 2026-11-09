@@ -10,6 +10,7 @@ class VehicleRelease extends Model
     protected $fillable = [
         'release_number',
         'clamping_record_id',
+        'impounding_record_id',
         'released_by',
         'notes',
         'released_at',
@@ -25,6 +26,11 @@ class VehicleRelease extends Model
     public function clampingRecord(): BelongsTo
     {
         return $this->belongsTo(ClampingRecord::class, 'clamping_record_id');
+    }
+
+    public function impounding(): BelongsTo
+    {
+        return $this->belongsTo(ImpoundingRecord::class, 'impounding_record_id');
     }
 
     public function releasedBy(): BelongsTo

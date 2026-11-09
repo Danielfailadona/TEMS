@@ -264,7 +264,7 @@ if (! \App\Enums\ImpoundingStatus::tryFrom($activeStatus)) {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">Process Release &mdash; {{ $record->vehicle_plate }}</h5>
-                            <button class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
                             <p>Confirm release of vehicle <strong>{{ $record->vehicle_plate }}</strong>?</p>
