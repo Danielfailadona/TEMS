@@ -2,6 +2,12 @@
 
 @section('title', 'Cashier Dashboard')
 
+@push('styles')
+<style>
+    .state-text { margin-left:auto; font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; opacity:0.85; }
+</style>
+@endpush
+
 @section('content')
 @php
     $hour = now()->hour;

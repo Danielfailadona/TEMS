@@ -3,7 +3,7 @@
     <div class="section-label">{{ $contribution['scope'] ?? 'My Contribution' }}</div>
     <div class="row g-3 mb-4 animate-on-load" id="my-contribution">
         @foreach ($contribution['cards'] as $card)
-            <div class="col-sm-6 col-xl-3">
+            <div class="col-sm-6 col-xl">
                 <div class="card stat-card h-100">
                     <div class="card-body d-flex align-items-center gap-3">
                         <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-{{ $card['color'] }}-subtle text-{{ $card['color'] }}" style="width:2.75rem;height:2.75rem;">
