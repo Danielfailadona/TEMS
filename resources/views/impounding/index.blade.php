@@ -87,6 +87,16 @@
         background: #fff; color: #0f6df0; font-size: 13px; font-weight: 700; white-space: nowrap;
     }
     .imp-dash .imp-eye-btn:hover, .imp-dash .imp-payment-btn:hover { background: var(--imp-blue-soft); }
+    .imp-dash .imp-queue-btn {
+        height: 28px; padding: 0 14px; border-radius: 16px; border: none;
+        background: #d97706; color: #fff; font-size: 13px; font-weight: 700; white-space: nowrap;
+    }
+    .imp-dash .imp-release-btn {
+        height: 28px; padding: 0 14px; border-radius: 16px; border: none;
+        background: #15803d; color: #fff; font-size: 13px; font-weight: 700; white-space: nowrap;
+    }
+    .imp-dash .imp-queue-btn:hover { background: #b45309; }
+    .imp-dash .imp-release-btn:hover { background: #14532d; }
 
     .imp-dash .imp-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: 34px; gap: 14px; flex-wrap: wrap; }
     .imp-dash .imp-result-count { font-size: 11px; color: #6f7d91; }
@@ -192,11 +202,11 @@ if (! \App\Enums\ImpoundingStatus::tryFrom($activeStatus)) {
                                     @can('markWaitingRelease', $record)
                                         <form action="{{ route('impounding.mark-waiting-release', $record) }}" method="POST" class="d-inline">
                                             @csrf
-                                            <button type="submit" class="btn btn-sm btn-warning">Queue Release</button>
+                                            <button type="submit" class="imp-queue-btn">Queue Release</button>
                                         </form>
                                     @endcan
                                     @can('processRelease', $record)
-                                        <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#releaseModal-{{ $record->id }}">Process Release</button>
+                                        <button type="button" class="imp-release-btn" data-bs-toggle="modal" data-bs-target="#releaseModal-{{ $record->id }}">Process Release</button>
                                     @endcan
                                 </div>
                             </td>
