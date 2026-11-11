@@ -162,6 +162,10 @@
     .cr-dash .cr-table th:nth-child(4), .cr-dash .cr-table td:nth-child(4) { width: 14% !important; }
     .cr-dash .cr-table th:nth-child(5), .cr-dash .cr-table td:nth-child(5) { width: 15% !important; }
     .cr-dash .cr-table th:nth-child(6), .cr-dash .cr-table td:nth-child(6) { width: 13% !important; overflow: visible; position: relative; }
+    @media (max-width: 767.98px) {
+        .cr-dash .cr-table { table-layout: auto; }
+        .cr-dash .cr-table th:nth-child(n), .cr-dash .cr-table td:nth-child(n) { width: auto !important; }
+    }
 
     .cr-dash .cr-pill {
         display: inline-block; font-size: 11px; font-weight: 700; line-height: 24px; padding: 0 10px;
@@ -399,10 +403,10 @@
     {{-- Users Table --}}
     <div class="cr-table-wrap">
         @if ($users->isNotEmpty())
-            <table class="cr-table">
+            <table class="cr-table table-cards">
                 <thead>
                     <tr>
-                        <th><input type="checkbox" id="selectAllUsersHeader" aria-label="Select all users on this page"></th>
+                        <th class="cell-checkbox"><input type="checkbox" id="selectAllUsersHeader" aria-label="Select all users on this page"></th>
                         <th>User</th>
                         <th>Role</th>
                         <th>Status</th>
@@ -414,12 +418,12 @@
                 <tbody>
                     @foreach ($users as $user)
                     <tr data-user-id="{{ $user->id }}">
-                        <td><input type="checkbox" class="user-checkbox" value="{{ $user->id }}" name="user_ids[]"></td>
-                        <td>
+                        <td class="cell-checkbox"><input type="checkbox" class="user-checkbox" value="{{ $user->id }}" name="user_ids[]"></td>
+                        <td data-label="User">
                             <strong>{{ $user->name }}</strong><br>
                             <small class="text-muted">{{ $user->email }}</small>
                         </td>
-                        <td>
+                        <td data-label="Role">
                             <span class="badge bg-secondary">{{ $user->role->label() }}</span>
                         </td>
                         <td>
@@ -434,7 +438,7 @@
                             @endphp
                             <span class="cr-pill {{ $statusClass }}">{{ \App\Enums\AccountStatus::tryFrom($user->account_status)?->label() ?? ucfirst($user->account_status) }}</span>
                         </td>
-                        <td>
+                        <td data-label="Active">
                             <form action="{{ route('users.toggle-active', $user) }}" method="POST" style="display: inline;">
                                 @csrf
                                 <input type="hidden" name="is_active" value="{{ $user->is_active ? '0' : '1' }}">
@@ -443,7 +447,7 @@
                                     <label class="form-check-label">{{ $user->is_active ? 'Active' : 'Inactive' }}</label>
                                 </div>
                             </form>
-                        <td>{{ $user->last_login_at ? $user->last_login_at->format('M d, Y H:i') : 'Never' }}</td>
+                        <td data-label="Last Login">{{ $user->last_login_at ? $user->last_login_at->format('M d, Y H:i') : 'Never' }}</td>
                         <td>
                             <div class="cr-actions">
                                 <button type="button" class="cr-actions-menu-btn" aria-expanded="false" aria-haspopup="menu" aria-label="Actions">
@@ -473,7 +477,21 @@
                                         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
                                         Devices
                                     </a>
-                            </div>
+                                    @can('delete', $user)
+                                        @if ($user->id !== auth()->id())
+                                            <form method="POST" action="{{ route('users.destroy', $user) }}" class="js-confirm-delete"
+                                                  data-confirm-title="Delete user {{ $user->name }}?"
+                                                  data-confirm="<strong>{{ $user->name }}</strong> will be archived before deletion. Accounts with citations, payments, clamping/impounding history, releases, appeals or assigned reports cannot be deleted.">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="cr-actions-menu-item text-danger" role="menuitem" style="background-color: white; border: none; width: 100%;">
+                                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        @endif
+                                    @endcan
+                                </div>
 
                             {{-- Suspend / Unsuspend Modal (per-row) --}}
                             @if ($user->account_status === 'suspended')

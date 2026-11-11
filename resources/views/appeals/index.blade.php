@@ -22,37 +22,48 @@
     <div class="col-auto"><button class="btn btn-outline-secondary">Filter</button></div>
 </form>
 
-<div class="card stat-card">
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead>
+<section class="std-table-wrap" aria-label="Appeals">
+    <table class="std-table table-cards">
+        <thead>
+            <tr>
+                <th scope="col">Ticket #</th>
+                <th scope="col">Citation</th>
+                <th scope="col">Filed By</th>
+                <th scope="col">Reason</th>
+                <th scope="col">Status</th>
+                <th scope="col">Submitted</th>
+                <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($appeals as $appeal)
                 <tr>
-                    <th>Ticket #</th>
-                    <th>Citation</th>
-                    <th>Filed By</th>
-                    <th>Reason</th>
-                    <th>Status</th>
-                    <th>Submitted</th>
-                    <th></th>
+                    <td data-label="Ticket #"><span class="std-pill tag-gray">{{ $appeal->ticketNumber() }}</span></td>
+                    <td data-label="Citation">{{ $appeal->citation->citation_number ?? '—' }}</td>
+                    <td data-label="Filed By">{{ $appeal->submitterDisplay() }}</td>
+                    <td data-label="Reason">{{ \Illuminate\Support\Str::limit($appeal->reason, 60) }}</td>
+                    <td data-label="Status"><span class="std-pill {{ $appeal->status->badgeClass() }}">{{ $appeal->status->label() }}</span></td>
+                    <td data-label="Submitted">{{ optional($appeal->submitted_at)->format('M d, Y') }}</td>
+                    <td>
+                        <div class="d-inline-flex align-items-center gap-2">
+                            <a href="{{ route('appeals.show', $appeal) }}" class="std-view-btn" title="View appeal" aria-label="View appeal {{ $appeal->ticketNumber() }}">
+                                <svg viewBox="0 0 24 24"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </a>
+                            <x-delete-button :record="$appeal" route-name="appeals.destroy" :label="appeal {{ $appeal->ticketNumber() }}" />
+                        </div>
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                @forelse ($appeals as $appeal)
-                    <tr>
-                        <td><span class="badge tag-gray">{{ $appeal->ticketNumber() }}</span></td>
-                        <td>{{ $appeal->citation->citation_number ?? '—' }}</td>
-                        <td>{{ $appeal->submitterDisplay() }}</td>
-                        <td>{{ $appeal->reason }}</td>
-                        <td><span class="badge {{ $appeal->status->badgeClass() }}">{{ $appeal->status->label() }}</span></td>
-                        <td>{{ optional($appeal->submitted_at)->format('M d, Y') }}</td>
-                        <td class="text-end"><a href="{{ route('appeals.show', $appeal) }}" class="btn btn-sm btn-outline-primary">View</a></td>
-                    </tr>
-                @empty
-                    <tr><td colspan="7" class="text-center text-muted py-4">No appeals found.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-    @if ($appeals->hasPages())<div class="card-footer bg-white">{{ $appeals->links() }}</div>@endif
-</div>
+            @empty
+                <tr><td colspan="7" class="std-empty">No appeals found.</td></tr>
+            @endforelse
+        </tbody>
+    </table>
+</section>
+
+<footer class="std-table-footer">
+    <span>Showing {{ $appeals->firstItem() ?? 0 }} to {{ $appeals->lastItem() ?? 0 }} of {{ $appeals->total() }} results</span>
+    @if ($appeals->hasPages())
+        {{ $appeals->links() }}
+    @endif
+</footer>
 @endsection

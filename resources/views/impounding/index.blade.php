@@ -48,40 +48,24 @@
     .imp-dash .imp-search input:focus { box-shadow: inset 0 0 0 1px #7aa9f8; }
     .imp-dash .imp-search input::placeholder { color: #7b8493; }
 
-    .imp-dash .imp-table-card {
-        background: #fff; border-radius: 10px; overflow: hidden;
-        box-shadow: 0 0 0 1px rgba(16, 24, 40, .01); padding: 28px 27px 0;
+    .imp-dash .imp-primary-btn {
+        height: 38px; border: 0; background: var(--imp-blue); color: #fff; border-radius: 16px;
+        padding: 0 16px; font-weight: 650; white-space: nowrap; display: inline-flex; align-items: center;
+        gap: 6px; text-decoration: none; font-size: 14px; align-self: center; margin-left: auto;
     }
-    .imp-dash .imp-table-wrap { overflow-x: auto; }
-    .imp-dash table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    .imp-dash thead th {
-        height: 51px; text-align: left; border-bottom: 1px solid #edf0f3;
-        font-size: 14px; font-weight: 700; color: #151922; vertical-align: middle; padding: 0;
-    }
-    .imp-dash tbody tr { height: 78px; border-bottom: 1px solid #edf0f3; }
-    .imp-dash tbody tr:last-child { border-bottom: 0; }
-    .imp-dash tbody td { font-size: 14px; color: #283140; padding: 0; vertical-align: middle; }
-    .imp-dash th:nth-child(1), .imp-dash td:nth-child(1) { width: 13.1%; }
-    .imp-dash th:nth-child(2), .imp-dash td:nth-child(2) { width: 16.5%; }
-    .imp-dash th:nth-child(3), .imp-dash td:nth-child(3) { width: 15.3%; }
-    .imp-dash th:nth-child(4), .imp-dash td:nth-child(4) { width: 14.0%; }
-    .imp-dash th:nth-child(5), .imp-dash td:nth-child(5) { width: 13.2%; }
-    .imp-dash th:nth-child(6), .imp-dash td:nth-child(6) { width: 14.0%; }
-    .imp-dash th:nth-child(7), .imp-dash td:nth-child(7) { width: 14.0%; text-align: center; }
+    .imp-dash .imp-primary-btn:hover { background: #075edb; color: #fff; }
+
     .imp-dash .imp-plate { font-weight: 700; color: #17202d; }
     .imp-dash .imp-muted-dash { color: #77808f; }
-    .imp-dash .imp-status {
-        display: inline-flex; align-items: center; justify-content: center; height: 23px; padding: 0 15px;
-        border-radius: 20px; font-size: 13px; font-weight: 700; white-space: nowrap;
-    }
-    .imp-dash .imp-empty { padding: 35px; text-align: center; color: #7b8798; }
 
-    .imp-dash .imp-actions { display: flex; align-items: center; gap: 10px; justify-content: center; }
-    .imp-dash .imp-eye-btn {
-        width: 48px; height: 34px; border: 1px solid #1976ff; border-radius: 18px;
-        background: #fff; color: #1976ff; display: grid; place-items: center; text-decoration: none;
-    }
-    .imp-dash .imp-eye-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+    .imp-dash .imp-actions { display: flex; align-items: center; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .imp-dash .std-table th:nth-child(1), .imp-dash .std-table td:nth-child(1) { width: 12%; }
+    .imp-dash .std-table th:nth-child(2), .imp-dash .std-table td:nth-child(2) { width: 15%; }
+    .imp-dash .std-table th:nth-child(3), .imp-dash .std-table td:nth-child(3) { width: 12%; }
+    .imp-dash .std-table th:nth-child(4), .imp-dash .std-table td:nth-child(4) { width: 13%; }
+    .imp-dash .std-table th:nth-child(5), .imp-dash .std-table td:nth-child(5) { width: 14%; }
+    .imp-dash .std-table th:nth-child(6), .imp-dash .std-table td:nth-child(6) { width: 10%; }
+    .imp-dash .std-table th:nth-child(7), .imp-dash .std-table td:nth-child(7) { width: 24%; text-align: center; }
     .imp-dash .imp-payment-btn {
         height: 28px; padding: 0 9px; border: 1px solid #1976ff; border-radius: 16px;
         background: #fff; color: #0f6df0; font-size: 13px; font-weight: 700; white-space: nowrap;
@@ -98,35 +82,16 @@
     .imp-dash .imp-queue-btn:hover { background: #b45309; }
     .imp-dash .imp-release-btn:hover { background: #14532d; }
 
-    .imp-dash .imp-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: 34px; gap: 14px; flex-wrap: wrap; }
-    .imp-dash .imp-result-count { font-size: 11px; color: #6f7d91; }
-    .imp-dash .imp-pagination .pagination { display: flex; align-items: center; height: 30px; gap: 0; margin-bottom: 0; }
-    .imp-dash .imp-pagination .page-link {
-        width: 38px; height: 30px; padding: 0; border: 1px solid #dce3eb; margin-left: -1px; background: #fff;
-        color: #176ff2; font-size: 13px; display: grid; place-items: center; text-decoration: none;
-        border-radius: 0;
-    }
-    .imp-dash .imp-pagination .page-item:first-child .page-link { border-radius: 5px 0 0 5px; color: #60728a; }
-    .imp-dash .imp-pagination .page-item:last-child .page-link { border-radius: 0 5px 5px 0; color: #60728a; }
-    .imp-dash .imp-pagination .page-item.active .page-link { background: #176ff2; color: #fff; border-color: #176ff2; }
-    .imp-dash .imp-pagination .page-item.disabled .page-link { background: #fff; color: #c3cdd9; cursor: default; pointer-events: none; }
-    .imp-dash .imp-pagination .small.text-muted { display: none !important; }
-    .imp-dash .imp-pagination .d-none.flex-sm-fill { display: flex !important; }
-    .imp-dash .imp-pagination .d-sm-none { display: none !important; }
-
     @media (max-width: 900px) {
         .imp-dash .imp-toolbar { gap: 8px; }
         .imp-dash .imp-search { flex: 1; }
-        .imp-dash .imp-table-card { padding-left: 16px; padding-right: 16px; }
-        .imp-dash table { min-width: 930px; }
-        .imp-dash .imp-footer { justify-content: space-between; }
     }
     @media (max-width: 600px) {
         .imp-dash .imp-toolbar { align-items: stretch; flex-direction: column; }
         .imp-dash .imp-filter-btn { width: 100%; }
         .imp-dash .imp-search { width: 100%; }
         .imp-dash .imp-filter-menu { width: 100%; }
-        .imp-dash .imp-footer { flex-direction: column; align-items: flex-end; }
+        .imp-dash .imp-primary-btn { margin-left: 0; }
     }
 </style>
 @endpush
@@ -160,71 +125,76 @@ if (! \App\Enums\ImpoundingStatus::tryFrom($activeStatus)) {
             </button>
             <input type="search" name="search" id="impSearchInput" placeholder="Search..." value="{{ request('search') }}" autocomplete="off">
         </label>
+
+        @can('create', App\Models\ImpoundingRecord::class)
+            <a href="{{ route('impounding.create') }}" class="imp-primary-btn">
+                <i class="bi bi-truck-front"></i>Record Impound
+            </a>
+        @endcan
     </form>
 
-    <div class="imp-table-card">
-        <div class="imp-table-wrap">
-            <table aria-label="Impounding records">
-                <thead>
+    <section class="std-table-wrap" aria-label="Impounding records">
+        <table class="std-table table-cards" aria-label="Impounding records">
+            <thead>
+                <tr>
+                    <th scope="col">Plate #</th>
+                    <th scope="col">Notice #</th>
+                    <th scope="col">Violation</th>
+                    <th scope="col">Officer</th>
+                    <th scope="col">Impounded At</th>
+                    <th scope="col">Status</th>
+                    <th scope="col"><span class="visually-hidden">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($records as $record)
                     <tr>
-                        <th scope="col">Plate #</th>
-                        <th scope="col">Notice #</th>
-                        <th scope="col">Violation</th>
-                        <th scope="col">Officer</th>
-                        <th scope="col">Impounded At</th>
-                        <th scope="col">Status</th>
-                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                        <td class="imp-plate" data-label="Plate #">{{ $record->vehicle_plate }}</td>
+                        <td data-label="Notice #">{{ $record->notice_number }}</td>
+                        <td class="{{ $record->citation?->violationType ? '' : 'imp-muted-dash' }}" data-label="Violation">
+                            @if ($record->citation)
+                                <a href="{{ route('citations.show', $record->citation) }}" title="View citation {{ $record->citation->citation_number }}">{{ $record->citation->violationType?->code ?? '—' }}</a>
+                            @else
+                                —
+                            @endif
+                        </td>
+                        <td data-label="Officer">{{ $record->officer->name }}</td>
+                        <td data-label="Impounded At">{{ $record->impounded_at?->format('M d, Y') ?? '—' }}</td>
+                        <td data-label="Status"><span class="std-pill {{ $record->status->badgeClass() }}">{{ $record->status->label() }}</span></td>
+                        <td>
+                            <div class="imp-actions">
+                                <a href="{{ route('impounding.show', $record) }}" class="std-view-btn" title="View details" aria-label="View {{ $record->vehicle_plate }}">
+                                    <svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-5 9.5-5 9.5 5 9.5 5-3.5 5-9.5 5-9.5-5-9.5-5Z"/><circle cx="12" cy="12" r="2.3"/></svg>
+                                </a>
+                                @can('markPaid', $record)
+                                    <button type="button" class="imp-payment-btn" data-bs-toggle="modal" data-bs-target="#payModal-{{ $record->id }}">Record Payment</button>
+                                @endcan
+                                @can('markWaitingRelease', $record)
+                                    <form action="{{ route('impounding.mark-waiting-release', $record) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="imp-queue-btn">Queue Release</button>
+                                    </form>
+                                @endcan
+                                @can('processRelease', $record)
+                                    <button type="button" class="imp-release-btn" data-bs-toggle="modal" data-bs-target="#releaseModal-{{ $record->id }}">Process Release</button>
+                                @endcan
+                                <x-delete-button :record="$record" route-name="impounding.destroy" :label="$record->notice_number" class="btn btn-sm btn-outline-danger" />
+                            </div>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @forelse ($records as $record)
-                        <tr>
-                            <td class="imp-plate">{{ $record->vehicle_plate }}</td>
-                            <td>{{ $record->notice_number }}</td>
-                            <td class="{{ $record->citation?->violationType ? '' : 'imp-muted-dash' }}">
-                                @if ($record->citation)
-                                    <a href="{{ route('citations.show', $record->citation) }}" title="View citation {{ $record->citation->citation_number }}">{{ $record->citation->violationType?->code ?? '—' }}</a>
-                                @else
-                                    —
-                                @endif
-                            </td>
-                            <td>{{ $record->officer->name }}</td>
-                            <td>{{ $record->impounded_at?->format('M d, Y') ?? '—' }}</td>
-                            <td><span class="imp-status {{ $record->status->badgeClass() }}">{{ $record->status->label() }}</span></td>
-                            <td>
-                                <div class="imp-actions">
-                                    <a href="{{ route('impounding.show', $record) }}" class="imp-eye-btn" title="View details" aria-label="View {{ $record->vehicle_plate }}">
-                                        <svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-5 9.5-5 9.5 5 9.5 5-3.5 5-9.5 5-9.5-5-9.5-5Z"/><circle cx="12" cy="12" r="2.3"/></svg>
-                                    </a>
-                                    @can('markPaid', $record)
-                                        <button type="button" class="imp-payment-btn" data-bs-toggle="modal" data-bs-target="#payModal-{{ $record->id }}">Record Payment</button>
-                                    @endcan
-                                    @can('markWaitingRelease', $record)
-                                        <form action="{{ route('impounding.mark-waiting-release', $record) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            <button type="submit" class="imp-queue-btn">Queue Release</button>
-                                        </form>
-                                    @endcan
-                                    @can('processRelease', $record)
-                                        <button type="button" class="imp-release-btn" data-bs-toggle="modal" data-bs-target="#releaseModal-{{ $record->id }}">Process Release</button>
-                                    @endcan
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="7" class="imp-empty">No impounded vehicles found.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                @empty
+                    <tr><td colspan="7" class="std-empty">No impounded vehicles found.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </section>
 
-        <footer class="imp-footer">
-            <span class="imp-result-count">Showing {{ $records->firstItem() ?? 0 }} to {{ $records->lastItem() ?? 0 }} of {{ $records->total() }} results</span>
-            @if ($records->hasPages())
-                <div class="imp-pagination">{{ $records->links() }}</div>
-            @endif
-        </footer>
-    </div>
+    <footer class="std-table-footer">
+        <span>Showing {{ $records->firstItem() ?? 0 }} to {{ $records->lastItem() ?? 0 }} of {{ $records->total() }} results</span>
+        @if ($records->hasPages())
+            {{ $records->withQueryString()->links() }}
+        @endif
+    </footer>
 </div>
 
 @foreach ($records as $record)

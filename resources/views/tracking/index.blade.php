@@ -339,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const map = new maplibregl.Map({
         container: 'tracking-map',
         style: 'https://tiles.openfreemap.org/styles/liberty',
-        center: [121.0402, 14.5432],
+        center: [123.79554621067624, 10.245912335483869],
         zoom: 12,
         attributionControl: false,
     });

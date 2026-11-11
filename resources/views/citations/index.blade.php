@@ -102,6 +102,9 @@
     .cit-dash .pagination .page-item:last-child .page-link { border-radius: 0 5px 5px 0; color: #60728a; }
     .cit-dash .pagination .page-item.active .page-link { background: #176ff2; border-color: #176ff2; color: #fff; }
     .cit-dash .pagination .page-item.disabled .page-link { background: #fff; color: #c3cdd9; }
+    @media (max-width: 767.98px) {
+        .cit-dash .cit-table { min-width: 0; table-layout: auto; }
+    }
     @media (max-width: 600px) {
         .cit-dash .cit-toolbar { flex-wrap: wrap; gap: 10px; }
         .cit-dash .cit-filter-wrap { flex-basis: 115px; }
@@ -148,7 +151,7 @@
     </form>
 
     <section class="cit-table-wrap" aria-label="Citations table">
-        <table class="cit-table">
+        <table class="cit-table table-cards">
             <thead>
                 <tr>
                     <th scope="col">Citation #</th>
@@ -163,7 +166,7 @@
             <tbody>
                 @forelse ($citations as $citation)
                     <tr>
-                        <td>
+                        <td data-label="Citation #">
                             {{ $citation->citation_number }}
                             @if ($citation->impoundingRecord)
                                 <a href="{{ route('impounding.show', $citation->impoundingRecord) }}" class="text-danger ms-1" title="Impounded — Notice {{ $citation->impoundingRecord->notice_number }}" aria-label="View impounding record">
@@ -171,15 +174,18 @@
                                 </a>
                             @endif
                         </td>
-                        <td>{{ $citation->violationType->code }}</td>
-                        <td>{{ $citation->vehicle_plate }}</td>
-                        <td>₱{{ number_format($citation->penalty_amount, 2) }}</td>
-                        <td>{{ $citation->issued_at->format('M d, Y') }}</td>
-                        <td><span class="cit-pill {{ $citation->status->badgeClass() }}">{{ $citation->status->label() }}</span></td>
+                        <td data-label="Violation">{{ $citation->violationType->code }}</td>
+                        <td data-label="Vehicle">{{ $citation->vehicle_plate }}</td>
+                        <td data-label="Amount">₱{{ number_format($citation->penalty_amount, 2) }}</td>
+                        <td data-label="Issued">{{ $citation->issued_at->format('M d, Y') }}</td>
+                        <td data-label="Status"><span class="cit-pill {{ $citation->status->badgeClass() }}">{{ $citation->status->label() }}</span></td>
                         <td>
-                            <a href="{{ route('citations.show', $citation) }}" class="cit-view-btn" aria-label="View citation {{ $citation->citation_number }}" title="View">
-                                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>
-                            </a>
+                            <div class="d-inline-flex align-items-center gap-1">
+                                <a href="{{ route('citations.show', $citation) }}" class="cit-view-btn" aria-label="View citation {{ $citation->citation_number }}" title="View">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>
+                                </a>
+                                <x-delete-button :record="$citation" route-name="citations.destroy" :label="$citation->citation_number" />
+                            </div>
                         </td>
                     </tr>
                 @empty

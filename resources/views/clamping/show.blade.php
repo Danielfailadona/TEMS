@@ -102,6 +102,18 @@
             </div>
         @endif
 
+        @can('delete', $clamping)
+            <div class="card stat-card border-danger mt-3">
+                <div class="card-header bg-white"><strong class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Danger Zone</strong></div>
+                <div class="card-body">
+                    <x-delete-button :record="$clamping" route-name="clamping.destroy" :label="$clamping->notice_number" class="btn btn-outline-danger w-100">
+                        <i class="bi bi-trash me-2"></i>Delete Clamping Record
+                    </x-delete-button>
+                    <small class="text-muted d-block mt-2">Archived before deletion. Blocked while payments, releases or impounds are linked.</small>
+                </div>
+            </div>
+        @endif
+
         <div class="card stat-card mt-4">
             <div class="card-header bg-white"><strong><i class="bi bi-qr-code me-1"></i>Driver Ticket</strong></div>
             <div class="card-body text-center">

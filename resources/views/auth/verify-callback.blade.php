@@ -4,7 +4,6 @@
 
 @section('content')
 <div class="text-center mb-4 animate-on-load">
-    <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" height="40" class="mb-2">
     <h4 class="mb-1">Verifying Your Email</h4>
     <p class="text-muted mb-0">Please wait while we verify your email address...</p>
 </div>

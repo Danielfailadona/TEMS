@@ -21,11 +21,8 @@ class ClampingPolicy
 
     public function create(User $user): bool
     {
-        return $user->isRole(
-            Role::SuperAdmin,
-            Role::Administrator,
-            Role::Enforcer
-        );
+        // Clamping is a manual decision held at the Administrator side.
+        return $user->isRole(Role::SuperAdmin, Role::Administrator);
     }
 
     public function markPaid(User $user, ClampingRecord $clampingRecord): bool
@@ -54,11 +51,7 @@ class ClampingPolicy
 
     public function referToImpounding(User $user): bool
     {
-        return $user->isRole(
-            Role::SuperAdmin,
-            Role::Administrator,
-            Role::Enforcer
-        );
+        return $user->isRole(Role::SuperAdmin, Role::Administrator);
     }
 
     public function delete(User $user, ClampingRecord $clampingRecord): bool

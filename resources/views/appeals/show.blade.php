@@ -43,6 +43,9 @@
         <a href="{{ route('appeals.index') }}" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i>Back
         </a>
+        <x-delete-button :record="$appeal" route-name="appeals.destroy" :label="appeal {{ $appeal->ticketNumber() }}" class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-trash me-1"></i>Delete
+        </x-delete-button>
     </div>
 </div>
 

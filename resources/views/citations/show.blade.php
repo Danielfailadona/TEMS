@@ -105,7 +105,7 @@
                     </small>
                 </div>
             </div>
-        @elseif ($citation->violationType->is_impoundable && $citation->clampingRecords->isEmpty() && auth()->user()->isRole(App\Enums\Role::SuperAdmin, App\Enums\Role::Administrator, App\Enums\Role::Enforcer))
+        @elseif ($citation->violationType->is_impoundable && $citation->clampingRecords->isEmpty() && auth()->user()->isRole(App\Enums\Role::SuperAdmin, App\Enums\Role::Administrator))
             <div class="card stat-card mb-3 border-warning">
                 <div class="card-body text-center">
                     <form method="POST" action="{{ route('citations.refer-impounding', $citation) }}">
@@ -160,6 +160,17 @@
                 </div>
             @endif
         @endif
+
+        @can('delete', $citation)
+            <div class="card stat-card mb-3 border-danger">
+                <div class="card-body">
+                    <x-delete-button :record="$citation" route-name="citations.destroy" :label="$citation->citation_number" class="btn btn-outline-danger w-100">
+                        <i class="bi bi-trash me-2"></i>Delete Citation
+                    </x-delete-button>
+                    <small class="text-muted d-block mt-2">Archived before deletion. Blocked while payments, clamps, impounds or appeals are linked.</small>
+                </div>
+            </div>
+        @endcan
     </div>
 </div>
 

@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('itevcms.app_name'))</title>
+    <link rel="icon" type="image/png" sizes="180x180" href="{{ asset('images/favicon-180.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon-32.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/favicon-180.png') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bootstrap-4@5.0.14/bootstrap-4.min.css">
@@ -13,10 +16,10 @@
 </head>
 <body class="app-shell{{ ($isEnforcerMobile ?? false) ? ' enforcer-mobile' : '' }}">
 <div class="d-flex" style="overflow-x:hidden;">
-    <aside class="sidebar animate-on-load">
+    <aside class="sidebar">
         <div class="sidebar-brand">
-            <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMs" class="sidebar-logo">
-            <div class="sidebar-brand-title">TEMs</div>
+            <img src="{{ asset('images/transpo_enfo_orig.png') }}" alt="TEMS" class="sidebar-logo">
+            <div class="sidebar-brand-title">{{ config('itevcms.app_name') }}</div>
             <div class="sidebar-brand-sub">Traffic Enforcement Management System</div>
         </div>
 
@@ -74,7 +77,7 @@
         </nav>
         @endif
 
-        <header class="topbar px-4 px-lg-5 py-3 border-bottom animate-on-load">
+        <header class="topbar px-4 px-lg-5 py-3 border-bottom">
             <div>
                 <div class="text-muted small">Operations console</div>
                 <h2 class="h4 mb-0">{{ $pageTitle }}</h2>
@@ -92,10 +95,14 @@
 
                 @if (auth()->check())
                 <div class="dropdown">
-                    <button class="btn btn-link text-dark text-decoration-none dropdown-toggle d-flex align-items-center gap-2 p-0 border-0" data-bs-toggle="dropdown" aria-expanded="false" id="userDropdown">
-                        <span class="status-dot text-success"><i class="bi bi-circle-fill" style="font-size:0.6rem;"></i></span>
-                        <span class="fw-semibold small d-none d-md-inline">{{ auth()->user()->name }}</span>
-                        <span class="text-muted small d-none d-lg-inline">{{ auth()->user()->role->label() }}</span>
+                    <button class="btn btn-link text-dark text-decoration-none dropdown-toggle d-flex align-items-center gap-2 p-0 border-0" data-bs-toggle="dropdown" aria-expanded="false" id="userDropdown" aria-label="User menu" title="{{ auth()->user()->name }} ({{ auth()->user()->role->label() }})">
+                        <span class="topbar-avatar {{ auth()->user()->is_online ? 'status-online' : '' }}">
+                            @if (auth()->user()->profile_photo_path)
+                                <img src="{{ auth()->user()->profile_photo_url }}" alt="{{ auth()->user()->name }}" class="topbar-avatar-img"
+                                     onerror="this.parentElement.classList.add('no-photo')">
+                            @endif
+                            <span class="topbar-avatar-initials">{{ strtoupper(substr(trim(auth()->user()->name), 0, 1)) }}</span>
+                        </span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdown" style="min-width: 230px;">
                         <li>
@@ -170,6 +177,12 @@
     <a href="{{ route('settings.index') }}" class="enforcer-more-item">
       <i class="bi bi-gear"></i><span>Settings</span>
     </a>
+    <a href="{{ route('citizen-reports.index') }}" class="enforcer-more-item">
+      <i class="bi bi-inbox"></i><span>Citizen Reports</span>
+    </a>
+    <a href="{{ route('archives.index') }}" class="enforcer-more-item">
+      <i class="bi bi-archive"></i><span>My Archives</span>
+    </a>
     <form action="{{ route('availability.toggle') }}" method="POST" class="enforcer-more-item">
       @csrf
       <button type="submit" class="enforcer-more-btn {{ auth()->user()->is_available ? 'text-success' : 'text-muted' }}">
@@ -241,40 +254,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     .sidebar-brand {
-        height: 190px;
+        height: 205px;
         flex-shrink: 0;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 1rem;
+        padding: 0.85rem 1rem;
         border-bottom: 1px solid rgba(255,255,255,0.1);
     }
 
     .sidebar-logo {
-        width: 100px;
-        height: 100px;
+        width: 180px;
+        height: auto;
         object-fit: contain;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.55rem;
     }
 
     .sidebar-brand-title {
-        font-size: 1.1rem;
+        font-size: 1.15rem;
         font-weight: 800;
         color: #fff;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.06em;
         line-height: 1.2;
     }
 
     .sidebar-brand-sub {
-        width: 140px;
-        height: 36px;
-        font-size: 0.65rem;
-        line-height: 1.2;
+        width: 100%;
+        max-width: 180px;
+        font-size: 0.6rem;
+        line-height: 1.35;
         font-weight: 500;
         color: rgba(255,255,255,0.55);
         text-align: center;
-        overflow: hidden;
         margin-top: 0.15rem;
     }
 
@@ -353,6 +365,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     #userDropdown:focus {
         box-shadow: none;
+    }
+
+    .topbar-avatar {
+        position: relative;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--itevcms-primary), var(--itevcms-accent));
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .topbar-avatar.status-online {
+        box-shadow: 0 0 0 2px var(--itevcms-card, #fff), 0 0 0 4px #22c55e;
+    }
+
+    .topbar-avatar-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .topbar-avatar.no-photo .topbar-avatar-img {
+        display: none;
     }
 
     #userDropdown::after {
@@ -439,6 +483,31 @@ document.addEventListener('DOMContentLoaded', () => {
 @stack('scripts')
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.8/dist/sweetalert2.all.min.js"></script>
+<script>
+// Global SweetAlert2 confirmation for destructive delete forms.
+// Any <form class="js-confirm-delete" data-confirm="..."> is intercepted here.
+document.addEventListener('submit', function (e) {
+    const form = e.target.closest('form.js-confirm-delete');
+    if (!form) return;
+    e.preventDefault();
+
+    Swal.fire({
+        title: form.dataset.confirmTitle || 'Delete this record?',
+        html: form.dataset.confirm || 'It will be archived first. This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: form.dataset.confirmButton || 'Yes, delete',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        reverseButtons: true,
+    }).then((result) => {
+        if (result.isConfirmed) {
+            form.submit(); // native submit does not re-fire the submit event
+        }
+    });
+});
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const badge = document.getElementById('notificationCount');

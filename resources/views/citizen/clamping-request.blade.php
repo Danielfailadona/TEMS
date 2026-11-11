@@ -307,7 +307,7 @@
 <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
 <script>
 const MAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
-const DEFAULT_CENTER = [121.0402, 14.5432];
+const DEFAULT_CENTER = [123.79554621067624, 10.245912335483869];
 const DEFAULT_ZOOM = 12;
 
 let map = null;

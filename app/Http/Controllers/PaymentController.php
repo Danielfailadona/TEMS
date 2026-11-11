@@ -7,6 +7,7 @@ use App\Enums\ClampingStatus;
 use App\Enums\ImpoundingStatus;
 use App\Enums\PaymentMethod;
 use App\Http\Requests\StorePaymentRequest;
+use App\Models\Archive;
 use App\Models\Citation;
 use App\Models\ClampingRecord;
 use App\Models\ImpoundingRecord;
@@ -17,6 +18,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -40,7 +42,7 @@ class PaymentController extends Controller
                   })
                   ->orWhereHasMorph('payable', [ClampingRecord::class, ImpoundingRecord::class], function ($q) use ($search) {
                       $q->where('notice_number', 'like', "%{$search}%")
-                        ->orWhere('vehicle_plate', 'like', "%{$search}%");
+                        ->orWhereHas('citation', fn ($c) => $c->where('vehicle_plate', 'like', "%{$search}%"));
                   });
             });
         }
@@ -191,7 +193,7 @@ class PaymentController extends Controller
             if ($search !== '') {
                 $term = '%'.mb_strtolower($search).'%';
                 $q->where(fn ($w) => $w->whereRaw('LOWER(notice_number) LIKE ?', [$term])
-                    ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', [$term])
+                    ->orWhereHas('citation', fn ($c) => $c->whereRaw('LOWER(vehicle_plate) LIKE ?', [$term]))
                     ->orWhereHas('officer', fn ($o) => $o->whereRaw('LOWER(name) LIKE ?', [$term])));
             }
 
@@ -290,7 +292,7 @@ class PaymentController extends Controller
             if ($filter === null || $filter === 'clamping') {
                 $c = ClampingRecord::with(['officer', 'citation'])
                     ->where(fn ($q) => $q->whereRaw('LOWER(notice_number) LIKE ?', [$term])
-                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', [$term]))
+                        ->orWhereHas('citation', fn ($c) => $c->whereRaw('LOWER(vehicle_plate) LIKE ?', [$term])))
                     ->orderByRaw('notice_number = ? desc', [$lookup])
                     ->latest('clamped_at')
                     ->first();
@@ -302,7 +304,7 @@ class PaymentController extends Controller
             if ($filter === null || $filter === 'impounding') {
                 $c = ImpoundingRecord::with(['officer', 'citation'])
                     ->where(fn ($q) => $q->whereRaw('LOWER(notice_number) LIKE ?', [$term])
-                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', [$term]))
+                        ->orWhereHas('citation', fn ($c) => $c->whereRaw('LOWER(vehicle_plate) LIKE ?', [$term])))
                     ->orderByRaw('notice_number = ? desc', [$lookup])
                     ->latest('impounded_at')
                     ->first();
@@ -344,7 +346,7 @@ class PaymentController extends Controller
                 if ($lookup !== '') {
                     $term = '%'.mb_strtolower($lookup).'%';
                     $q->where(fn ($w) => $w->whereRaw('LOWER(notice_number) LIKE ?', [$term])
-                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', [$term])
+                        ->orWhereHas('citation', fn ($c) => $c->whereRaw('LOWER(vehicle_plate) LIKE ?', [$term]))
                         ->orWhereHas('officer', fn ($o) => $o->whereRaw('LOWER(name) LIKE ?', [$term])));
                 }
 
@@ -360,7 +362,7 @@ class PaymentController extends Controller
                 if ($lookup !== '') {
                     $term = '%'.mb_strtolower($lookup).'%';
                     $q->where(fn ($w) => $w->whereRaw('LOWER(notice_number) LIKE ?', [$term])
-                        ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', [$term])
+                        ->orWhereHas('citation', fn ($c) => $c->whereRaw('LOWER(vehicle_plate) LIKE ?', [$term]))
                         ->orWhereHas('officer', fn ($o) => $o->whereRaw('LOWER(name) LIKE ?', [$term])));
                 }
 
@@ -486,5 +488,41 @@ public function edit(Payment $payment): View
         $payment->load(['citation.violationType', 'cashier', 'payable.officer']);
 
         return view('payments.print', compact('payment'));
+    }
+
+    public function destroy(Payment $payment): RedirectResponse
+    {
+        $this->authorize('delete', $payment);
+
+        $payable = $payment->payable;
+
+        if ($payable && ($payable->status?->value ?? '') === 'released') {
+            return back()->with('error', 'Cannot delete payment '.$payment->receipt_number.' because the linked record has already been released.');
+        }
+
+        DB::transaction(function () use ($payment) {
+            Archive::log($payment, 'Payment deleted', auth()->id(), $payment->toArray());
+
+            $payable = $payment->payable;
+
+            $payment->delete();
+
+            // Revert the linked record's status so the fee can be re-recorded.
+            if ($payable instanceof Citation) {
+                $payable->update(['status' => CitationStatus::Issued]);
+            } elseif ($payable instanceof ClampingRecord) {
+                $payable->update(['status' => ClampingStatus::AwaitingPayment]);
+
+                // The clamp payment may have also settled the linked citation fine.
+                if ($payment->citation_id && $payable->citation) {
+                    $payable->citation->update(['status' => CitationStatus::Issued]);
+                }
+            } elseif ($payable instanceof ImpoundingRecord) {
+                $payable->update(['status' => ImpoundingStatus::AwaitingPayment, 'paid_at' => null]);
+            }
+        });
+
+        return redirect()->route('payments.index')
+            ->with('success', 'Payment '.$payment->receipt_number.' has been deleted and archived. The linked record was reverted to awaiting payment.');
     }
 }

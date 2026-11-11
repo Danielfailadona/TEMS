@@ -123,7 +123,7 @@ function createDetailOverlay(containerId, actions = null) {
 export function initTeamZonePicker(containerId, options = {}) {
     const {
         styleUrl = 'https://tiles.openfreemap.org/styles/liberty',
-        center = [121.0402, 14.5432],
+        center = [123.79554621067624, 10.245912335483869],
         zoom = 11,
         zonesEndpoint = '/api/zones',
         zones = null,
@@ -249,7 +249,7 @@ export function initTeamZonePicker(containerId, options = {}) {
 export function initZoneEditor(containerId, options = {}) {
     const {
         styleUrl = 'https://tiles.openfreemap.org/styles/liberty',
-        center = [121.0402, 14.5432],
+        center = [123.79554621067624, 10.245912335483869],
         zoom = 11,
         initialLat = null,
         initialLng = null,
@@ -403,7 +403,7 @@ export function initZoneViewer(containerId, options = {}) {
 
     const {
         styleUrl = 'https://tiles.openfreemap.org/styles/liberty',
-        center = [121.0402, 14.5432],
+        center = [123.79554621067624, 10.245912335483869],
         zoom = 11,
         zones = [],
         onZoneClick = null,

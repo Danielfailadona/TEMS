@@ -190,4 +190,20 @@ class AppealController extends Controller
 
         return redirect()->route('appeals.show', $appeal)->with('success', 'Appeal updated successfully.');
     }
+
+    public function destroy(Appeal $appeal): RedirectResponse
+    {
+        $this->authorize('delete', $appeal);
+
+        if ($appeal->status === AppealStatus::Approved) {
+            return back()->with('error', 'Cannot delete appeal '.$appeal->ticketNumber().' because it has been approved (its penalty adjustment is applied to the citation).');
+        }
+
+        Archive::log($appeal, 'Appeal deleted', auth()->id(), $appeal->toArray());
+
+        $appeal->delete();
+
+        return redirect()->route('appeals.index')
+            ->with('success', 'Appeal '.$appeal->ticketNumber().' has been deleted and archived.');
+    }
 }

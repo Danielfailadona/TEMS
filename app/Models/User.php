@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\Role;
 use App\Models\EnforcerSchedule;
+use App\Services\SupabaseStorage;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -101,6 +102,15 @@ class User extends Authenticatable
         return $this->role->canDelete();
     }
 
+    /**
+     * Public URL for the user's profile photo (null when none is set).
+     * No remote existence check on purpose — pair with an initials fallback in the UI.
+     */
+    public function getProfilePhotoUrlAttribute(): ?string
+    {
+        return SupabaseStorage::publicUrl($this->profile_photo_path);
+    }
+
     public function devices(): HasMany
     {
         return $this->hasMany(DeviceManager::class);
@@ -172,17 +182,20 @@ class User extends Authenticatable
     }
 
     /**
-     * An enforcer is assignable when they have manually marked themselves
-     * available AND are currently online (marked by an active GPS ping).
+     * Whether this enforcer may be given an assignment right now.
+     *
+     * Task Management force_available beats the enforcer's own Unavailable
+     * toggle; force_unavailable and self-toggled unavailable enforcers are
+     * never assignable. Schedule and GPS status do not block manual
+     * assignment — only the availability signals above do.
      */
-    public function isAssignable(): bool
+    public function canBeAssigned(): bool
     {
-        return (bool) $this->is_available && (bool) $this->is_online;
-    }
-
-    public function scopeAssignable($query)
-    {
-        return $query->where('is_available', true)->where('is_online', true);
+        return match ($this->availability_override) {
+            'force_available' => true,
+            'force_unavailable' => false,
+            default => (bool) $this->is_available,
+        };
     }
 
     /**
@@ -204,11 +217,18 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if enforcer is available for assignment based on schedule AND online status.
+     * Check if enforcer is available for assignment based on schedule rules.
+     *
+     * force_available (Task Management override) is authoritative; auto-mode
+     * enforcers must be self-toggled available AND online AND within schedule.
      */
     public function isScheduleAssignable(): bool
     {
-        return $this->isWithinSchedule() && (bool) $this->is_online;
+        if ($this->availability_override === 'force_available') {
+            return true;
+        }
+
+        return (bool) $this->is_available && $this->isWithinSchedule() && (bool) $this->is_online;
     }
 
     /**
@@ -256,27 +276,34 @@ class User extends Authenticatable
     }
 
     /**
-     * Scope for enforcers who are currently schedule-assignable (within schedule AND online).
+     * Scope for enforcers who are currently assignable by schedule rules.
+     *
+     * force_available (Task Management override) is authoritative: the enforcer
+     * is assignable even off-schedule, offline, or self-toggled unavailable.
+     * Auto-mode enforcers must be self-toggled available AND online AND within
+     * their scheduled duty hours. force_unavailable / self-toggled unavailable
+     * enforcers never match this scope.
      */
     public function scopeScheduleAssignable($query)
     {
-        return $query->where('is_online', true)
-            ->where(function ($q) {
-                // Force available
-                $q->where('availability_override', 'force_available')
-                    // Or auto with valid schedule
-                    ->orWhere(function ($q2) {
-                        $q2->where('availability_override', 'auto')
-                            ->whereHas('enforcerSchedules', function ($q3) {
-                                $dayOfWeek = now()->dayOfWeek;
-                                $time = now()->format('H:i:s');
-                                $q3->whereJsonContains('days', $dayOfWeek)
-                                    ->whereJsonContains('is_active_days', [(string) $dayOfWeek => true])
-                                    ->where('start_time', '<=', $time)
-                                    ->where('end_time', '>', $time);
-                            });
-                    });
-            });
+        return $query->where(function ($q) {
+            // Task Management force_available override is authoritative
+            $q->where('availability_override', 'force_available')
+                // Or auto mode: self-toggled available AND online with valid schedule
+                ->orWhere(function ($q2) {
+                    $q2->where('availability_override', 'auto')
+                        ->where('is_available', true)
+                        ->where('is_online', true)
+                        ->whereHas('enforcerSchedules', function ($q3) {
+                            $dayOfWeek = now()->dayOfWeek;
+                            $time = now()->format('H:i:s');
+                            $q3->whereJsonContains('days', $dayOfWeek)
+                                ->whereJsonContains('is_active_days', [(string) $dayOfWeek => true])
+                                ->where('start_time', '<=', $time)
+                                ->where('end_time', '>', $time);
+                        });
+                });
+        });
     }
 
     /**

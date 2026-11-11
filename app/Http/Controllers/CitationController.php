@@ -4,14 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Enums\CitationStatus;
 use App\Enums\ClampingStatus;
-use App\Enums\ImpoundingStatus;
 use App\Enums\Role;
 use App\Http\Requests\StoreCitationRequest;
 use App\Models\Archive;
 use App\Models\Citation;
 use App\Models\CitationEvidence;
+use App\Models\CitizenReport;
 use App\Models\ClampingRecord;
-use App\Models\ImpoundingRecord;
 use App\Models\SystemNotification;
 use App\Models\User;
 use App\Models\ViolationType;
@@ -101,31 +100,9 @@ class CitationController extends Controller
                 }
             }
 
-            if ($violationType->is_impoundable) {
-                $violationCode = $violationType->code ?? 'default';
-                $fees = config('itevcms.impounding.violation_fees')[$violationCode] ?? config('itevcms.impounding.violation_fees.default');
-
-                $impounding = ImpoundingRecord::create([
-                    'notice_number' => $numberService->impoundNumber(),
-                    'citation_id' => $citation->id,
-                    'impounded_by' => auth()->id(),
-                    'status' => ImpoundingStatus::Impounded,
-                    'location' => $citation->location,
-                    'notes' => $request->input('impounding_notes'),
-                    'evidence_path' => $evidencePaths[0] ?? null,
-                    'towing_fee' => $fees['towing_fee'],
-                    'storage_fee_per_day' => $fees['storage_fee_per_day'],
-                    'admin_fee' => $fees['admin_fee'],
-                    'grace_until' => now()->addHours(config('itevcms.impounding.grace_hours', 24)),
-                    'impounded_at' => now(),
-                ]);
-
-                Archive::log($impounding, 'Vehicle impounded (auto-created from citation)', auth()->id());
-
-                $citation->update(['status' => CitationStatus::Impounded]);
-            } elseif ($violationType->is_clampable) {
-                $citation->update(['status' => CitationStatus::Clamped]);
-            }
+            // Clamping/impounding records are NOT auto-created here. Citations with
+            // clampable/impoundable violations become eligible on the Clamping and
+            // Impounding pages, where an Administrator makes the decision manually.
 
             Archive::log($citation, 'Citation issued', auth()->id());
 
@@ -160,47 +137,12 @@ class CitationController extends Controller
             }
         }
 
-        // Notify if impounding was created
-        if ($violationType->is_impoundable) {
-            $impounding = ImpoundingRecord::where('citation_id', $citation->id)->latest()->first();
-            if ($impounding) {
-                // Notify admins
-                $admins = User::whereIn('role', [Role::SuperAdmin, Role::Administrator])->get();
-                foreach ($admins as $admin) {
-                    SystemNotification::notify(
-                        $admin,
-                        'impounding_created',
-                        'Vehicle Impounded',
-                        "Vehicle {$citation->vehicle_plate} was impounded via citation {$citation->citation_number}. Notice: {$impounding->notice_number}",
-                        ['impounding_record_id' => $impounding->id, 'citation_id' => $citation->id]
-                    );
-                }
-            }
-        }
-
-        // Notify if clamping was created
-        if ($violationType->is_clampable) {
-            $admins = User::whereIn('role', [Role::SuperAdmin, Role::Administrator])->get();
-            foreach ($admins as $admin) {
-                SystemNotification::notify(
-                    $admin,
-                    'clamping_created',
-                    'Vehicle Clamped',
-                    "Vehicle {$citation->vehicle_plate} was clamped via citation {$citation->citation_number}.",
-                    ['citation_id' => $citation->id]
-                );
-            }
-        }
-
-        $impoundSuffix = $violationType->is_impoundable ? ' An impounding record was created for this violation.' : '';
-        $clampSuffix = (!$violationType->is_impoundable && $violationType->is_clampable) ? ' Vehicle is clamped.' : '';
-
         if (auth()->user()->isRole(Role::Enforcer)) {
             return redirect()->route('citations.handoff', $citation)
-                ->with('success', 'Citation issued successfully. Show the QR code to the violator.'.$impoundSuffix.$clampSuffix);
+                ->with('success', 'Citation issued successfully. Show the QR code to the violator.');
         }
 
-        return redirect()->route('citations.show', $citation)->with('success', 'Citation issued successfully.'.$impoundSuffix.$clampSuffix);
+        return redirect()->route('citations.show', $citation)->with('success', 'Citation issued successfully.');
     }
 
     public function handoff(Citation $citation): View
@@ -250,7 +192,6 @@ class CitationController extends Controller
         $clamping = DB::transaction(function () use ($citation, $numberService) {
             $clamping = ClampingRecord::create([
                 'notice_number' => $numberService->noticeNumber(),
-                'vehicle_plate' => $citation->vehicle_plate,
                 'citation_id' => $citation->id,
                 'clamped_by' => auth()->id(),
                 'status' => ClampingStatus::AwaitingPayment,
@@ -268,5 +209,41 @@ class CitationController extends Controller
 
         return redirect()->route('clamping.show', $clamping)
             ->with('success', 'Vehicle clamped successfully. Create the impounding record to continue.');
+    }
+
+    public function destroy(Citation $citation): RedirectResponse
+    {
+        $this->authorize('delete', $citation);
+
+        $blockers = [];
+        if ($citation->payment()->exists()) {
+            $blockers[] = 'a payment record';
+        }
+        if ($citation->clampingRecords()->exists()) {
+            $blockers[] = 'a clamping record';
+        }
+        if ($citation->impoundingRecord()->exists()) {
+            $blockers[] = 'an impounding record';
+        }
+        if ($citation->appeal()->exists()) {
+            $blockers[] = 'an appeal';
+        }
+        if (CitizenReport::where('citation_id', $citation->id)->exists()) {
+            $blockers[] = 'a citizen report issued from it';
+        }
+
+        if ($blockers !== []) {
+            return back()->with('error', 'Cannot delete citation '.$citation->citation_number.' because it is linked to '.implode(', ', $blockers).'. Delete or resolve the linked records first.');
+        }
+
+        DB::transaction(function () use ($citation) {
+            Archive::log($citation, 'Citation deleted', auth()->id(), $citation->toArray());
+
+            // Citation evidence rows cascade at the database level.
+            $citation->delete();
+        });
+
+        return redirect()->route('citations.index')
+            ->with('success', 'Citation '.$citation->citation_number.' has been deleted and archived.');
     }
 }

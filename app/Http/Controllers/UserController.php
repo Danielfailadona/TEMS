@@ -6,10 +6,16 @@ use App\Enums\AccountStatus;
 use App\Enums\Role;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\Appeal;
 use App\Models\Archive;
+use App\Models\CitizenReport;
+use App\Models\ClampingRecord;
 use App\Models\DeviceManager;
+use App\Models\ImpoundingRecord;
+use App\Models\SavedSearch;
 use App\Models\SystemNotification;
 use App\Models\User;
+use App\Models\VehicleRelease;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -153,8 +159,36 @@ $pending = $pendingUsers;
     {
         $this->authorize('delete', $user);
 
-        if ($user->issuedCitations()->exists() || $user->processedPayments()->exists()) {
-            return back()->with('error', 'This user has issued citations or recorded payments and cannot be deleted. Suspend the account instead.');
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'You cannot delete your own account.');
+        }
+
+        // Any enforcement/financial history blocks deletion — suspend instead.
+        $blockers = [];
+        if ($user->issuedCitations()->exists()) {
+            $blockers[] = 'issued citations';
+        }
+        if ($user->processedPayments()->exists()) {
+            $blockers[] = 'processed payments';
+        }
+        if (ClampingRecord::where('clamped_by', $user->id)->exists()
+            || ImpoundingRecord::where('impounded_by', $user->id)->exists()) {
+            $blockers[] = 'clamping/impounding records';
+        }
+        if (VehicleRelease::where('released_by', $user->id)->exists()) {
+            $blockers[] = 'vehicle releases';
+        }
+        if (Appeal::where('submitted_by', $user->id)->exists()
+            || Appeal::where('reviewed_by', $user->id)->exists()) {
+            $blockers[] = 'appeals';
+        }
+        if ($user->assignedCitizenReports()->exists()
+            || CitizenReport::where('processed_by', $user->id)->exists()) {
+            $blockers[] = 'citizen reports';
+        }
+
+        if ($blockers !== []) {
+            return back()->with('error', "Cannot delete {$user->name}: the account is linked to ".implode(', ', $blockers).'. Suspend the account instead.');
         }
 
         $name = $user->name;
@@ -163,8 +197,10 @@ $pending = $pendingUsers;
             Archive::log($user, 'User deleted', auth()->id(), $user->toArray());
 
             $user->teams()->detach();
+            $user->enforcerSchedules()->delete();
             $user->notifications()->delete();
             $user->devices()->delete();
+            SavedSearch::where('user_id', $user->id)->delete();
             $user->delete();
         });
 

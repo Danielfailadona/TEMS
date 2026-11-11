@@ -596,8 +596,9 @@
                             </button>
                         </form>
                         @if (auth()->user()?->isSuperAdmin())
-                        <form action="{{ route('teams.destroy', $team) }}" method="POST"
-                              onsubmit="return confirm('Delete team {{ $team->name }}?\n\nAssigned zones will be released and members detached.');">
+                        <form action="{{ route('teams.destroy', $team) }}" method="POST" class="js-confirm-delete"
+                              data-confirm-title="Delete team {{ $team->name }}?"
+                              data-confirm="Assigned zones will be released and members detached. The team will be archived before deletion. This action cannot be undone.">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="tm-round delete" title="Delete team">

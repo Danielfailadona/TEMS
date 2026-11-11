@@ -953,20 +953,232 @@ body::before {
 }
 
 @media (max-width: 991.98px) {
+    /* Mobile chrome for every role: hide the fixed desktop sidebar */
+    .sidebar {
+        display: none !important;
+    }
+    .main-content {
+        margin-left: 0 !important;
+    }
     .enforcer-tab-bar {
         display: flex !important;
     }
-    .main-content {
-        padding-bottom: 72px !important;
-    }
-    body.enforcer-mobile .sidebar {
-        display: none !important;
-    }
     body.enforcer-mobile .main-content {
-        margin-left: 0 !important;
+        padding-bottom: 72px !important;
     }
     body.enforcer-mobile .navbar.d-lg-none {
         display: none !important;
+    }
+}
+
+/* ----- Group B: list tables become stacked cards on phones ----- */
+@media (max-width: 767.98px) {
+    .table-cards thead {
+        display: none;
+    }
+    .table-cards tbody tr {
+        display: block;
+        background: #fff;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08);
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.85rem;
+        height: auto !important;
+    }
+    .table-cards tbody tr:last-child {
+        margin-bottom: 0;
+    }
+    .table-cards tbody th,
+    .table-cards tbody td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        text-align: right !important;
+        border: 0 !important;
+        padding: 0.3rem 0 !important;
+        height: auto !important;
+        white-space: normal !important;
+    }
+    .table-cards tbody td:first-child {
+        font-weight: 600;
+    }
+    .table-cards tbody th:not(:last-child)::before,
+    .table-cards tbody td:not(:last-child)::before {
+        content: attr(data-label);
+        font-weight: 600;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: #64748b;
+        text-align: left !important;
+        flex-shrink: 0;
+    }
+    /* Actions cell: buttons wrap on their own line below the fields */
+    .table-cards tbody th:last-child,
+    .table-cards tbody td:last-child {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        padding-top: 0.6rem !important;
+        border-top: 1px dashed #e2e8f0 !important;
+        margin-top: 0.4rem;
+    }
+    .table-cards tbody th:last-child::before,
+    .table-cards tbody td:last-child::before {
+        display: none;
+    }
+    /* Empty-state rows span the full card */
+    .table-cards tbody tr > td[colspan],
+    .table-cards tbody tr > th[colspan] {
+        display: block;
+        text-align: center !important;
+        padding: 1.25rem 0.5rem !important;
+        margin: 0;
+        font-weight: 400;
+    }
+    .table-cards tbody tr > td[colspan]::before {
+        display: none;
+    }
+    /* Bulk-select checkbox column (users) has no place on a card */
+    .table-cards td.cell-checkbox,
+    .table-cards th.cell-checkbox {
+        display: none;
+    }
+}
+
+/* ----- Unified standard table design (modeled on the Citations table) ----- */
+.std-table-wrap {
+    overflow-x: auto;
+    background: #fff;
+    border: 1px solid #dfe5eb;
+    border-radius: 12px;
+}
+.std-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 790px;
+    table-layout: fixed;
+    background: #fff;
+}
+.std-table thead th {
+    height: 51px;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 0 16px;
+    border-bottom: 2px solid #e8edf2;
+    white-space: nowrap;
+    color: #182235;
+}
+.std-table tbody tr {
+    height: 78px;
+    border-bottom: 2px solid #e8edf2;
+}
+.std-table tbody tr:last-child {
+    border-bottom: 0;
+}
+.std-table tbody td,
+.std-table tbody th {
+    padding: 0 16px;
+    white-space: nowrap;
+    font-size: 14px;
+    color: #182235;
+    vertical-align: middle;
+}
+.std-table tbody th {
+    font-weight: 600;
+}
+.std-table .std-empty {
+    padding: 45px 20px;
+    text-align: center;
+    color: #738197;
+}
+.std-pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 24px;
+    padding: 0 10px;
+    border-radius: 7px;
+    min-width: 40px;
+    text-align: center;
+}
+.std-view-btn {
+    width: 48px;
+    height: 34px;
+    border: 1px solid #176ff2;
+    color: #176ff2;
+    background: #fff;
+    border-radius: 18px;
+    display: inline-grid;
+    place-items: center;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+.std-view-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+}
+.std-view-btn:hover {
+    background: #edf5ff;
+    color: #176ff2;
+}
+.std-table-footer {
+    min-height: 42px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    color: #74839a;
+    font-size: 11px;
+    padding: 12px 4px 0;
+    flex-wrap: wrap;
+}
+.std-table-footer .pagination {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 0;
+}
+.std-table-footer .pagination .page-link {
+    width: 38px;
+    height: 30px;
+    background: #fff;
+    border: 1px solid #dce3eb;
+    color: #176ff2;
+    margin-left: -1px;
+    display: grid;
+    place-items: center;
+    font-size: 13px;
+    border-radius: 0;
+    padding: 0;
+    text-decoration: none;
+}
+.std-table-footer .pagination .page-item:first-child .page-link {
+    border-radius: 5px 0 0 5px;
+    color: #60728a;
+}
+.std-table-footer .pagination .page-item:last-child .page-link {
+    border-radius: 0 5px 5px 0;
+    color: #60728a;
+}
+.std-table-footer .pagination .page-item.active .page-link {
+    background: #176ff2;
+    border-color: #176ff2;
+    color: #fff;
+}
+.std-table-footer .pagination .page-item.disabled .page-link {
+    background: #fff;
+    color: #c3cdd9;
+}
+@media (max-width: 767.98px) {
+    .std-table {
+        min-width: 0;
+        table-layout: auto;
     }
 }
 

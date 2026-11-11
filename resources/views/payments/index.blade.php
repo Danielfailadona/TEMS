@@ -169,6 +169,9 @@
     /* Table */
     .pym-dash .pym-table-wrap { margin-top: 24px; overflow-x: auto; background: #fff; border: 1px solid var(--pym-line); border-radius: 12px; }
     .pym-dash .pym-table { width: 100%; border-collapse: collapse; min-width: 900px; table-layout: fixed; background: #fff; }
+    @media (max-width: 767.98px) {
+        .pym-dash .pym-table { min-width: 0; table-layout: auto; }
+    }
     .pym-dash .pym-table thead th {
         height: 51px; text-align: left; font-size: 14px; font-weight: 600; padding: 0 16px;
         border-bottom: 2px solid #e8edf2; white-space: nowrap; color: var(--pym-ink);
@@ -372,7 +375,7 @@
     @endif
 
     <section class="pym-table-wrap" aria-label="Payments table">
-        <table class="pym-table">
+        <table class="pym-table table-cards">
             <thead>
                 <tr>
                     <th scope="col">Citation #</th>
@@ -393,15 +396,15 @@
                         $category = $row['category'];
                     @endphp
                     <tr>
-                        <th scope="row" title="{{ $isReceipt ? $payment->payableNoticeNumber() : ($payable->citation_number ?? $payable->notice_number) }}">
+                        <th scope="row" title="{{ $isReceipt ? $payment->payableNoticeNumber() : ($payable->citation_number ?? $payable->notice_number) }}" data-label="Ticket #">
                             @if ($isReceipt)
                                 {{ $payment->payableNoticeNumber() }}
                             @else
                                 {{ $payable->citation_number ?? $payable->notice_number }}
                             @endif
                         </th>
-                        <td>{{ $isReceipt ? $payment->payableVehicle() : ($payable->vehicle_plate ?: '—') }}</td>
-                        <td>
+                        <td data-label="Vehicle">{{ $isReceipt ? $payment->payableVehicle() : ($payable->vehicle_plate ?: '—') }}</td>
+                        <td data-label="Amount">
                             @if ($isReceipt)
                                 ₱{{ number_format($payment->amount, 2) }}
                             @else
@@ -415,15 +418,15 @@
                                 ₱{{ number_format((float) $due, 2) }}
                             @endif
                         </td>
-                        <td>
+                        <td data-label="Method">
                             @if ($isReceipt)
                                 {{ $payment->methodDisplay() }}
                             @else
                                 —
                             @endif
                         </td>
-                        <td>{{ $row['date']?->format('M d, Y') ?? '—' }}</td>
-                        <td>
+                        <td data-label="Paid At">{{ $row['date']?->format('M d, Y') ?? '—' }}</td>
+                        <td data-label="Status">
                             @if ($isReceipt)
                                 <span class="pym-pill {{ $payment->getStatusBadgeClass() }}">{{ $payment->getStatusLabel() }}</span>
                             @else
@@ -441,6 +444,7 @@
                                             <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                                         </a>
                                     @endcan
+                                    <x-delete-button :record="$payment" route-name="payments.destroy" :label="$payment->receipt_number" class="btn btn-sm btn-outline-danger" />
                                 @else
                                     @php
                                         $detailRoute = match ($category) {

@@ -10,7 +10,6 @@ use App\Models\Archive;
 use App\Models\Citation;
 use App\Models\CitationEvidence;
 use App\Models\CitizenReport;
-use App\Models\ImpoundingRecord;
 use App\Models\SystemNotification;
 use App\Models\User;
 use App\Models\ViolationType;
@@ -91,6 +90,8 @@ class CitizenReportController extends Controller
         $citizenReport->load(['processedBy', 'assignedTo', 'citation.violationType', 'clampingRecord.citation', 'clampingRecord.officer']);
 
         $enforcers = User::where('role', Role::Enforcer->value)
+            ->where('account_status', 'approved')
+            ->where('is_active', true)
             ->orderBy('name')
             ->get();
 
@@ -108,7 +109,7 @@ class CitizenReportController extends Controller
         $this->authorize('update', $citizenReport);
 
         $validated = $request->validate([
-            'assigned_to' => 'nullable|exists:users,id',
+            'assigned_to' => 'nullable|integer|exists:users,id',
         ]);
 
         $actor = auth()->user();
@@ -116,11 +117,30 @@ class CitizenReportController extends Controller
         // An enforcer accepting from the pool assigns the report to themselves;
         // admins choose an enforcer (or fall back to auto-assignment).
         if ($actor->isRole(Role::Enforcer)) {
+            if (! $actor->canBeAssigned()) {
+                return back()->withErrors([
+                    'assigned_to' => 'You are currently marked unavailable. Set yourself available first before accepting reports.',
+                ]);
+            }
             $assignedTo = $actor->id;
+        } elseif ($validated['assigned_to'] ?? null) {
+            // Admin explicitly chose an enforcer — respect availability.
+            $enforcer = User::findOrFail($validated['assigned_to']);
+
+            if (! $enforcer->isRole(Role::Enforcer)) {
+                return back()->withErrors(['assigned_to' => 'Selected user is not an enforcer.']);
+            }
+
+            if (! $enforcer->canBeAssigned()) {
+                return back()->withErrors(['assigned_to' => "{$enforcer->name} is currently unavailable and cannot be assigned reports."]);
+            }
+
+            $assignedTo = $enforcer->id;
+        } elseif ($citizenReport->assigned_to) {
+            // Keep an existing assignment as-is.
+            $assignedTo = $citizenReport->assigned_to;
         } else {
-            $assignedTo = $validated['assigned_to']
-                ?? $citizenReport->assigned_to
-                ?? $autoAssign->pickEnforcer()?->id;
+            $assignedTo = $autoAssign->pickEnforcer()?->id;
         }
 
         $citizenReport->update([
@@ -138,6 +158,22 @@ class CitizenReportController extends Controller
                 "Report {$citizenReport->report_number} for {$citizenReport->vehicle_plate} has been assigned to you.",
                 ['citizen_report_id' => $citizenReport->id]
             );
+        }
+
+        // No enforcer was available: the report stays accepted but unassigned.
+        if (! $assignedTo) {
+            foreach (User::whereIn('role', [Role::SuperAdmin, Role::Administrator])->get() as $admin) {
+                SystemNotification::notify(
+                    $admin,
+                    'citizen_report',
+                    'Report Awaiting Assignment',
+                    "Report {$citizenReport->report_number} for {$citizenReport->vehicle_plate} was accepted but no enforcer is currently available to take it.",
+                    ['citizen_report_id' => $citizenReport->id]
+                );
+            }
+
+            return redirect()->route('citizen-reports.show', $citizenReport)
+                ->with('warning', 'Report accepted, but no enforcer is currently available — it remains unassigned. All administrators have been notified.');
         }
 
         return redirect()->route('citizen-reports.show', $citizenReport)
@@ -205,8 +241,18 @@ class CitizenReportController extends Controller
         $this->authorize('update', $citizenReport);
 
         $validated = $request->validate([
-            'assigned_to' => 'required|exists:users,id',
+            'assigned_to' => 'required|integer|exists:users,id',
         ]);
+
+        $enforcer = User::findOrFail($validated['assigned_to']);
+
+        if (! $enforcer->isRole(Role::Enforcer)) {
+            return back()->withErrors(['assigned_to' => 'Selected user is not an enforcer.']);
+        }
+
+        if (! $enforcer->canBeAssigned()) {
+            return back()->withErrors(['assigned_to' => "{$enforcer->name} is currently unavailable and cannot be assigned reports."]);
+        }
 
         $citizenReport->update([
             'assigned_to' => $validated['assigned_to'],
@@ -320,31 +366,9 @@ class CitizenReportController extends Controller
                 }
             }
 
-            if ($violationType->is_impoundable) {
-                $violationCode = $violationType->code ?? 'default';
-                $fees = config('itevcms.impounding.violation_fees')[$violationCode] ?? config('itevcms.impounding.violation_fees.default');
-
-                $impounding = ImpoundingRecord::create([
-                    'notice_number' => $numberService->impoundNumber(),
-
-                    'citation_id' => $citation->id,
-                    'impounded_by' => auth()->id(),
-                    'status' => \App\Enums\ImpoundingStatus::Impounded,
-                    'location' => $citation->location,
-                    'notes' => $request->input('impounding_notes'),
-                    'evidence_path' => $evidencePaths[0] ?? null,
-                    'towing_fee' => $fees['towing_fee'],
-                    'storage_fee_per_day' => $fees['storage_fee_per_day'],
-                    'admin_fee' => $fees['admin_fee'],
-                    'grace_until' => now()->addHours(config('itevcms.impounding.grace_hours', 24)),
-                    'impounded_at' => now(),
-                ]);
-
-                Archive::log($impounding, 'Vehicle impounded (auto-created from citation)', auth()->id());
-                $citation->update(['status' => CitationStatus::Impounded]);
-            } elseif ($violationType->is_clampable) {
-                $citation->update(['status' => CitationStatus::Clamped]);
-            }
+            // Clamping/impounding records are NOT auto-created here. Citations with
+            // clampable/impoundable violations become eligible on the Clamping and
+            // Impounding pages, where an Administrator makes the decision manually.
 
             $citizenReport->update([
                 'citation_id' => $citation->id,
@@ -362,10 +386,23 @@ class CitizenReportController extends Controller
             return $citation;
         });
 
-        $suffix = $violationType->is_impoundable ? ' An impounding record was created.' : '';
-        $suffix .= (! $violationType->is_impoundable && $violationType->is_clampable) ? ' Vehicle is clamped.' : '';
-
         return redirect()->route('citations.handoff', $citation)
-            ->with('success', 'Citation issued from report. Show the QR code to the violator.'.$suffix);
+            ->with('success', 'Citation issued from report. Show the QR code to the violator.');
+    }
+
+    public function destroy(CitizenReport $citizenReport): RedirectResponse
+    {
+        $this->authorize('delete', $citizenReport);
+
+        if ($citizenReport->citation_id) {
+            return back()->with('error', 'Cannot delete report '.$citizenReport->report_number.' because a citation was already issued from it. Delete the citation first.');
+        }
+
+        Archive::log($citizenReport, 'Citizen report deleted', auth()->id(), $citizenReport->toArray());
+
+        $citizenReport->delete();
+
+        return redirect()->route('citizen-reports.index')
+            ->with('success', 'Citizen report '.$citizenReport->report_number.' has been deleted and archived.');
     }
 }

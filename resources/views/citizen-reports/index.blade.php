@@ -54,6 +54,9 @@
     .cr-dash .cr-search-box input:focus { border-color: #7aa9f8; box-shadow: inset 0 0 0 1px #7aa9f8; }
     .cr-dash .cr-table-wrap { margin-top: 24px; overflow-x: auto; background: #fff; border: 1px solid var(--cr-line); border-radius: 12px; }
     .cr-dash .cr-table { width: 100%; border-collapse: collapse; min-width: 790px; table-layout: fixed; background: #fff; }
+    @media (max-width: 767.98px) {
+        .cr-dash .cr-table { min-width: 0; table-layout: auto; }
+    }
     .cr-dash .cr-table thead th {
         height: 51px; text-align: left; font-size: 14px; font-weight: 700; padding: 0 16px;
         border-bottom: 2px solid #e8edf2; white-space: nowrap; color: var(--cr-ink);
@@ -175,7 +178,7 @@
 
     {{-- Table --}}
     <section class="cr-table-wrap" aria-label="Citizen reports table">
-        <table class="cr-table">
+        <table class="cr-table table-cards">
             <thead>
                 <tr>
                     <th scope="col">Report #</th>
@@ -190,16 +193,19 @@
             <tbody>
                 @forelse ($reports as $r)
                     <tr>
-                        <td>{{ $r->report_number }}</td>
-                        <td>{{ $r->vehicle_plate }}</td>
-                        <td>{{ $r->location_address }}</td>
-                        <td><span class="cr-pill {{ $r->getStatusBadgeClass() }}">{{ $r->getStatusLabel() }}</span></td>
-                        <td>{{ $r->created_at->format('M d, Y') }}</td>
-                        <td>{{ $r->assignedTo?->name ?? '—' }}</td>
+                        <td data-label="Report #">{{ $r->report_number }}</td>
+                        <td data-label="Vehicle Plate">{{ $r->vehicle_plate }}</td>
+                        <td data-label="Location">{{ $r->location_address }}</td>
+                        <td data-label="Status"><span class="cr-pill {{ $r->getStatusBadgeClass() }}">{{ $r->getStatusLabel() }}</span></td>
+                        <td data-label="Reported">{{ $r->created_at->format('M d, Y') }}</td>
+                        <td data-label="Assigned To">{{ $r->assignedTo?->name ?? '—' }}</td>
                         <td style="text-align: center;">
-                            <a href="{{ route('citizen-reports.show', $r) }}" class="cr-view-btn" aria-label="View report {{ $r->report_number }}" title="View">
-                                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>
-                            </a>
+                            <div class="d-inline-flex align-items-center gap-1">
+                                <a href="{{ route('citizen-reports.show', $r) }}" class="cr-view-btn" aria-label="View report {{ $r->report_number }}" title="View">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>
+                                </a>
+                                <x-delete-button :record="$r" route-name="citizen-reports.destroy" :label="$r->report_number" />
+                            </div>
                         </td>
                     </tr>
                 @empty

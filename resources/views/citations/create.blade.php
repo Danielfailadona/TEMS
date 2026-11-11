@@ -112,51 +112,10 @@
             </div>
 
             <div class="row g-3 mt-2" id="violationDetailsPanels" style="display:none;">
-                <div class="col-12 col-md-6">
-                    <div class="card border-warning bg-warning-subtle h-100">
+                <div class="col-12">
+                    <div class="card border-info bg-info-subtle">
                         <div class="card-body py-2">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <small class="fw-semibold">This violation is eligible for impounding.</small>
-                                    <div class="small mt-1">
-                                        <strong>Violations Eligible for Impounding:</strong>
-                                        <ul class="mb-0 mt-1 ps-3">
-                                            <li>Unregistered or Delinquent Vehicles: Driving with expired, invalid, or missing registration (₱10,000 fine plus impoundment until properly registered and inspected).</li>
-                                            <li>Unauthorized Modifications: Changing color, body, engine/chassis without prior LTO approval and registration update.</li>
-                                            <li>Tampered or Improvised Plates: Using unauthorized, fake, or improperly attached plates, or illegal transfer of plates/stickers.</li>
-                                            <li>Suspended or Revoked CR/OR: Operating while CR/OR is suspended or revoked.</li>
-                                            <li>Defective or Missing Parts: Operating with missing/unsafe required parts that pose public safety hazard.</li>
-                                            <li>Colorum Operations: Operating PUVs without valid CPC or franchise.</li>
-                                            <li>Fake Driver's Licenses or Documents: Presenting fraudulent licenses, fake OR/CR, or tampered franchising documents.</li>
-                                            <li>Major Driving & Crime Violations: Using vehicle in commission of crime or severe offenses upon court conviction.</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-md-6">
-                    <div class="card border-primary bg-primary-subtle h-100">
-                        <div class="card-body py-2">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <small class="fw-semibold">This violation is eligible for clamping.</small>
-                                    <div class="small mt-1">
-                                        <strong>Core Violations Eligible for Clamping:</strong>
-                                        <ul class="mb-0 mt-1 ps-3">
-                                            <li>Posted "No Parking" or "Tow-Away" Zones: Any road, street, or Mabuhay lane designated with official no-parking signs.</li>
-                                            <li>Sidewalks and Paths: Parked on sidewalks, walking paths, pedestrian crosswalks, or alleys.</li>
-                                            <li>Vital Entrances & Driveways: Blocking an authorized driveway or parked within four meters of a hospital, clinic, or fire station entrance.</li>
-                                            <li>Intersections & Curves: Parked within six meters of any curved lane or street intersection.</li>
-                                            <li>Fire Hydrants: Stopped or parked within four meters of a fire hydrant.</li>
-                                            <li>Bicycle Lanes: Straddling or completely obstructing a designated active transport lane.</li>
-                                            <li>Double Parking: Parked on the roadside of any legally parked vehicle.</li>
-                                            <li>Bridges: Parked at the foot or directly on top of a bridge.</li>
-</ul>
-                                    </div>
-                                </div>
-                            </div>
+                            <small><i class="bi bi-info-circle me-1"></i>For violations that are clampable or impoundable, the clamping/impounding decision is made separately by an Administrator on the Clamping / Impounding pages — issuing this citation does not clamp or impound the vehicle.</small>
                         </div>
                     </div>
                 </div>
@@ -186,7 +145,6 @@
             <div class="col-md-6">
                 <label class="form-label">Notes</label>
                 <textarea name="notes" class="form-control" rows="3" placeholder="Driver behavior, weather, officer observations, etc.">{{ old('notes') }}</textarea>
-                <small class="form-text text-muted">General citation context (not impounding-specific)</small>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Evidence Photos <span class="text-danger">*</span></label>
@@ -204,22 +162,6 @@
                     <small class="form-text text-muted d-block mt-2">At least one photo is required. You may attach multiple photos.</small>
                     <div class="evidence-preview row g-2 mt-2" id="evidencePreview"></div>
                     @error('evidence')<small class="text-danger d-block mt-1">{{ $message }}</small>@enderror
-                </div>
-            </div>
-            <div class="col-md-6" id="impoundingSection" style="display:none;">
-                <div class="card border-danger">
-                    <div class="card-header bg-danger-subtle">
-                        <strong><i class="bi bi-truck-front me-2"></i>Impounding Details</strong>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label">Impounding Notes (optional)</label>
-                            <textarea name="impounding_notes" rows="3" class="form-control" placeholder="Tow reason, storage location, release conditions, etc.">{{ old('impounding_notes') }}</textarea>
-                            @error('impounding_notes')<small class="text-danger">{{ $message }}</small>@enderror
-                            <small class="form-text text-muted">Impounding-specific details (separate from general Notes above)</small>
-                        </div>
-                        <small class="form-text text-muted">Impounding evidence will reuse the citation evidence photos submitted above.</small>
-                    </div>
                 </div>
             </div>
         </div>
@@ -278,36 +220,25 @@
     document.getElementById('btnGallery').addEventListener('click', () => galleryInput.click());
 
     const violationSelect = document.getElementById('violationTypeSelect');
-    const impoundingSection = document.getElementById('impoundingSection');
     const violationDetailsPanels = document.getElementById('violationDetailsPanels');
     const customViolationPanel = document.getElementById('customViolationPanel');
-    function toggleImpounding() {
+    function toggleViolationPanels() {
         if (!violationSelect) return;
         const option = violationSelect.options[violationSelect.selectedIndex];
-        const isImpoundable = option && option.dataset.isImpoundable === '1';
-        const isClampable = option && option.dataset.isClampable === '1';
+        const isClampable = option && (option.dataset.isImpoundable === '1' || option.dataset.isClampable === '1');
         const isCustom = option && option.dataset.isCustom === '1';
-        // Impounding section shows only when impoundable
-        if (impoundingSection) {
-            impoundingSection.style.display = isImpoundable ? 'block' : 'none';
-        }
-        // Violation details panels show when either impoundable OR clampable
+        // Eligibility info panel: clamping/impounding happens on the Admin pages
         if (violationDetailsPanels) {
-            violationDetailsPanels.style.display = (isImpoundable || isClampable) ? 'flex' : 'none';
+            violationDetailsPanels.style.display = isClampable ? 'flex' : 'none';
         }
         // Custom violation panel shows only for "Others" type
         if (customViolationPanel) {
             customViolationPanel.style.display = isCustom ? 'block' : 'none';
         }
-        // Ensure main Notes field is always visible (safety)
-        const notesField = document.querySelector('[name="notes"]').closest('.col-12');
-        if (notesField) {
-            notesField.style.display = 'block';
-        }
     }
     if (violationSelect) {
-        violationSelect.addEventListener('change', toggleImpounding);
-        toggleImpounding();
+        violationSelect.addEventListener('change', toggleViolationPanels);
+        toggleViolationPanels();
     }
 
     const currentLocationBtn = document.getElementById('btnCurrentLocation');

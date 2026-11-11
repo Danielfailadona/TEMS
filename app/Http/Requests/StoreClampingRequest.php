@@ -15,19 +15,9 @@ class StoreClampingRequest extends FormRequest
     {
         return [
             'vehicle_plate' => ['required', 'string', 'max:20'],
+            'citation_id' => ['required', 'integer', 'exists:citations,id'],
             'location' => ['nullable', 'string', 'max:500'],
             'notes' => ['nullable', 'string'],
-            'evidence' => ['required', 'file', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'evidence.required' => 'An evidence photo is required.',
-            'evidence.image' => 'The evidence file must be an image.',
-            'evidence.mimes' => 'The evidence photo must be a JPEG, PNG, or WebP.',
-            'evidence.max' => 'The evidence photo must be 5 MB or smaller.',
         ];
     }
 }

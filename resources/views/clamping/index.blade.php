@@ -232,7 +232,7 @@
     @endif
 
     <section class="pym-table-wrap" aria-label="Clamping records table">
-        <table class="pym-table">
+        <table class="pym-table table-cards">
             <thead>
                 <tr>
                     <th scope="col">Notice #</th>
@@ -251,12 +251,12 @@
                         $statusBadge = $row->status->badgeClass();
                     @endphp
                     <tr>
-                        <th scope="row">{{ $row->notice_number }}</th>
-                        <td>{{ $row->vehicle_plate }}</td>
-                        <td>{{ $row->officer->name ?? '—' }}</td>
-                        <td>{{ $row->clamped_at?->format('M d, Y') ?? '—' }}</td>
-                        <td><span class="pym-pill {{ $statusBadge }}">{{ $statusLabel }}</span></td>
-                        <td>₱{{ number_format($row->clamping_fee ?? ($row->citation?->penalty_amount ?? 0), 2) }}</td>
+                        <th scope="row" data-label="Notice #">{{ $row->notice_number }}</th>
+                        <td data-label="Plate">{{ $row->vehicle_plate }}</td>
+                        <td data-label="Officer">{{ $row->officer->name ?? '—' }}</td>
+                        <td data-label="Clamped At">{{ $row->clamped_at?->format('M d, Y') ?? '—' }}</td>
+                        <td data-label="Status"><span class="pym-pill {{ $statusBadge }}">{{ $statusLabel }}</span></td>
+                        <td data-label="Fee">₱{{ number_format($row->clamping_fee ?? ($row->citation?->penalty_amount ?? 0), 2) }}</td>
                         <td>
                             <div class="pym-actions">
                                 <a href="{{ route('clamping.show', $row) }}" class="pym-pill-btn" aria-label="View {{ $row->notice_number }}" title="View">
@@ -289,6 +289,7 @@
                                         </button>
                                     </form>
                                 @endcan
+                                <x-delete-button :record="$row" route-name="clamping.destroy" :label="$row->notice_number" class="btn btn-sm btn-outline-danger" />
                             </div>
                         </td>
                     </tr>

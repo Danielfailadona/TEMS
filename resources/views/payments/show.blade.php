@@ -12,6 +12,9 @@
             <a href="{{ route('payments.edit', $payment) }}" class="btn btn-outline-secondary">Edit</a>
         @endcan
         <a href="{{ route('payments.print', $payment) }}" target="_blank" class="btn btn-outline-primary">Print Receipt</a>
+        <x-delete-button :record="$payment" route-name="payments.destroy" :label="$payment->receipt_number" class="btn btn-outline-danger">
+            <i class="bi bi-trash me-1"></i>Delete
+        </x-delete-button>
     </div>
 </div>
 

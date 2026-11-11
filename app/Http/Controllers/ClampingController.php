@@ -32,7 +32,7 @@ class ClampingController extends Controller
             $search = trim($request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('notice_number', 'like', "%{$search}%")
-                  ->orWhere('vehicle_plate', 'like', "%{$search}%")
+                  ->orWhereHas('citation', fn ($c) => $c->where('vehicle_plate', 'like', "%{$search}%"))
                   ->orWhereHas('officer', fn ($o) => $o->where('name', 'like', "%{$search}%"));
             });
         }
@@ -42,8 +42,8 @@ class ClampingController extends Controller
         }
 
         if ($request->filled('date_from') && $request->filled('date_to')) {
-            $dateFrom = Carbon::parse($request->date_from)->startOfDay()->setTimezone('UTC');
-            $dateTo   = Carbon::parse($request->date_to)->endOfDay()->setTimezone('UTC');
+            $dateFrom = \Carbon\Carbon::parse($request->date_from)->startOfDay()->setTimezone('UTC');
+            $dateTo   = \Carbon\Carbon::parse($request->date_to)->endOfDay()->setTimezone('UTC');
             $query->whereBetween('clamped_at', [$dateFrom, $dateTo]);
         }
 
@@ -53,17 +53,7 @@ class ClampingController extends Controller
             ->latest()
             ->get();
 
-        $overdueCitations = collect();
-        if (auth()->user()->isRole(\App\Enums\Role::SuperAdmin, \App\Enums\Role::Administrator, \App\Enums\Role::Enforcer)) {
-            $eligibleDays = config('itevcms.clamping_eligible_days');
-            $overdueCitations = Citation::whereIn('status', [CitationStatus::Overdue, CitationStatus::Issued])
-                ->whereDate('due_date', '<=', now()->subDays($eligibleDays))
-                ->whereDoesntHave('clampingRecords')
-                ->orderBy('vehicle_plate')
-                ->get();
-        }
-
-        return view('clamping.index', compact('grid', 'pendingRequests', 'overdueCitations'));
+        return view('clamping.index', compact('grid', 'pendingRequests'));
     }
 
     public function create(Request $request): View
@@ -72,22 +62,58 @@ class ClampingController extends Controller
 
         $plate = $request->vehicle_plate;
         $citation = null;
-        if ($plate) {
+
+        if ($request->filled('citation_id')) {
+            $citation = Citation::with('violationType')->find($request->citation_id);
+        } elseif ($plate) {
             $citation = Citation::where('vehicle_plate', $plate)
                 ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue])
                 ->latest('issued_at')
                 ->first();
         }
 
-        return view('clamping.create', compact('plate', 'citation'));
+        // Citations eligible for clamping: clampable violation, still Issued/Overdue,
+        // unpaid, and not yet clamped. The admin selects one here and records the clamp.
+        $eligibleQuery = Citation::with(['violationType', 'enforcer'])
+            ->whereHas('violationType', fn ($v) => $v->where('is_clampable', true))
+            ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue])
+            ->whereDoesntHave('clampingRecords')
+            ->whereDoesntHave('payment', fn ($p) => $p->whereNotNull('paid_at'));
+
+        if ($request->filled('eligible_search')) {
+            $term = trim($request->eligible_search);
+            $eligibleQuery->where(function ($q) use ($term) {
+                $q->where('citation_number', 'like', "%{$term}%")
+                    ->orWhere('vehicle_plate', 'like', "%{$term}%")
+                    ->orWhere('driver_name', 'like', "%{$term}%");
+            });
+        }
+
+        if ($request->filled('eligible_status') && in_array($request->eligible_status, [CitationStatus::Issued->value, CitationStatus::Overdue->value], true)) {
+            $eligibleQuery->where('status', $request->eligible_status);
+        }
+
+        $eligibleCitations = $eligibleQuery->orderBy('due_date')->limit(100)->get();
+
+        return view('clamping.create', compact('plate', 'citation', 'eligibleCitations'));
     }
 
     public function store(StoreClampingRequest $request, CitationNumberService $numberService): RedirectResponse
     {
         $this->authorize('create', ClampingRecord::class);
 
-        $existingClamp = ClampingRecord::whereHas('citation', function ($query) use ($request) {
-            $query->where('vehicle_plate', $request->vehicle_plate);
+        $citation = Citation::with('violationType')->findOrFail($request->citation_id);
+
+        if (! $citation->violationType?->is_clampable) {
+            return back()->withErrors(['citation_id' => 'The linked citation is not eligible for clamping.']);
+        }
+
+        if (! in_array($citation->status, [CitationStatus::Issued, CitationStatus::Overdue], true)) {
+            return back()->withErrors(['citation_id' => 'Only issued or overdue citations can be clamped.']);
+        }
+
+        $existingClamp = ClampingRecord::whereHas('citation', function ($query) use ($citation) {
+            $query->where('vehicle_plate', $citation->vehicle_plate);
         })
             ->where('status', ClampingStatus::AwaitingPayment)
             ->exists();
@@ -96,37 +122,21 @@ class ClampingController extends Controller
             return back()->withErrors(['vehicle_plate' => 'This vehicle is already clamped.']);
         }
 
-        $citation = Citation::where('vehicle_plate', $request->vehicle_plate)
-            ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue])
-            ->latest('issued_at')
-            ->first();
-
-        $evidencePath = null;
-        if ($request->hasFile('evidence')) {
-            try {
-                $evidencePath = \App\Services\SupabaseStorage::put('clamping/'.$request->file('evidence')->hashName(), $request->file('evidence'));
-            } catch (\Throwable $e) {
-                report($e);
-                return back()->with('error', 'Failed to upload clamp evidence. Please try again.');
-            }
-        }
-
+        // Evidence is inherited from the citation's own photos — no separate upload.
         $record = ClampingRecord::create([
             'notice_number' => $numberService->noticeNumber(),
-            'citation_id' => $citation?->id,
+            'citation_id' => $citation->id,
             'clamped_by' => auth()->id(),
             'status' => ClampingStatus::AwaitingPayment,
             'location' => $request->location,
             'notes' => $request->notes,
-            'evidence_path' => $evidencePath,
+            'evidence_path' => $citation->evidence()->first()?->file_path,
             'clamped_at' => now(),
         ]);
 
         Archive::log($record, 'Vehicle clamped', auth()->id());
 
-        if ($citation) {
-            $citation->update(['status' => CitationStatus::Clamped]);
-        }
+        $citation->update(['status' => CitationStatus::Clamped]);
 
         // Notify vehicle owner (if exists in users) and assigned enforcer
         if ($record->citation && $record->citation->driver_id) {
@@ -256,5 +266,34 @@ class ClampingController extends Controller
 
         return redirect()->route('clamping.show', $clamping)
             ->with('success', 'Vehicle released successfully.');
+    }
+
+    public function destroy(ClampingRecord $clamping): RedirectResponse
+    {
+        $this->authorize('delete', $clamping);
+
+        $blockers = [];
+        if ($clamping->payments()->exists()) {
+            $blockers[] = 'a payment record';
+        }
+        if ($clamping->release()->exists()) {
+            $blockers[] = 'a vehicle release';
+        }
+        if ($clamping->impoundingRecord()->exists()) {
+            $blockers[] = 'an impounding record';
+        }
+
+        if ($blockers !== []) {
+            return back()->with('error', 'Cannot delete clamping record '.$clamping->notice_number.' because it is linked to '.implode(' and ', $blockers).'. Delete or resolve the linked records first.');
+        }
+
+        DB::transaction(function () use ($clamping) {
+            Archive::log($clamping, 'Clamping record deleted', auth()->id(), $clamping->toArray());
+
+            $clamping->delete();
+        });
+
+        return redirect()->route('clamping.index')
+            ->with('success', 'Clamping record '.$clamping->notice_number.' has been deleted and archived.');
     }
 }

@@ -10,27 +10,35 @@
         <p class="text-muted mb-0">Collect payment for citations, clamping, and impounding tickets</p>
     </div>
     <a href="{{ route('payments.index') }}" class="btn btn-outline-secondary">
-        <i class="bi bi-hourglass-split me-1"></i>Awaiting Payment
+        <i class="bi bi-arrow-left me-1"></i>Back to Payments
     </a>
 </div>
 
-<div class="card stat-card mb-4"><div class="card-body">
-    <form method="GET" action="{{ route('payments.create') }}" class="row g-2">
-        <div class="col-md-3">
-            <label class="form-label visually-hidden">Category</label>
-            <select name="category" class="form-select" onchange="this.form.submit()">
-                <option value="" {{ request('category') === '' ? 'selected' : '' }}>All Categories</option>
-                <option value="citation" {{ request('category') === 'citation' ? 'selected' : '' }}>Citation</option>
-                <option value="clamping" {{ request('category') === 'clamping' ? 'selected' : '' }}>Clamping</option>
-                <option value="impounding" {{ request('category') === 'impounding' ? 'selected' : '' }}>Impounding</option>
-            </select>
-        </div>
-        <div class="col-md-6">
-            <input type="text" name="lookup" class="form-control" placeholder="Enter citation/notice number or vehicle plate..." value="{{ request('lookup') }}">
-        </div>
-        <div class="col-auto"><button class="btn btn-outline-secondary"><i class="bi bi-search me-1"></i>Look Up</button></div>
-    </form>
-</div></div>
+@if ($record)
+    <div class="mb-4 d-print-none">
+        <a href="{{ route('payments.create') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-search me-1"></i>Look up a different ticket
+        </a>
+    </div>
+@else
+    <div class="card stat-card mb-4"><div class="card-body">
+        <form method="GET" action="{{ route('payments.create') }}" class="row g-2">
+            <div class="col-md-3">
+                <label class="form-label visually-hidden">Category</label>
+                <select name="category" class="form-select">
+                    <option value="" {{ ($filter ?? null) === null ? 'selected' : '' }}>All Categories</option>
+                    <option value="citation" {{ ($filter ?? null) === 'citation' ? 'selected' : '' }}>Citation</option>
+                    <option value="clamping" {{ ($filter ?? null) === 'clamping' ? 'selected' : '' }}>Clamping</option>
+                    <option value="impounding" {{ ($filter ?? null) === 'impounding' ? 'selected' : '' }}>Impounding</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <input type="text" name="lookup" class="form-control" placeholder="Enter citation/notice number or vehicle plate..." value="{{ request('lookup') }}">
+            </div>
+            <div class="col-auto"><button class="btn btn-outline-secondary"><i class="bi bi-search me-1"></i>Look Up</button></div>
+        </form>
+    </div></div>
+@endif
 
 @if ($record)
     @php

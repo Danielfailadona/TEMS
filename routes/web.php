@@ -113,13 +113,13 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'active', 'approved'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::resource('citations', CitationController::class)->only(['index', 'create', 'store', 'show']);
+    Route::resource('citations', CitationController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
     Route::get('citations/{citation}/handoff', [CitationController::class, 'handoff'])->name('citations.handoff');
     Route::get('citations/{citation}/print', [CitationController::class, 'printCitation'])->name('citations.print');
     Route::post('citations/{citation}/refer-impounding', [CitationController::class, 'referToImpounding'])->name('citations.refer-impounding');
-    Route::resource('payments', PaymentController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
+    Route::resource('payments', PaymentController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
     Route::get('payments/{payment}/print', [PaymentController::class, 'printReceipt'])->name('payments.print');
-    Route::resource('clamping', ClampingController::class)->only(['index', 'create', 'store', 'show']);
+    Route::resource('clamping', ClampingController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
     Route::post('clamping/{clamping}/mark-paid', [ClampingController::class, 'markPaid'])->name('clamping.mark-paid');
     Route::post('clamping/{clamping}/mark-waiting-release', [ClampingController::class, 'markWaitingRelease'])->name('clamping.mark-waiting-release');
     Route::post('clamping/{clamping}/process-release', [ClampingController::class, 'processRelease'])->name('clamping.process-release');
@@ -133,15 +133,13 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
         Route::post('{citizenReport}/assign', 'assign')->name('assign');
         Route::post('{citizenReport}/resolve', 'resolve')->name('resolve');
         Route::post('{citizenReport}/issue-citation', 'issueCitation')->name('issue-citation');
+        Route::delete('{citizenReport}', 'destroy')->name('destroy');
     });
     Route::prefix('operations/task-management')->name('operations.task-management.')->controller(TaskManagementController::class)->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('enforcers/{enforcer}', 'show')->name('show');
         Route::post('enforcers/{enforcer}/schedule', 'updateSchedule')->name('schedule.update');
         Route::post('enforcers/{enforcer}/override', 'updateOverride')->name('override.update');
-        Route::post('auto-assign-all', 'autoAssignAll')->name('auto-assign-all');
-        Route::post('{citizenReport}/assign', 'assign')->name('assign');
-        Route::post('{citizenReport}/auto-assign', 'autoAssign')->name('auto-assign');
     });
     Route::prefix('impounding')->name('impounding.')->controller(ImpoundingController::class)->group(function () {
         Route::get('/', 'index')->name('index');
@@ -152,9 +150,10 @@ Route::middleware(['auth', 'active', 'approved'])->group(function () {
         Route::post('{impounding}/mark-paid', 'markPaid')->name('mark-paid');
         Route::post('{impounding}/mark-waiting-release', 'markWaitingRelease')->name('mark-waiting-release');
         Route::post('{impounding}/process-release', 'processRelease')->name('process-release');
+        Route::delete('{impounding}', 'destroy')->name('destroy');
     });
 
-    Route::resource('appeals', AppealController::class)->except(['destroy']);
+    Route::resource('appeals', AppealController::class);
     Route::resource('teams', TeamController::class);
     Route::patch('teams/{team}/toggle-active', [TeamController::class, 'toggleActive'])->name('teams.toggle-active');
     Route::post('teams/{team}/zones/toggle', [TeamController::class, 'toggleZone'])->name('teams.zones.toggle');

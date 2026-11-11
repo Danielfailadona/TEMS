@@ -222,6 +222,18 @@
                 </div>
             </div>
         @endif
+
+        @can('delete', $impounding)
+            <div class="card stat-card mb-4 border-danger">
+                <div class="card-header bg-white"><strong class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Danger Zone</strong></div>
+                <div class="card-body">
+                    <x-delete-button :record="$impounding" route-name="impounding.destroy" :label="$impounding->notice_number" class="btn btn-outline-danger w-100">
+                        <i class="bi bi-trash me-2"></i>Delete Impounding Record
+                    </x-delete-button>
+                    <small class="text-muted d-block mt-2">Archived before deletion. Blocked while payments or releases are linked.</small>
+                </div>
+            </div>
+        @endcan
     </div>
 </div>
 

@@ -43,8 +43,8 @@ class ImpoundingController extends Controller
 
         if ($search = trim((string) $request->query('search'))) {
             $query->where(function ($inner) use ($search) {
-                $inner->where('vehicle_plate', 'like', "%{$search}%")
-                    ->orWhere('notice_number', 'like', "%{$search}%")
+                $inner->where('notice_number', 'like', "%{$search}%")
+                    ->orWhereHas('citation', fn ($c) => $c->where('vehicle_plate', 'like', "%{$search}%"))
                     ->orWhereHas('citation', fn ($c) => $c->where('citation_number', 'like', "%{$search}%"))
                     ->orWhereHas('citation.violationType', fn ($v) => $v->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('officer', fn ($o) => $o->where('name', 'like', "%{$search}%"));
@@ -62,7 +62,10 @@ class ImpoundingController extends Controller
 
         $plate = $request->vehicle_plate;
         $citation = null;
-        if ($plate) {
+
+        if ($request->filled('citation_id')) {
+            $citation = Citation::with('violationType')->find($request->citation_id);
+        } elseif ($plate) {
             $citation = Citation::where('vehicle_plate', $plate)
                 ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue])
                 ->whereHas('violationType', fn ($q) => $q->where('is_impoundable', true))
@@ -70,7 +73,53 @@ class ImpoundingController extends Controller
                 ->first();
         }
 
-        return view('impounding.create', compact('plate', 'citation'));
+        // Citations eligible for impounding: impoundable violation, still Issued/Overdue,
+        // unpaid, and no active (non-released) impounding record. The admin selects one
+        // here and records the impound.
+        $eligibleQuery = Citation::with(['violationType', 'enforcer'])
+            ->whereHas('violationType', fn ($v) => $v->where('is_impoundable', true))
+            ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue])
+            ->whereDoesntHave('impoundingRecord', fn ($r) => $r->where('status', '!=', ImpoundingStatus::Released))
+            ->whereDoesntHave('payment', fn ($p) => $p->whereNotNull('paid_at'));
+
+        if ($request->filled('eligible_search')) {
+            $term = trim($request->eligible_search);
+            $eligibleQuery->where(function ($q) use ($term) {
+                $q->where('citation_number', 'like', "%{$term}%")
+                    ->orWhere('vehicle_plate', 'like', "%{$term}%")
+                    ->orWhere('driver_name', 'like', "%{$term}%");
+            });
+        }
+
+        if ($request->filled('eligible_status') && in_array($request->eligible_status, [CitationStatus::Issued->value, CitationStatus::Overdue->value], true)) {
+            $eligibleQuery->where('status', $request->eligible_status);
+        }
+
+        $eligibleCitations = $eligibleQuery->orderBy('due_date')->limit(100)->get();
+
+        // Fee schedule per violation code, used by the client-side picker to
+        // update the fee cards when a citation is selected.
+        $feeSchedule = [];
+        foreach ($eligibleCitations as $eligible) {
+            $code = $eligible->violationType?->code ?? 'default';
+            if (! array_key_exists($code, $feeSchedule)) {
+                $fees = config('itevcms.impounding.violation_fees')[$code] ?? config('itevcms.impounding.violation_fees.default');
+                $feeSchedule[$code] = [
+                    'towing_fee' => (float) ($fees['towing_fee'] ?? 0),
+                    'storage_fee_per_day' => (float) ($fees['storage_fee_per_day'] ?? 0),
+                    'admin_fee' => (float) ($fees['admin_fee'] ?? 0),
+                ];
+            }
+        }
+        $feeSchedule['default'] = $feeSchedule['default']
+            ?? collect(config('itevcms.impounding.violation_fees.default'))
+                ->map(fn ($v) => (float) $v)->all();
+
+        // Fees for the pre-selected citation (defaults when none is linked)
+        $violationCode = $citation?->violationType?->code ?? 'default';
+        $fees = $feeSchedule[$violationCode] ?? $feeSchedule['default'];
+
+        return view('impounding.create', compact('plate', 'citation', 'fees', 'eligibleCitations', 'feeSchedule'));
     }
 
     public function store(Request $request, CitationNumberService $numberService): RedirectResponse
@@ -79,19 +128,23 @@ class ImpoundingController extends Controller
 
         $validated = $request->validate([
             'vehicle_plate' => 'required|string|max:20',
-            'citation_id' => 'nullable|exists:citations,id',
+            'citation_id' => 'required|integer|exists:citations,id',
             'location' => 'nullable|string|max:500',
             'notes' => 'nullable|string|max:1000',
-            'evidence' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
-        ], [
-            'evidence.required' => 'An evidence photo is required.',
-            'evidence.image' => 'The evidence file must be an image.',
-            'evidence.mimes' => 'The evidence photo must be a JPEG, PNG, or WebP.',
-            'evidence.max' => 'The evidence photo must be 5 MB or smaller.',
         ]);
 
-        $existingImpound = ImpoundingRecord::whereHas('citation', function ($query) use ($validated) {
-            $query->where('vehicle_plate', $validated['vehicle_plate']);
+        $citation = Citation::with('violationType')->findOrFail($validated['citation_id']);
+
+        if (! $citation->violationType?->is_impoundable) {
+            return back()->withErrors(['citation_id' => 'The linked citation is not eligible for impounding.']);
+        }
+
+        if (! in_array($citation->status, [CitationStatus::Issued, CitationStatus::Overdue], true)) {
+            return back()->withErrors(['citation_id' => 'Only issued or overdue citations can be impounded.']);
+        }
+
+        $existingImpound = ImpoundingRecord::whereHas('citation', function ($query) use ($citation) {
+            $query->where('vehicle_plate', $citation->vehicle_plate);
         })
             ->whereIn('status', [ImpoundingStatus::Impounded, ImpoundingStatus::AwaitingPayment, ImpoundingStatus::Paid, ImpoundingStatus::WaitingRelease])
             ->exists();
@@ -100,36 +153,17 @@ class ImpoundingController extends Controller
             return back()->withErrors(['vehicle_plate' => 'This vehicle is already impounded.']);
         }
 
-        $citation = Citation::where('vehicle_plate', $validated['vehicle_plate'])
-            ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue])
-            ->whereHas('violationType', fn ($q) => $q->where('is_impoundable', true))
-            ->latest('issued_at')
-            ->first();
-
         // Determine fees based on violation type
-        $violationCode = $citation?->violationType?->code ?? 'default';
+        $violationCode = $citation->violationType?->code ?? 'default';
         $fees = config('itevcms.impounding.violation_fees')[$violationCode] ?? config('itevcms.impounding.violation_fees.default');
 
-        $evidencePath = null;
-        if ($request->hasFile('evidence')) {
-            try {
-                $evidencePath = \App\Services\SupabaseStorage::put('impounding/'.$request->file('evidence')->hashName(), $request->file('evidence'));
-            } catch (\Throwable $e) {
-                report($e);
-                return back()->with('error', 'Failed to upload impounding evidence. Please try again.');
-            }
-        }
-
-        $clampingRecord = null;
-        if ($citation) {
-            $clampingRecord = ClampingRecord::where('citation_id', $citation->id)
-                ->where('status', '!=', ClampingStatus::Released)
-                ->latest('clamped_at')
-                ->first();
-        }
+        $clampingRecord = ClampingRecord::where('citation_id', $citation->id)
+            ->where('status', '!=', ClampingStatus::Released)
+            ->latest('clamped_at')
+            ->first();
         if (! $clampingRecord) {
-            $clampingRecord = ClampingRecord::whereHas('citation', function ($query) use ($validated) {
-                $query->where('vehicle_plate', $validated['vehicle_plate']);
+            $clampingRecord = ClampingRecord::whereHas('citation', function ($query) use ($citation) {
+                $query->where('vehicle_plate', $citation->vehicle_plate);
             })
                 ->where('status', '!=', ClampingStatus::Released)
                 ->latest('clamped_at')
@@ -138,13 +172,14 @@ class ImpoundingController extends Controller
 
         $record = ImpoundingRecord::create([
             'notice_number' => $numberService->impoundNumber(),
-            'citation_id' => $citation?->id,
+            'citation_id' => $citation->id,
             'clamping_record_id' => $clampingRecord?->id,
             'impounded_by' => auth()->id(),
             'status' => ImpoundingStatus::Impounded,
             'location' => $validated['location'],
             'notes' => $validated['notes'],
-            'evidence_path' => $evidencePath,
+            // Evidence is inherited from the citation's own photos — no separate upload.
+            'evidence_path' => $citation->evidence()->first()?->file_path,
             'towing_fee' => $fees['towing_fee'],
             'storage_fee_per_day' => $fees['storage_fee_per_day'],
             'admin_fee' => $fees['admin_fee'],
@@ -154,9 +189,7 @@ class ImpoundingController extends Controller
 
         Archive::log($record, 'Vehicle impounded', auth()->id());
 
-        if ($citation) {
-            $citation->update(['status' => CitationStatus::Impounded]);
-        }
+        $citation->update(['status' => CitationStatus::Impounded]);
 
         // Notify vehicle owner (if exists in users)
         if ($record->citation && $record->citation->driver_id) {
@@ -293,5 +326,31 @@ class ImpoundingController extends Controller
 
         return redirect()->route('impounding.index')
             ->with('success', 'Vehicle released successfully. Record archived.');
+    }
+
+    public function destroy(ImpoundingRecord $impounding): RedirectResponse
+    {
+        $this->authorize('delete', $impounding);
+
+        $blockers = [];
+        if ($impounding->payments()->exists()) {
+            $blockers[] = 'a payment record';
+        }
+        if ($impounding->release()->exists()) {
+            $blockers[] = 'a vehicle release';
+        }
+
+        if ($blockers !== []) {
+            return back()->with('error', 'Cannot delete impounding record '.$impounding->notice_number.' because it is linked to '.implode(' and ', $blockers).'. Delete or resolve the linked records first.');
+        }
+
+        DB::transaction(function () use ($impounding) {
+            Archive::log($impounding, 'Impounding record deleted', auth()->id(), $impounding->toArray());
+
+            $impounding->delete();
+        });
+
+        return redirect()->route('impounding.index')
+            ->with('success', 'Impounding record '.$impounding->notice_number.' has been deleted and archived.');
     }
 }

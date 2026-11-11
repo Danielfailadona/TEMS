@@ -21,11 +21,8 @@ class ImpoundingRecordPolicy
 
     public function create(User $user): bool
     {
-        return $user->isRole(
-            Role::SuperAdmin,
-            Role::Administrator,
-            Role::Enforcer
-        );
+        // Impounding is a manual decision held at the Administrator side.
+        return $user->isRole(Role::SuperAdmin, Role::Administrator);
     }
 
     public function markPaid(User $user, ImpoundingRecord $impoundingRecord): bool

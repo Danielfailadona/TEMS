@@ -143,6 +143,9 @@
                     @endif
                 @endif
             @endcan
+            <x-delete-button :record="$request" route-name="citizen-reports.destroy" :label="$request->report_number" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-trash me-1"></i>Delete
+            </x-delete-button>
             <a href="{{ route('citizen-reports.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left me-1"></i>Back
             </a>
@@ -495,9 +498,21 @@
                             <select name="assigned_to" class="form-select" required>
                                 <option value="">— Select Personnel —</option>
                                 @foreach ($enforcers as $enforcer)
-                                    <option value="{{ $enforcer->id }}" @selected($request->assigned_to === $enforcer->id)>{{ $enforcer->name }}</option>
+                                    @php
+                                        $assignable = $enforcer->canBeAssigned();
+                                        $label = $enforcer->name;
+                                        if ($enforcer->availability_override === 'force_available') {
+                                            $label .= ' — Forced Available';
+                                        } elseif ($enforcer->availability_override === 'force_unavailable') {
+                                            $label .= ' — Forced Unavailable';
+                                        } elseif (! $assignable) {
+                                            $label .= ' — Unavailable';
+                                        }
+                                    @endphp
+                                    <option value="{{ $enforcer->id }}" @selected($request->assigned_to === $enforcer->id) @disabled(! $assignable)>{{ $label }}</option>
                                 @endforeach
                             </select>
+                            <div class="form-text">Unavailable enforcers cannot be selected. Task Management "Force Available" overrides still allow assignment.</div>
                         </div>
                         <div class="modal-footer border-0 pt-0">
                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -713,7 +728,7 @@
 
         Swal.fire({
             title: 'Accept & Assign?',
-            text: 'This will accept the report and auto-assign it to an available enforcer.',
+            text: 'This will accept the report and assign it to an available enforcer. If no enforcer is currently available, it will remain unassigned and administrators will be notified.',
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'Yes, Accept & Assign',

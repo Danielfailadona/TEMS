@@ -165,11 +165,6 @@
             <h1 class="h3 mb-1"><i class="bi bi-clipboard-check me-2"></i>Task Management</h1>
             <p class="text-muted mb-0">Manage enforcer schedules, availability overrides, and task assignments</p>
         </div>
-        <div class="d-flex gap-2">
-            <button type="button" class="tm-primary-btn" data-bs-toggle="modal" data-bs-target="#autoAssignModal">
-                <i class="bi bi-magic me-1"></i>Auto-Assign All
-            </button>
-        </div>
     </div>
 
     {{-- KPI Cards --}}
