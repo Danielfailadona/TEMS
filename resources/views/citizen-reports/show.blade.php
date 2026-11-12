@@ -110,6 +110,29 @@
         .sticky-action-bar .vr { display: none; }
         .sticky-action-bar form.d-inline { display: block !important; width: 100%; }
     }
+
+    /* Phones: report modals become edge-to-edge bottom sheets —
+       header pinned on top, body scrolls, footer pinned at bottom. */
+    @media (max-width: 575.98px) {
+        #issueCitationModal .modal-dialog,
+        #resolveModal .modal-dialog,
+        #rejectModal .modal-dialog,
+        #assignModal .modal-dialog {
+            margin: 0;
+            max-width: 100%;
+            min-height: 100%;
+            height: 100%;
+            transform: none;
+        }
+        #issueCitationModal .modal-content,
+        #resolveModal .modal-content,
+        #rejectModal .modal-content,
+        #assignModal .modal-content {
+            min-height: 100vh;
+            border: none;
+            border-radius: 0;
+        }
+    }
 </style>
 @endpush
 

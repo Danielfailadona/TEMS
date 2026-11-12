@@ -1273,10 +1273,31 @@ body::before {
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 1060;
+    z-index: 1040;
     background: #fff;
     border-top: 1px solid #e5e7eb;
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Keep the enforcer mobile nav out of the way while a modal is open
+   (tab bar z-index previously sat above the modal backdrop). */
+body.modal-open .enforcer-tab-bar,
+body.modal-open .enforcer-more-sheet,
+body.modal-open .enforcer-more-backdrop {
+    display: none !important;
+}
+
+/* Forms wrapping modal-content break Bootstrap's flex chain — without this,
+   modal-dialog-scrollable clips its overflow instead of scrolling. */
+.modal-dialog-scrollable .modal-content > form {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+.modal-dialog-scrollable .modal-content > form .modal-body {
+    overflow-y: auto;
+    min-height: 0;
 }
 
 .enforcer-tab-bar .tab-item {
