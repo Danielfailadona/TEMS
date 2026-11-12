@@ -169,7 +169,7 @@
   </div>
   <div class="enforcer-more-grid">
     <a href="{{ route('citizen-reports.index') }}" class="enforcer-more-item">
-      <i class="bi bi-inbox"></i><span>Citizen Reports</span>
+      <i class="bi bi-inbox"></i><span>Report Assigned</span>
     </a>
     <a href="{{ route('archives.index') }}" class="enforcer-more-item">
       <i class="bi bi-archive"></i><span>My Archives</span>

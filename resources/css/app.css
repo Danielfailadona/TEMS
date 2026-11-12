@@ -991,35 +991,40 @@ body::before {
     }
     .table-cards tbody th,
     .table-cards tbody td {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        text-align: right !important;
+        display: block !important;
+        text-align: left !important;
         border: 0 !important;
-        padding: 0.3rem 0 !important;
+        padding: 0.22rem 0 !important;
         height: auto !important;
         white-space: normal !important;
     }
     .table-cards tbody td:first-child {
         font-weight: 600;
     }
+    .table-cards tbody th:not(:last-child),
+    .table-cards tbody td:not(:last-child) {
+        padding-bottom: 0.45rem !important;
+    }
     .table-cards tbody th:not(:last-child)::before,
     .table-cards tbody td:not(:last-child)::before {
         content: attr(data-label);
-        font-weight: 600;
-        font-size: 0.78rem;
+        display: block;
+        font-weight: 700;
+        font-size: 0.68rem;
         text-transform: uppercase;
-        letter-spacing: 0.03em;
+        letter-spacing: 0.05em;
         color: #64748b;
         text-align: left !important;
-        flex-shrink: 0;
+        margin-bottom: 0.1rem;
     }
     /* Actions cell: buttons wrap on their own line below the fields */
     .table-cards tbody th:last-child,
     .table-cards tbody td:last-child {
+        display: flex !important;
         justify-content: flex-start;
+        align-items: center;
         flex-wrap: wrap;
+        gap: 0.5rem;
         padding-top: 0.6rem !important;
         border-top: 1px dashed #e2e8f0 !important;
         margin-top: 0.4rem;
@@ -1238,6 +1243,7 @@ body::before {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    text-align: center;
     gap: 3px;
     padding: 6px 4px 8px;
     font-size: 0.65rem;
@@ -1359,6 +1365,7 @@ body::before {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    text-align: center;
     gap: 4px;
     padding: 0.6rem 0.25rem;
     border-radius: 0.75rem;
@@ -1394,6 +1401,7 @@ body::before {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    text-align: center;
     gap: 4px;
     padding: 0.6rem 0.25rem;
     width: 100%;

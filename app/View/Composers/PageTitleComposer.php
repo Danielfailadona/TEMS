@@ -2,6 +2,7 @@
 
 namespace App\View\Composers;
 
+use App\Enums\Role;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Route;
 
@@ -21,7 +22,9 @@ class PageTitleComposer
             'appeals.*'            => 'Appeals',
             'clamping.*'           => 'Clamping',
             'impounding.*'         => 'Impounding',
-            'citizen-reports.*'  => 'Citizen Reports',
+            'citizen-reports.*'    => auth()->user()?->isRole(\App\Enums\Role::Enforcer)
+                ? 'Report Assigned'
+                : 'Citizen Reports',
             'operations.task-assignment.*' => 'Task Assignment',
             'dashboard'            => 'Dashboard',
             'dashboard.*'          => 'Dashboard',

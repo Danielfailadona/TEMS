@@ -129,24 +129,15 @@
     <div class="d-flex flex-column align-items-end gap-2">
         <div class="d-flex gap-2">
             @can('update', $request)
-                @if ($isAccepted)
-                    @if ($request->citation)
-                        <a href="{{ route('citations.show', $request->citation) }}" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-receipt me-1"></i>View Citation
-                        </a>
-                    @else
-                        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#issueCitationModal">
-                            <i class="bi bi-file-earmark-plus me-1"></i>Issue Citation
-                        </button>
-                        <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#resolveModal">
-                            <i class="bi bi-check-all me-1"></i>Resolve with Notes
-                        </button>
-                    @endif
-                    @if ($request->assigned_to && !auth()->user()->isRole(\App\Enums\Role::Enforcer))
-                        <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#assignModal">
-                            <i class="bi bi-arrow-repeat me-1"></i>Reassign
-                        </button>
-                    @endif
+                @if ($isAccepted && $request->citation)
+                    <a href="{{ route('citations.show', $request->citation) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-receipt me-1"></i>View Citation
+                    </a>
+                @endif
+                @if ($isAccepted && $request->assigned_to && !auth()->user()->isRole(\App\Enums\Role::Enforcer))
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#assignModal">
+                        <i class="bi bi-arrow-repeat me-1"></i>Reassign
+                    </button>
                 @endif
             @endcan
             @can('delete', $request)
