@@ -1052,42 +1052,84 @@ body::before {
     }
 }
 
-/* ----- Evidence-photo cells: 2-part enforcer cards (photo + info) ----- */
-.table-cards tbody td.cell-photo {
-    display: none !important;
+/* ----- Enforcer mobile hero cards (real cards, not restyled tables) ----- */
+.hero-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
 }
-@media (max-width: 767.98px) {
-    .table-cards.table-cards-photo tbody td.cell-photo {
-        display: block !important;
-        padding: 0 !important;
-        margin: -0.75rem -1rem 0.6rem;
-    }
-    .table-cards.table-cards-photo tbody td.cell-photo::before {
-        display: none !important;
-    }
-    .table-cards.table-cards-photo tbody td.cell-photo img {
-        display: block;
-        width: 100%;
-        height: 150px;
-        object-fit: cover;
-        border-radius: 11px 11px 0 0;
-    }
-    .table-cards.table-cards-photo tbody td.cell-photo .cell-photo-placeholder {
-        display: grid;
-        place-items: center;
-        width: 100%;
-        height: 110px;
-        background: #f1f5f9;
-        color: #94a3b8;
-        font-size: 1.75rem;
-        border-radius: 11px 11px 0 0;
-    }
-    .table-cards.table-cards-photo tbody td:first-child {
-        font-weight: 400;
-    }
-    .table-cards.table-cards-photo tbody td:nth-child(2) {
-        font-weight: 600;
-    }
+.hero-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08);
+}
+.hero-card-photo {
+    position: relative;
+    height: 150px;
+    background: #f1f5f9;
+}
+.hero-card-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.hero-card-photo .hero-photo-placeholder {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    color: #94a3b8;
+    font-size: 2rem;
+}
+.hero-card-status {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    z-index: 1;
+}
+.hero-card-body {
+    padding: 0.75rem 1rem 0.25rem;
+}
+.hero-card-title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #182235;
+    word-break: break-word;
+}
+.hero-card-sub {
+    color: #64748b;
+    font-size: 0.85rem;
+    margin-bottom: 0.6rem;
+}
+.hero-card-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45rem 1rem;
+    font-size: 0.82rem;
+}
+.hero-card-meta .meta-label {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+}
+.hero-card-meta .meta-value {
+    color: #182235;
+    font-weight: 600;
+}
+.hero-card-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1rem 0.85rem;
+    border-top: 1px dashed #e2e8f0;
+    margin-top: 0.6rem;
 }
 
 /* ----- Unified standard table design (modeled on the Citations table) ----- */

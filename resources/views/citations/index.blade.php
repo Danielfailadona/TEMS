@@ -150,8 +150,8 @@
         @endcan
     </form>
 
-    <section class="cit-table-wrap" aria-label="Citations table">
-        <table class="cit-table table-cards {{ auth()->user()->isRole(\App\Enums\Role::Enforcer) ? 'table-cards-photo' : '' }}">
+    <section class="cit-table-wrap {{ auth()->user()->isRole(\App\Enums\Role::Enforcer) ? 'd-none d-md-block' : '' }}" aria-label="Citations table">
+        <table class="cit-table table-cards">
             <thead>
                 <tr>
                     <th scope="col">Citation #</th>
@@ -166,14 +166,6 @@
             <tbody>
                 @forelse ($citations as $citation)
                     <tr>
-                        <td class="cell-photo">
-                            @php $evidence = $citation->evidence->first(); @endphp
-                            @if ($evidence)
-                                <img src="{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}" alt="Evidence photo for {{ $citation->citation_number }}" loading="lazy">
-                            @else
-                                <div class="cell-photo-placeholder"><i class="bi bi-image"></i></div>
-                            @endif
-                        </td>
                         <td data-label="Citation #">
                             {{ $citation->citation_number }}
                             @if ($citation->impoundingRecord)
@@ -197,11 +189,46 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="cit-empty">No citations found.</td></tr>
+                    <tr><td colspan="7" class="cit-empty">No citations found.</td></tr>
                 @endforelse
             </tbody>
         </table>
     </section>
+
+    @if (auth()->user()->isRole(\App\Enums\Role::Enforcer))
+        <div class="hero-card-list d-md-none mt-3" aria-label="Citations">
+            @forelse ($citations as $citation)
+                @php $evidence = $citation->evidence->first(); @endphp
+                <div class="hero-card">
+                    <div class="hero-card-photo">
+                        @if ($evidence)
+                            <img src="{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}" alt="Evidence photo for {{ $citation->citation_number }}" loading="lazy">
+                        @else
+                            <div class="hero-photo-placeholder"><i class="bi bi-image"></i></div>
+                        @endif
+                        <span class="hero-card-status cit-pill {{ $citation->status->badgeClass() }}">{{ $citation->status->label() }}</span>
+                    </div>
+                    <div class="hero-card-body">
+                        <div class="hero-card-title">{{ $citation->citation_number }}</div>
+                        <div class="hero-card-sub">{{ $citation->violationType->code }} · {{ $citation->vehicle_plate }}</div>
+                        <div class="hero-card-meta">
+                            <div class="meta-item"><span class="meta-label">Amount</span><span class="meta-value">₱{{ number_format($citation->penalty_amount, 2) }}</span></div>
+                            <div class="meta-item"><span class="meta-label">Issued</span><span class="meta-value">{{ $citation->issued_at->format('M d, Y') }}</span></div>
+                            <div class="meta-item"><span class="meta-label">Due</span><span class="meta-value">{{ $citation->due_date->format('M d, Y') }}</span></div>
+                            <div class="meta-item"><span class="meta-label">Vehicle</span><span class="meta-value">{{ trim($citation->vehicle_make . ' ' . $citation->vehicle_model) ?: '—' }}</span></div>
+                        </div>
+                    </div>
+                    <div class="hero-card-actions">
+                        <a href="{{ route('citations.show', $citation) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye me-1"></i>View
+                        </a>
+                    </div>
+                </div>
+            @empty
+                <div class="hero-card"><div class="p-4 text-center text-muted">No citations found.</div></div>
+            @endforelse
+        </div>
+    @endif
 
     <footer class="cit-table-footer">
         <span id="citResultCount">Showing {{ $citations->firstItem() ?? 0 }} to {{ $citations->lastItem() ?? 0 }} of {{ $citations->total() }} results</span>

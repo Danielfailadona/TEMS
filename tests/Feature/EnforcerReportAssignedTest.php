@@ -46,6 +46,39 @@ class EnforcerReportAssignedTest extends TestCase
         $response->assertOk();
         $response->assertSee('CR-000001');
         $response->assertDontSee('CR-000002');
+        $response->assertSee('hero-card-list');
+    }
+
+    public function test_admin_index_keeps_table_without_hero_cards(): void
+    {
+        $admin = User::factory()->create(['role' => 'administrator', 'account_status' => 'approved']);
+        $this->report(['report_number' => 'CR-000007', 'assigned_to' => $this->enforcer()->id]);
+
+        $response = $this->actingAs($admin)->get('/citizen-reports');
+
+        $response->assertOk();
+        $response->assertDontSee('hero-card-list');
+        $response->assertSee('CR-000007');
+    }
+
+    public function test_enforcer_citations_page_renders_hero_cards(): void
+    {
+        $enforcer = $this->enforcer();
+
+        $response = $this->actingAs($enforcer)->get('/citations');
+
+        $response->assertOk();
+        $response->assertSee('hero-card-list');
+    }
+
+    public function test_admin_citations_page_keeps_table_without_hero_cards(): void
+    {
+        $admin = User::factory()->create(['role' => 'administrator', 'account_status' => 'approved']);
+
+        $response = $this->actingAs($admin)->get('/citations');
+
+        $response->assertOk();
+        $response->assertDontSee('hero-card-list');
     }
 
     public function test_enforcer_cannot_claim_pending_reports(): void

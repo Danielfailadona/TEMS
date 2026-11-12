@@ -177,8 +177,8 @@
     </form>
 
     {{-- Table --}}
-    <section class="cr-table-wrap" aria-label="Citizen reports table">
-        <table class="cr-table table-cards {{ auth()->user()->isRole(\App\Enums\Role::Enforcer) ? 'table-cards-photo' : '' }}">
+    <section class="cr-table-wrap {{ auth()->user()->isRole(\App\Enums\Role::Enforcer) ? 'd-none d-md-block' : '' }}" aria-label="Citizen reports table">
+        <table class="cr-table table-cards">
             <thead>
                 <tr>
                     <th scope="col">Report #</th>
@@ -193,13 +193,6 @@
             <tbody>
                 @forelse ($reports as $r)
                     <tr>
-                        <td class="cell-photo">
-                            @if ($r->evidence_photo)
-                                <img src="{{ \App\Services\SupabaseStorage::publicUrl($r->evidence_photo) }}" alt="Evidence photo for {{ $r->report_number }}" loading="lazy">
-                            @else
-                                <div class="cell-photo-placeholder"><i class="bi bi-image"></i></div>
-                            @endif
-                        </td>
                         <td data-label="Report #">{{ $r->report_number }}</td>
                         <td data-label="Vehicle Plate">{{ $r->vehicle_plate }}</td>
                         <td data-label="Location">{{ $r->location_address }}</td>
@@ -216,11 +209,43 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="cr-empty">No citizen reports found.</td></tr>
+                    <tr><td colspan="7" class="cr-empty">No citizen reports found.</td></tr>
                 @endforelse
             </tbody>
         </table>
     </section>
+
+    @if (auth()->user()->isRole(\App\Enums\Role::Enforcer))
+        <div class="hero-card-list d-md-none mt-3" aria-label="Reports assigned to you">
+            @forelse ($reports as $r)
+                <div class="hero-card">
+                    <div class="hero-card-photo">
+                        @if ($r->evidence_photo)
+                            <img src="{{ \App\Services\SupabaseStorage::publicUrl($r->evidence_photo) }}" alt="Evidence photo for {{ $r->report_number }}" loading="lazy">
+                        @else
+                            <div class="hero-photo-placeholder"><i class="bi bi-image"></i></div>
+                        @endif
+                        <span class="hero-card-status cr-pill {{ $r->getStatusBadgeClass() }}">{{ $r->getStatusLabel() }}</span>
+                    </div>
+                    <div class="hero-card-body">
+                        <div class="hero-card-title">{{ $r->report_number }}</div>
+                        <div class="hero-card-sub">{{ $r->vehicle_plate }} · {{ $r->location_address }}</div>
+                        <div class="hero-card-meta">
+                            <div class="meta-item"><span class="meta-label">Reported</span><span class="meta-value">{{ $r->created_at->format('M d, Y') }}</span></div>
+                            <div class="meta-item"><span class="meta-label">Assigned To</span><span class="meta-value">{{ $r->assignedTo?->name ?? '—' }}</span></div>
+                        </div>
+                    </div>
+                    <div class="hero-card-actions">
+                        <a href="{{ route('citizen-reports.show', $r) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye me-1"></i>View
+                        </a>
+                    </div>
+                </div>
+            @empty
+                <div class="hero-card"><div class="p-4 text-center text-muted">No reports assigned to you yet.</div></div>
+            @endforelse
+        </div>
+    @endif
 
     <footer class="cr-table-footer">
         <span id="crResultCount">Showing {{ $reports->firstItem() ?? 0 }} to {{ $reports->lastItem() ?? 0 }} of {{ $reports->total() }} results</span>
