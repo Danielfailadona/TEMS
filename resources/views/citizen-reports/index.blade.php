@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Citizen Reports')
+@section('title', auth()->user()->isRole(\App\Enums\Role::Enforcer) ? 'Report Assigned' : 'Citizen Reports')
 
 @php
     $statusValue = request('status');
@@ -114,7 +114,7 @@
 
 @section('content')
 <div class="cr-dash">
-    <p class="text-muted mb-4 small">Manage citizen-reported violations and clamping concerns</p>
+    <p class="text-muted mb-4 small">{{ auth()->user()->isRole(\App\Enums\Role::Enforcer) ? 'Reports assigned to you for action' : 'Manage citizen-reported violations and clamping concerns' }}</p>
 
     {{-- KPI Cards --}}
     <div class="cr-kpi-row">
@@ -178,7 +178,7 @@
 
     {{-- Table --}}
     <section class="cr-table-wrap" aria-label="Citizen reports table">
-        <table class="cr-table table-cards">
+        <table class="cr-table table-cards {{ auth()->user()->isRole(\App\Enums\Role::Enforcer) ? 'table-cards-photo' : '' }}">
             <thead>
                 <tr>
                     <th scope="col">Report #</th>
@@ -193,6 +193,13 @@
             <tbody>
                 @forelse ($reports as $r)
                     <tr>
+                        <td class="cell-photo">
+                            @if ($r->evidence_photo)
+                                <img src="{{ \App\Services\SupabaseStorage::publicUrl($r->evidence_photo) }}" alt="Evidence photo for {{ $r->report_number }}" loading="lazy">
+                            @else
+                                <div class="cell-photo-placeholder"><i class="bi bi-image"></i></div>
+                            @endif
+                        </td>
                         <td data-label="Report #">{{ $r->report_number }}</td>
                         <td data-label="Vehicle Plate">{{ $r->vehicle_plate }}</td>
                         <td data-label="Location">{{ $r->location_address }}</td>
@@ -209,7 +216,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="cr-empty">No citizen reports found.</td></tr>
+                    <tr><td colspan="8" class="cr-empty">No citizen reports found.</td></tr>
                 @endforelse
             </tbody>
         </table>

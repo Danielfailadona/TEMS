@@ -23,8 +23,9 @@ class CitizenReportPolicy
             return false;
         }
 
-        return $citizenReport->assigned_to === $user->id
-            || $citizenReport->status === \App\Enums\ReportStatus::Pending->value;
+        // Enforcers work only from their assigned reports — the pending
+        // pool is admin-side.
+        return $citizenReport->assigned_to === $user->id;
     }
 
     public function update(User $user, CitizenReport $citizenReport): bool
@@ -33,17 +34,22 @@ class CitizenReportPolicy
             return true;
         }
 
-        // Enforcers may act on reports assigned to them, or claim fresh
-        // pending reports from the shared pool.
+        // Enforcers may act only on reports assigned to them.
         return $user->isRole(Role::Enforcer)
-            && ($citizenReport->assigned_to === $user->id
-                || $citizenReport->status === \App\Enums\ReportStatus::Pending->value);
+            && $citizenReport->assigned_to === $user->id;
     }
 
     public function claim(User $user, CitizenReport $citizenReport): bool
     {
-        return $user->isRole(Role::SuperAdmin, Role::Administrator, Role::Enforcer)
+        // Pool claiming is admin-side only; enforcers work from assignments.
+        return $user->isRole(Role::SuperAdmin, Role::Administrator)
             && $citizenReport->status === \App\Enums\ReportStatus::Pending->value;
+    }
+
+    public function reject(User $user, CitizenReport $citizenReport): bool
+    {
+        // Rejecting a report is an admin decision.
+        return $user->isRole(Role::SuperAdmin, Role::Administrator);
     }
 
     public function delete(User $user, CitizenReport $citizenReport): bool

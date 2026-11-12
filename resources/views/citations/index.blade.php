@@ -151,7 +151,7 @@
     </form>
 
     <section class="cit-table-wrap" aria-label="Citations table">
-        <table class="cit-table table-cards">
+        <table class="cit-table table-cards {{ auth()->user()->isRole(\App\Enums\Role::Enforcer) ? 'table-cards-photo' : '' }}">
             <thead>
                 <tr>
                     <th scope="col">Citation #</th>
@@ -166,6 +166,14 @@
             <tbody>
                 @forelse ($citations as $citation)
                     <tr>
+                        <td class="cell-photo">
+                            @php $evidence = $citation->evidence->first(); @endphp
+                            @if ($evidence)
+                                <img src="{{ \App\Services\SupabaseStorage::publicUrl($evidence->file_path) }}" alt="Evidence photo for {{ $citation->citation_number }}" loading="lazy">
+                            @else
+                                <div class="cell-photo-placeholder"><i class="bi bi-image"></i></div>
+                            @endif
+                        </td>
                         <td data-label="Citation #">
                             {{ $citation->citation_number }}
                             @if ($citation->impoundingRecord)
@@ -189,7 +197,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="cit-empty">No citations found.</td></tr>
+                    <tr><td colspan="8" class="cit-empty">No citations found.</td></tr>
                 @endforelse
             </tbody>
         </table>

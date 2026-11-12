@@ -57,7 +57,11 @@ class NavigationComposer
             }
 
             if ($user->isRole(Role::SuperAdmin, Role::Administrator, Role::Enforcer)) {
-                $operations[] = ['label' => 'Citizen Reports', 'route' => 'citizen-reports.index', 'icon' => 'inbox'];
+                $operations[] = [
+                    'label' => $user->isRole(Role::Enforcer) ? 'Report Assigned' : 'Citizen Reports',
+                    'route' => 'citizen-reports.index',
+                    'icon' => 'inbox',
+                ];
             }
 
             if ($user->isRole(Role::SuperAdmin, Role::Administrator)) {

@@ -76,25 +76,58 @@ class CitizenReportWorkflowTest extends TestCase
         Http::fake(['*' => Http::response('', 200)]);
     }
 
-    public function test_enforcer_can_claim_a_pending_report(): void
+    public function test_enforcer_cannot_claim_a_pending_report(): void
     {
         $report = $this->report();
 
         $this->actingAs($this->enforcer())
             ->post("/citizen-reports/{$report->id}/claim")
+            ->assertForbidden();
+
+        $report->refresh();
+        $this->assertSame(ReportStatus::Pending->value, $report->status);
+    }
+
+    public function test_admin_can_claim_a_pending_report(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'administrator',
+            'account_status' => 'approved',
+        ]);
+        $report = $this->report();
+
+        $this->actingAs($admin)
+            ->post("/citizen-reports/{$report->id}/claim")
             ->assertRedirect();
 
         $report->refresh();
         $this->assertSame(ReportStatus::Accepted->value, $report->status);
-        $this->assertSame('enforcer@example.com', $report->assignedTo->email);
+        $this->assertSame($admin->id, $report->assigned_to);
     }
 
-    public function test_enforcer_can_reject_a_report_with_reason(): void
+    public function test_enforcer_cannot_reject_a_report(): void
     {
         $enforcer = $this->enforcer();
         $report = $this->report(['assigned_to' => $enforcer->id, 'status' => ReportStatus::Accepted->value]);
 
         $this->actingAs($enforcer)
+            ->post("/citizen-reports/{$report->id}/reject", ['rejection_reason' => 'Not a parking violation'])
+            ->assertForbidden();
+
+        $report->refresh();
+        $this->assertSame(ReportStatus::Accepted->value, $report->status);
+    }
+
+    public function test_admin_can_reject_a_report_with_reason(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'administrator',
+            'account_status' => 'approved',
+        ]);
+        $enforcer = $this->enforcer();
+        $report = $this->report(['assigned_to' => $enforcer->id, 'status' => ReportStatus::Accepted->value]);
+
+        $this->actingAs($admin)
             ->post("/citizen-reports/{$report->id}/reject", ['rejection_reason' => 'Not a parking violation'])
             ->assertRedirect();
 

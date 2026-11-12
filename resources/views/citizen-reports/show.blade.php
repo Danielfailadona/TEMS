@@ -94,12 +94,22 @@
         padding:1rem 0; margin-top:2rem;
     }
 
-    .detail-hero .status-badge { background:rgba(255,255,255,0.2); color:#fff; border-left-color:#fff; }
-    .detail-hero .status-badge i { color:#fff; }
-    .detail-hero .status-badge-pending { background:rgba(245,158,11,0.5); }
-    .detail-hero .status-badge-accepted,
-    .detail-hero .status-badge-resolved { background:rgba(5,150,105,0.5); }
-    .detail-hero .status-badge-rejected { background:rgba(220,38,38,0.5); }
+    /* Phones: action buttons stack full-width at normal size instead of enlarging */
+    @media (max-width: 575.98px) {
+        .sticky-action-bar .d-flex {
+            flex-direction: column;
+            align-items: stretch !important;
+            width: 100%;
+            gap: 0.5rem !important;
+        }
+        .sticky-action-bar .btn-lg {
+            width: 100%;
+            padding: 0.55rem 1rem !important;
+            font-size: 1rem;
+        }
+        .sticky-action-bar .vr { display: none; }
+        .sticky-action-bar form.d-inline { display: block !important; width: 100%; }
+    }
 </style>
 @endpush
 
@@ -117,10 +127,6 @@
         <p class="text-muted mb-0">{{ $request->report_number ?? '—' }} · {{ $request->location_address }}</p>
     </div>
     <div class="d-flex flex-column align-items-end gap-2">
-        <span class="status-badge status-badge-{{ $request->status }}" style="font-size:0.85rem;">
-            <i class="bi bi-{{ $statusIcon }} me-1"></i>
-            {{ $request->getStatusLabel() }}
-        </span>
         <div class="d-flex gap-2">
             @can('update', $request)
                 @if ($isAccepted)
@@ -143,9 +149,11 @@
                     @endif
                 @endif
             @endcan
-            <x-delete-button :record="$request" route-name="citizen-reports.destroy" :label="$request->report_number" class="btn btn-outline-danger btn-sm">
-                <i class="bi bi-trash me-1"></i>Delete
-            </x-delete-button>
+            @can('delete', $request)
+                <x-delete-button :record="$request" route-name="citizen-reports.destroy" :label="$request->report_number" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-trash me-1"></i>Delete
+                </x-delete-button>
+            @endcan
             <a href="{{ route('citizen-reports.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left me-1"></i>Back
             </a>
@@ -429,7 +437,7 @@
 @endif
 
 @can('update', $request)
-    @if ($isPending)
+    @if ($isPending && !auth()->user()->isRole(\App\Enums\Role::Enforcer))
         <div class="sticky-action-bar">
             <div class="d-flex justify-content-center gap-4 align-items-center">
                 <button type="button" class="btn btn-lg btn-outline-secondary px-5" data-bs-toggle="modal" data-bs-target="#rejectModal">
@@ -463,12 +471,12 @@
     @if ($isPending)
         <div class="modal fade" id="rejectModal" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
-                <form method="POST" action="{{ route('citizen-reports.reject', $request) }}">
-                    @csrf
-                    <div class="modal-content" style="border-radius:1rem;border:none;box-shadow:0 20px 60px rgba(0,0,0,0.15);">
+                <div class="modal-content" style="border-radius:1rem;border:none;box-shadow:0 20px 60px rgba(0,0,0,0.15);">
+                    <form method="POST" action="{{ route('citizen-reports.reject', $request) }}">
+                        @csrf
                         <div class="modal-header border-0 pb-0">
                             <h5 class="modal-title fw-bold"><i class="bi bi-x-circle text-danger me-2"></i>Reject Report</h5>
-                            <button class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
                             <label class="form-label fw-semibold small">Reason for Rejection</label>
@@ -478,21 +486,21 @@
                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                             <button type="submit" class="btn btn-danger"><i class="bi bi-x-circle me-1"></i>Reject Report</button>
                         </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     @endif
 
-    @if ($isAccepted)
+    @if ($isAccepted && !auth()->user()->isRole(\App\Enums\Role::Enforcer))
         <div class="modal fade" id="assignModal" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
-                <form method="POST" action="{{ route('citizen-reports.assign', $request) }}">
-                    @csrf
-                    <div class="modal-content" style="border-radius:1rem;border:none;box-shadow:0 20px 60px rgba(0,0,0,0.15);">
+                <div class="modal-content" style="border-radius:1rem;border:none;box-shadow:0 20px 60px rgba(0,0,0,0.15);">
+                    <form method="POST" action="{{ route('citizen-reports.assign', $request) }}">
+                        @csrf
                         <div class="modal-header border-0 pb-0">
                             <h5 class="modal-title fw-bold"><i class="bi bi-arrow-repeat text-primary me-2"></i>Reassign Personnel</h5>
-                            <button class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
                             <select name="assigned_to" class="form-select" required>
@@ -518,20 +526,20 @@
                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                             <button type="submit" class="btn btn-primary"><i class="bi bi-check me-1"></i>Assign</button>
                         </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
 
         @if (! $request->citation)
             <div class="modal fade" id="resolveModal" tabindex="-1">
                 <div class="modal-dialog modal-dialog-centered">
-                    <form method="POST" action="{{ route('citizen-reports.resolve', $request) }}">
-                        @csrf
-                        <div class="modal-content" style="border-radius:1rem;border:none;box-shadow:0 20px 60px rgba(0,0,0,0.15);">
+                    <div class="modal-content" style="border-radius:1rem;border:none;box-shadow:0 20px 60px rgba(0,0,0,0.15);">
+                        <form method="POST" action="{{ route('citizen-reports.resolve', $request) }}">
+                            @csrf
                             <div class="modal-header border-0 pb-0">
                                 <h5 class="modal-title fw-bold"><i class="bi bi-check-all text-info me-2"></i>Resolve with Notes</h5>
-                                <button class="btn-close" data-bs-dismiss="modal"></button>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
                                 <p class="text-muted small">Close this report without issuing a citation. Describe the action taken.</p>
@@ -542,19 +550,19 @@
                                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                                 <button type="submit" class="btn btn-info"><i class="bi bi-check-all me-1"></i>Mark Resolved</button>
                             </div>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
 
             <div class="modal fade" id="issueCitationModal" tabindex="-1">
                 <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                    <form method="POST" action="{{ route('citizen-reports.issue-citation', $request) }}" enctype="multipart/form-data">
-                        @csrf
-                        <div class="modal-content" style="border-radius:1rem;border:none;box-shadow:0 20px 60px rgba(0,0,0,0.15);">
+                    <div class="modal-content" style="border-radius:1rem;border:none;box-shadow:0 20px 60px rgba(0,0,0,0.15);">
+                        <form method="POST" action="{{ route('citizen-reports.issue-citation', $request) }}" enctype="multipart/form-data">
+                            @csrf
                             <div class="modal-header border-0 pb-0">
                                 <h5 class="modal-title fw-bold"><i class="bi bi-file-earmark-plus text-warning me-2"></i>Issue Citation from Report</h5>
-                                <button class="btn-close" data-bs-dismiss="modal"></button>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
                                 <div class="alert alert-info py-2 small mb-3">
@@ -639,8 +647,8 @@
                                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                                 <button type="submit" class="btn btn-warning"><i class="bi bi-file-earmark-plus me-1"></i>Issue Citation</button>
                             </div>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
         @endif

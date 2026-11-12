@@ -27,7 +27,7 @@ class CitationController extends Controller
     {
         $this->authorize('viewAny', Citation::class);
 
-        $query = Citation::with(['violationType', 'enforcer', 'impoundingRecord']);
+        $query = Citation::with(['violationType', 'enforcer', 'impoundingRecord', 'evidence']);
 
         $citations = $query
             ->when($request->search, function ($q, $search) {

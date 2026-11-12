@@ -59,9 +59,6 @@
                     <div class="detail-hero-badge">
                         <i class="bi bi-receipt me-1"></i>Citation #{{ $citation->citation_number }}
                     </div>
-                    <span class="status-badge status-badge-{{ strtolower($citation->status->value) }}">
-                        {{ $citation->status->label() }}
-                    </span>
                 </div>
                 <h1>{{ $citation->violationLabel() }}</h1>
                 <p class="mb-0 opacity-75">Issued on {{ $citation->issued_at?->format('F d, Y') }} at {{ $citation->location }}</p>

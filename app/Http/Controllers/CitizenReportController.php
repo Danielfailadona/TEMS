@@ -38,10 +38,8 @@ class CitizenReportController extends Controller
         $query = CitizenReport::with(['processedBy', 'assignedTo', 'clampingRecord']);
 
         if ($isRestricted) {
-            $query->where(function ($q) use ($user) {
-                $q->where('assigned_to', $user->id)
-                  ->orWhere('status', ReportStatus::Pending->value);
-            });
+            // Enforcers see only their assigned reports — the pending pool is admin-side.
+            $query->where('assigned_to', $user->id);
         }
 
         if ($request->filled('status')) {
@@ -63,10 +61,7 @@ class CitizenReportController extends Controller
 
         $statsQuery = CitizenReport::query();
         if ($isRestricted) {
-            $statsQuery->where(function ($q) use ($user) {
-                $q->where('assigned_to', $user->id)
-                  ->orWhere('status', ReportStatus::Pending->value);
-            });
+            $statsQuery->where('assigned_to', $user->id);
         }
 
         $stats = [
@@ -219,7 +214,7 @@ class CitizenReportController extends Controller
 
     public function reject(Request $request, CitizenReport $citizenReport): RedirectResponse
     {
-        $this->authorize('update', $citizenReport);
+        $this->authorize('reject', $citizenReport);
 
         $validated = $request->validate([
             'rejection_reason' => 'required|string|max:1000',
