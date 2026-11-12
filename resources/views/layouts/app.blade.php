@@ -168,15 +168,6 @@
     </button>
   </div>
   <div class="enforcer-more-grid">
-    <a href="{{ route('profile.edit') }}" class="enforcer-more-item">
-      <i class="bi bi-person-circle"></i><span>My Profile</span>
-    </a>
-    <a href="{{ route('notifications.index') }}" class="enforcer-more-item">
-      <i class="bi bi-bell"></i><span>Notifications</span>
-    </a>
-    <a href="{{ route('settings.index') }}" class="enforcer-more-item">
-      <i class="bi bi-gear"></i><span>Settings</span>
-    </a>
     <a href="{{ route('citizen-reports.index') }}" class="enforcer-more-item">
       <i class="bi bi-inbox"></i><span>Citizen Reports</span>
     </a>
@@ -221,24 +212,31 @@ document.addEventListener('DOMContentLoaded', () => {
 @endif
 
 <style>
-    .sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 220px;
-        min-width: 220px;
-        max-width: 220px;
-        height: 100vh;
-        z-index: 1030;
-        background: linear-gradient(160deg, var(--itevcms-primary) 0%, #0a1f35 100%);
-        box-shadow: 20px 0 45px rgba(15, 23, 42, 0.15);
-        display: flex !important;
-        flex-direction: column !important;
-        overflow: hidden;
+    /* Desktop-only: the sidebar's display rules must not beat the mobile
+       hide rule in app.css (same !important weight — order decides). */
+    @media (min-width: 992px) {
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 220px;
+            min-width: 220px;
+            max-width: 220px;
+            height: 100vh;
+            z-index: 1030;
+            background: linear-gradient(160deg, var(--itevcms-primary) 0%, #0a1f35 100%);
+            box-shadow: 20px 0 45px rgba(15, 23, 42, 0.15);
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden;
+        }
+
+        .main-content {
+            margin-left: 220px;
+        }
     }
 
     .main-content {
-        margin-left: 220px;
         min-height: 100vh;
         min-width: 0;
     }

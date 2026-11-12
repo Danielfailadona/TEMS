@@ -197,7 +197,9 @@
                                                     <option value="issued">Issued</option>
                                                     <option value="paid">Paid</option>
                                                     <option value="overdue">Overdue</option>
-                                                    <option value="appealed">Appealed</option>
+                                                    <option value="clamped">Clamped</option>
+                                                    <option value="impounded">Impounded</option>
+                                                    <option value="released">Released</option>
                                                 </select>
                                             </div>
                                         </div>

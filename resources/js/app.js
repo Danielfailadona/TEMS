@@ -11,6 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
         new bootstrap.Tooltip(el);
     });
 
+    // Flash alerts dismiss themselves after 5 seconds — no close click needed.
+    document.querySelectorAll('.alert.alert-dismissible').forEach((el) => {
+        setTimeout(() => {
+            bootstrap.Alert.getOrCreateInstance(el).close();
+        }, 5000);
+    });
+
     const animatedItems = document.querySelectorAll('.animate-on-load');
     const observer = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CitationStatus;
 use App\Models\Archive;
 use App\Models\Citation;
 use App\Models\CitizenReport;
@@ -9,6 +10,7 @@ use App\Models\ClampingRecord;
 use App\Services\CitationNumberService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class CitizenPortalController extends Controller
@@ -89,17 +91,63 @@ class CitizenPortalController extends Controller
 
     public function citationSearch(Request $request)
     {
+        $advanced = $request->filled('citation_number')
+            || $request->filled('plate_number')
+            || $request->filled('issued_date')
+            || $request->filled('status');
+
+        if ($advanced) {
+            $request->validate([
+                'citation_number' => 'nullable|string|max:50',
+                'plate_number' => 'nullable|string|max:20',
+                'issued_date' => 'nullable|date',
+                'status' => ['nullable', Rule::in(array_column(CitationStatus::cases(), 'value'))],
+            ]);
+
+            $query = Citation::with(['violationType', 'evidence']);
+
+            $query->where(function ($q) use ($request) {
+                if ($request->filled('citation_number')) {
+                    $term = '%'.mb_strtolower(trim($request->input('citation_number'))).'%';
+                    $q->whereRaw('LOWER(citation_number) LIKE ?', [$term]);
+                }
+                if ($request->filled('plate_number')) {
+                    $term = '%'.mb_strtolower(trim($request->input('plate_number'))).'%';
+                    $q->whereRaw('LOWER(vehicle_plate) LIKE ?', [$term]);
+                }
+                if ($request->filled('issued_date')) {
+                    $q->whereDate('issued_at', $request->input('issued_date'));
+                }
+                if ($request->filled('status')) {
+                    $q->where('status', $request->input('status'));
+                }
+            });
+
+            $citation = $query->orderByDesc('issued_at')->first();
+
+            if (! $citation) {
+                return back()->with('error', 'No citation found matching your search.');
+            }
+
+            return view('citizen.citation-lookup', ['citationResult' => $citation]);
+        }
+
         $request->validate([
             'search' => 'required|string|min:3',
         ]);
 
-        $search = $request->input('search');
+        $search = trim($request->input('search'));
+        $term = '%'.mb_strtolower($search).'%';
 
+        // Case-insensitive matching: Postgres LIKE is case-sensitive and plates
+        // are stored uppercase, so a lowercase plate would never match otherwise.
         $citation = Citation::with(['violationType', 'evidence'])
-            ->where(function ($query) use ($search) {
-                $query->where('citation_number', 'like', "%{$search}%")
-                    ->orWhere('vehicle_plate', 'like', "%{$search}%");
+            ->where(function ($query) use ($term) {
+                $query->whereRaw('LOWER(citation_number) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', [$term]);
             })
+            ->orderByRaw('citation_number = ? desc', [$search])
+            ->orderByDesc('issued_at')
             ->first();
 
         if (! $citation) {
@@ -120,13 +168,18 @@ class CitizenPortalController extends Controller
             'search' => 'required|string|min:3',
         ]);
 
-        $search = $request->input('search');
+        $search = trim($request->input('search'));
+        $term = '%'.mb_strtolower($search).'%';
 
+        // Case-insensitive; the plate lives on the linked citation (the
+        // clamping_records.vehicle_plate column was dropped).
         $clamping = \App\Models\ClampingRecord::with(['officer', 'citation', 'impoundingRecord', 'release'])
-            ->where(function ($query) use ($search) {
-                $query->where('notice_number', 'like', "%{$search}%")
-                    ->orWhere('vehicle_plate', 'like', "%{$search}%");
+            ->where(function ($query) use ($term) {
+                $query->whereRaw('LOWER(notice_number) LIKE ?', [$term])
+                    ->orWhereHas('citation', fn ($c) => $c->whereRaw('LOWER(vehicle_plate) LIKE ?', [$term]));
             })
+            ->orderByRaw('notice_number = ? desc', [$search])
+            ->orderByDesc('clamped_at')
             ->first();
 
         if (! $clamping) {

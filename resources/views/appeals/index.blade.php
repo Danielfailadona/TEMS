@@ -49,7 +49,7 @@
                             <a href="{{ route('appeals.show', $appeal) }}" class="std-view-btn" title="View appeal" aria-label="View appeal {{ $appeal->ticketNumber() }}">
                                 <svg viewBox="0 0 24 24"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
                             </a>
-                            <x-delete-button :record="$appeal" route-name="appeals.destroy" :label="appeal {{ $appeal->ticketNumber() }}" />
+                            <x-delete-button :record="$appeal" route-name="appeals.destroy" :label="'Appeal '.$appeal->ticketNumber()" />
                         </div>
                     </td>
                 </tr>
