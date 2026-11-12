@@ -180,6 +180,17 @@ class EvidenceRequiredTest extends TestCase
         $response->assertOk();
         $response->assertSee('IMP-1234');
         $response->assertSee('Impound Vehicle');
+
+        // Selecting a citation (server-side, ?citation_id=) shows the review panel
+        // with details, fees, and the next-step record form.
+        $citation = \App\Models\Citation::where('vehicle_plate', 'IMP-1234')->firstOrFail();
+        $review = $this->actingAs($admin)->get('/impounding/create?citation_id='.$citation->id);
+
+        $review->assertOk();
+        $review->assertSee('Selected Citation — Review');
+        $review->assertSee('IMP-1234');
+        $review->assertSee('Next Step — Record the Impound');
+        $review->assertSee('Towing Fee');
     }
 
     public function test_clampable_citation_appears_as_eligible_on_clamping_create(): void
@@ -209,6 +220,16 @@ class EvidenceRequiredTest extends TestCase
         $response->assertOk();
         $response->assertSee('CLP-1234');
         $response->assertSee('Record Clamp');
+
+        // Selecting a citation (server-side, ?citation_id=) shows the review panel
+        // with the full details and the next-step record form.
+        $citation = \App\Models\Citation::where('vehicle_plate', 'CLP-1234')->firstOrFail();
+        $review = $this->actingAs($admin)->get('/clamping/create?citation_id='.$citation->id);
+
+        $review->assertOk();
+        $review->assertSee('Selected Citation — Review');
+        $review->assertSee('CLP-1234');
+        $review->assertSee('Next Step — Record the Clamp');
     }
 
     public function test_enforcer_cannot_access_clamping_create(): void

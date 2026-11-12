@@ -521,9 +521,10 @@
                 </div>
             </div>
         </div>
+    @endif
 
-        @if (! $request->citation)
-            <div class="modal fade" id="resolveModal" tabindex="-1">
+    @if ($isAccepted && ! $request->citation)
+        <div class="modal fade" id="resolveModal" tabindex="-1">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content" style="border-radius:1rem;border:none;box-shadow:0 20px 60px rgba(0,0,0,0.15);">
                         <form method="POST" action="{{ route('citizen-reports.resolve', $request) }}">
@@ -557,28 +558,28 @@
                             </div>
                             <div class="modal-body">
                                 <div class="alert alert-info py-2 small mb-3">
-                                    <i class="bi bi-info-circle me-1"></i>Vehicle and location details are pre-filled from report <strong>{{ $request->report_number }}</strong>. Adjust if needed.
+                                    <i class="bi bi-lock me-1"></i>Vehicle and location details are locked to report <strong>{{ $request->report_number }}</strong>. Fill in the driver details, violation, and evidence.
                                 </div>
                                 <div class="row g-3">
                                     <div class="col-md-4">
                                         <label class="form-label small fw-semibold">Vehicle Plate <span class="text-danger">*</span></label>
-                                        <input type="text" name="vehicle_plate" class="form-control" value="{{ old('vehicle_plate', $request->vehicle_plate) }}" required>
+                                        <input type="text" name="vehicle_plate" class="form-control bg-light" value="{{ old('vehicle_plate', $request->vehicle_plate) }}" readonly required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small fw-semibold">Make</label>
-                                        <input type="text" name="vehicle_make" class="form-control" value="{{ old('vehicle_make', $request->vehicle_make) }}">
+                                        <input type="text" name="vehicle_make" class="form-control bg-light" value="{{ old('vehicle_make', $request->vehicle_make) }}" readonly>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small fw-semibold">Model</label>
-                                        <input type="text" name="vehicle_model" class="form-control" value="{{ old('vehicle_model', $request->vehicle_model) }}">
+                                        <input type="text" name="vehicle_model" class="form-control bg-light" value="{{ old('vehicle_model', $request->vehicle_model) }}" readonly>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small fw-semibold">Color</label>
-                                        <input type="text" name="vehicle_color" class="form-control" value="{{ old('vehicle_color', $request->vehicle_color) }}">
+                                        <input type="text" name="vehicle_color" class="form-control bg-light" value="{{ old('vehicle_color', $request->vehicle_color) }}" readonly>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small fw-semibold">Vehicle Type</label>
-                                        <input type="text" name="vehicle_type" class="form-control" placeholder="e.g. Sedan" value="{{ old('vehicle_type') }}">
+                                        <input type="text" name="vehicle_type" class="form-control bg-light" placeholder="e.g. Sedan" value="{{ old('vehicle_type') }}" readonly>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small fw-semibold">Violation Type <span class="text-danger">*</span></label>
@@ -613,15 +614,15 @@
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label small fw-semibold">Location <span class="text-danger">*</span></label>
-                                        <input type="text" name="location" class="form-control" value="{{ old('location', $request->location_address) }}" required>
+                                        <input type="text" name="location" class="form-control bg-light" value="{{ old('location', $request->location_address) }}" readonly required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small fw-semibold">Latitude</label>
-                                        <input type="number" step="0.0000001" name="latitude" class="form-control" value="{{ old('latitude', $request->latitude) }}">
+                                        <input type="number" step="0.0000001" name="latitude" class="form-control bg-light" value="{{ old('latitude', $request->latitude) }}" readonly>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small fw-semibold">Longitude</label>
-                                        <input type="number" step="0.0000001" name="longitude" class="form-control" value="{{ old('longitude', $request->longitude) }}">
+                                        <input type="number" step="0.0000001" name="longitude" class="form-control bg-light" value="{{ old('longitude', $request->longitude) }}" readonly>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label small fw-semibold">Notes</label>
@@ -642,7 +643,6 @@
                     </div>
                 </div>
             </div>
-        @endif
     @endif
 @endcan
 @endsection

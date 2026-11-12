@@ -112,6 +112,8 @@ class EnforcerReportAssignedTest extends TestCase
         $response->assertOk();
         $response->assertSee('Issue Citation');
         $response->assertSee('Resolve with Notes');
+        $response->assertSee('issueCitationModal');
+        $response->assertSee('resolveModal');
         $response->assertDontSee('Accept &amp; Assign');
         $response->assertDontSee('Reassign');
         $response->assertDontSee('Reject Report');

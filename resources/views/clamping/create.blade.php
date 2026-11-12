@@ -91,6 +91,13 @@
         text-decoration: none; background: #fff; cursor: pointer;
     }
     .pym-dash .pym-pill-btn:hover { background: #f4f7fa; }
+    .pym-dash .pym-pill-btn--select {
+        background: var(--pym-blue); border-color: var(--pym-blue); color: #fff;
+    }
+    .pym-dash .pym-pill-btn--select:hover { background: #075edb; color: #fff; }
+    .pym-dash .pym-pill-btn--selected {
+        background: #eef5ff; border-color: var(--pym-blue); color: var(--pym-blue); cursor: default;
+    }
     .pym-dash .pym-pill-btn.is-selected { background: var(--pym-blue); border-color: var(--pym-blue); color: #fff; }
 
     .pym-dash .pym-empty { padding: 30px; text-align: center; color: var(--pym-muted); }
@@ -181,11 +188,19 @@
                         <td data-label="Violation">{{ $eligible->violationLabel() }}</td>
                         <td data-label="Issued">{{ $eligible->issued_at->format('M d, Y') }}</td>
                         <td data-label="Due">{{ $eligible->due_date->format('M d, Y') }}</td>
-                        <td data-label="Status"><span class="pym-pill {{ $eligible->status->badgeClass() }}">{{ $eligible->status->label() }}</span></td>
+                        <td data-label="Status"><span class="pym-pill {{ $eligible->status->value === 'overdue' ? 'bg-warning-soft' : 'bg-gray-soft' }}">{{ $eligible->status->label() }}</span></td>
                         <td>
-                            <button type="button" class="pym-pill-btn js-select-citation" data-id="{{ $eligible->id }}">
-                                @if (($citation->id ?? null) === $eligible->id) Selected @else Select @endif
-                            </button>
+                            @php
+                                $selectUrl = route('clamping.create', array_filter([
+                                    'citation_id' => $eligible->id,
+                                    'eligible_search' => request('eligible_search'),
+                                    'eligible_status' => request('eligible_status'),
+                                ]));
+                                $isSelected = ($citation->id ?? null) === $eligible->id;
+                            @endphp
+                            <a href="{{ $selectUrl }}" class="pym-pill-btn {{ $isSelected ? 'pym-pill-btn--selected' : 'pym-pill-btn--select' }}">
+                                @if ($isSelected) <i class="bi bi-check-lg me-1"></i>Selected @else Select @endif
+                            </a>
                         </td>
                     </tr>
                 @empty
@@ -199,71 +214,58 @@
         <span>{{ $eligibleCitations->count() }} eligible citation{{ $eligibleCitations->count() === 1 ? '' : 's' }} found</span>
     </footer>
 
-    {{-- Review panel: full citation details + record form (appears on select) --}}
-    <div class="card stat-card mt-4" id="reviewPanel" @if (! $citation) style="display:none;" @endif>
-        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <strong><i class="bi bi-file-earmark-text me-1"></i>Selected Citation — Review</strong>
-            <span class="pym-pill" id="reviewStatus">—</span>
-        </div>
-        <div class="card-body">
-            <div class="row g-3 mb-4">
-                <div class="col-md-4"><span class="text-muted small d-block">Citation #</span><strong id="reviewNumber">—</strong></div>
-                <div class="col-md-4"><span class="text-muted small d-block">Vehicle Plate</span><strong id="reviewPlate">—</strong></div>
-                <div class="col-md-4"><span class="text-muted small d-block">Violation</span><span id="reviewViolation">—</span></div>
-                <div class="col-md-4"><span class="text-muted small d-block">Penalty</span><span id="reviewPenalty">—</span></div>
-                <div class="col-md-4"><span class="text-muted small d-block">Issued</span><span id="reviewIssued">—</span></div>
-                <div class="col-md-4"><span class="text-muted small d-block">Due</span><span id="reviewDue">—</span></div>
-                <div class="col-md-4"><span class="text-muted small d-block">Vehicle</span><span id="reviewVehicle">—</span></div>
-                <div class="col-md-4"><span class="text-muted small d-block">Driver</span><span id="reviewDriver">—</span></div>
-                <div class="col-md-4"><span class="text-muted small d-block">Issuing Officer</span><span id="reviewOfficer">—</span></div>
-                <div class="col-12"><span class="text-muted small d-block">Location</span><span id="reviewLocation">—</span></div>
+    {{-- Review panel: full citation details + record form (server-rendered for the selected citation) --}}
+    @if ($citation)
+        <div class="card stat-card mt-4" id="reviewPanel">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong><i class="bi bi-file-earmark-text me-1"></i>Selected Citation — Review</strong>
+                <span class="pym-pill {{ $citation->status->value === 'overdue' ? 'bg-warning-soft' : 'bg-gray-soft' }}">{{ $citation->status->label() }}</span>
             </div>
-
-            <form method="POST" action="{{ route('clamping.store') }}">@csrf
-                <input type="hidden" name="citation_id" id="recordCitationId" value="{{ $citation->id ?? '' }}">
-                <input type="hidden" name="vehicle_plate" id="recordPlate" value="{{ $citation->vehicle_plate ?? '' }}">
-
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Location</label>
-                        <input type="text" name="location" class="form-control" value="{{ old('location') }}" placeholder="Clamp location">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Notes</label>
-                        <textarea name="notes" class="form-control" rows="2" placeholder="Optional notes">{{ old('notes') }}</textarea>
-                    </div>
-                    <div class="col-12">
-                        <div class="alert alert-info mb-0 py-2">
-                            <small><i class="bi bi-camera me-1"></i>Evidence photos are taken from the selected citation's own records.</small>
-                        </div>
-                    </div>
+            <div class="card-body">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4"><span class="text-muted small d-block">Citation #</span><strong>{{ $citation->citation_number }}</strong></div>
+                    <div class="col-md-4"><span class="text-muted small d-block">Vehicle Plate</span><strong>{{ $citation->vehicle_plate }}</strong></div>
+                    <div class="col-md-4"><span class="text-muted small d-block">Violation</span><span>{{ $citation->violationLabel() }}</span></div>
+                    <div class="col-md-4"><span class="text-muted small d-block">Penalty</span><span>₱{{ number_format((float) $citation->penalty_amount, 2) }}</span></div>
+                    <div class="col-md-4"><span class="text-muted small d-block">Issued</span><span>{{ $citation->issued_at?->format('M d, Y') ?? '—' }}</span></div>
+                    <div class="col-md-4"><span class="text-muted small d-block">Due</span><span>{{ $citation->due_date?->format('M d, Y') ?? '—' }}</span></div>
+                    <div class="col-md-4"><span class="text-muted small d-block">Vehicle</span><span>{{ trim(collect([$citation->vehicle_make, $citation->vehicle_model, $citation->vehicle_type, $citation->vehicle_color])->filter()->implode(' ')) ?: '—' }}</span></div>
+                    <div class="col-md-4"><span class="text-muted small d-block">Driver</span><span>{{ $citation->driver_name ?: '—' }}</span></div>
+                    <div class="col-md-4"><span class="text-muted small d-block">Issuing Officer</span><span>{{ $citation->enforcer?->name ?? '—' }}</span></div>
+                    <div class="col-12"><span class="text-muted small d-block">Location</span><span>{{ $citation->location ?: '—' }}</span></div>
                 </div>
 
-                <button type="submit" class="btn btn-danger mt-3"><i class="bi bi-lock me-1"></i>Record Clamp</button>
-                <a href="{{ route('clamping.index') }}" class="btn btn-link mt-3">Cancel</a>
-            </form>
+                <h6 class="fw-bold mb-2"><i class="bi bi-clipboard-check me-1"></i>Next Step — Record the Clamp</h6>
+                <form method="POST" action="{{ route('clamping.store') }}">@csrf
+                    <input type="hidden" name="citation_id" value="{{ $citation->id }}">
+                    <input type="hidden" name="vehicle_plate" value="{{ $citation->vehicle_plate }}">
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Location</label>
+                            <input type="text" name="location" class="form-control" value="{{ old('location', $citation->location) }}" placeholder="Clamp location">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Notes</label>
+                            <textarea name="notes" class="form-control" rows="2" placeholder="Optional notes">{{ old('notes') }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <div class="alert alert-info mb-0 py-2">
+                                <small><i class="bi bi-camera me-1"></i>Evidence photos are taken from the selected citation's own records.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger mt-3"><i class="bi bi-lock me-1"></i>Record Clamp</button>
+                    <a href="{{ route('clamping.index') }}" class="btn btn-link mt-3">Cancel</a>
+                </form>
+            </div>
         </div>
-    </div>
+    @endif
 </div>
 @endsection
 
 @push('scripts')
-@php
-    $reviewData = $eligibleCitations->mapWithKeys(fn ($c) => [$c->id => [
-        'number' => $c->citation_number,
-        'plate' => $c->vehicle_plate,
-        'statusLabel' => $c->status->label(),
-        'statusClass' => $c->status->badgeClass(),
-        'violation' => $c->violationLabel(),
-        'penalty' => '₱' . number_format((float) $c->penalty_amount, 2),
-        'issued' => $c->issued_at?->format('M d, Y') ?? '—',
-        'due' => $c->due_date?->format('M d, Y') ?? '—',
-        'vehicle' => trim(collect([$c->vehicle_make, $c->vehicle_model, $c->vehicle_type, $c->vehicle_color])->filter()->implode(' ')) ?: '—',
-        'driver' => $c->driver_name ?: '—',
-        'officer' => $c->enforcer?->name ?? '—',
-        'location' => $c->location ?: '—',
-    ]])->all();
-@endphp
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('eligibleForm');
@@ -295,55 +297,6 @@ document.addEventListener('DOMContentLoaded', () => {
     searchInput.addEventListener('input', () => {
         clearTimeout(debounce);
         debounce = setTimeout(() => form.submit(), 300);
-    });
-
-    const reviewData = @json($reviewData);
-
-    const reviewPanel = document.getElementById('reviewPanel');
-    const slots = ['Number', 'Plate', 'Violation', 'Penalty', 'Issued', 'Due', 'Vehicle', 'Driver', 'Officer', 'Location'];
-
-    function renderReview(data) {
-        slots.forEach(function (name) {
-            const el = document.getElementById('review' + name);
-            if (el) el.textContent = data[name.toLowerCase()] ?? '—';
-        });
-        const statusEl = document.getElementById('reviewStatus');
-        statusEl.textContent = data.statusLabel;
-        statusEl.className = 'pym-pill ' + data.statusClass;
-
-        document.getElementById('recordCitationId').value = data.id ?? '';
-        document.getElementById('recordPlate').value = data.plate ?? '';
-    }
-
-    // Pre-fill the review from a deep link (?citation_id=)
-    const selectedRow = document.querySelector('[data-citation-row].row-selected');
-    if (selectedRow) {
-        const data = reviewData[selectedRow.dataset.id];
-        if (data) renderReview({ id: selectedRow.dataset.id, ...data });
-        selectedRow.querySelector('.js-select-citation')?.classList.add('is-selected');
-    }
-
-    document.querySelectorAll('.js-select-citation').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            const row = btn.closest('[data-citation-row]');
-            const data = reviewData[btn.dataset.id];
-            if (!row || !data) return;
-
-            renderReview({ id: btn.dataset.id, ...data });
-
-            document.querySelectorAll('[data-citation-row]').forEach(function (r) {
-                r.classList.remove('row-selected');
-                r.querySelector('.js-select-citation')?.classList.remove('is-selected');
-                r.querySelector('.js-select-citation')?.textContent = 'Select';
-            });
-            row.classList.add('row-selected');
-            btn.classList.add('is-selected');
-            btn.textContent = 'Selected';
-
-            // The review panel only appears once a citation is selected.
-            reviewPanel.style.display = '';
-            reviewPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
     });
 });
 </script>

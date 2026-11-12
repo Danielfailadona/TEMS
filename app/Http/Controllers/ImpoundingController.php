@@ -97,29 +97,11 @@ class ImpoundingController extends Controller
 
         $eligibleCitations = $eligibleQuery->orderBy('due_date')->limit(100)->get();
 
-        // Fee schedule per violation code, used by the client-side picker to
-        // update the fee cards when a citation is selected.
-        $feeSchedule = [];
-        foreach ($eligibleCitations as $eligible) {
-            $code = $eligible->violationType?->code ?? 'default';
-            if (! array_key_exists($code, $feeSchedule)) {
-                $fees = config('itevcms.impounding.violation_fees')[$code] ?? config('itevcms.impounding.violation_fees.default');
-                $feeSchedule[$code] = [
-                    'towing_fee' => (float) ($fees['towing_fee'] ?? 0),
-                    'storage_fee_per_day' => (float) ($fees['storage_fee_per_day'] ?? 0),
-                    'admin_fee' => (float) ($fees['admin_fee'] ?? 0),
-                ];
-            }
-        }
-        $feeSchedule['default'] = $feeSchedule['default']
-            ?? collect(config('itevcms.impounding.violation_fees.default'))
-                ->map(fn ($v) => (float) $v)->all();
-
         // Fees for the pre-selected citation (defaults when none is linked)
         $violationCode = $citation?->violationType?->code ?? 'default';
-        $fees = $feeSchedule[$violationCode] ?? $feeSchedule['default'];
+        $fees = config('itevcms.impounding.violation_fees')[$violationCode] ?? config('itevcms.impounding.violation_fees.default');
 
-        return view('impounding.create', compact('plate', 'citation', 'fees', 'eligibleCitations', 'feeSchedule'));
+        return view('impounding.create', compact('plate', 'citation', 'fees', 'eligibleCitations'));
     }
 
     public function store(Request $request, CitationNumberService $numberService): RedirectResponse
