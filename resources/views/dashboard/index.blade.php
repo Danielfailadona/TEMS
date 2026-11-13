@@ -12,6 +12,20 @@
     .state-text { margin-left:auto; font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; opacity:0.85; }
     .chart-box { height:200px; }
     .chart-box-sm { height:150px; }
+
+    /* Category tag chips for the unified chart */
+    .chart-tag {
+        border: 1px solid #d7dee7; background: #fff; color: #263247;
+        font-size: 0.8rem; font-weight: 600; border-radius: 999px;
+        padding: 0.3rem 0.9rem; cursor: pointer; transition: all 0.15s ease;
+    }
+    .chart-tag:hover { background: #f0f6ff; border-color: #7aa9f8; }
+    .chart-tag.active { background: #176ff2; border-color: #176ff2; color: #fff; }
+
+    .chart-dot {
+        display: inline-block; width: 10px; height: 10px;
+        border-radius: 50%; margin-right: 4px; vertical-align: middle;
+    }
     .dash-map { width:100%; height:220px; border-radius:0.5rem; overflow:hidden; }
     .two-col { align-items: stretch; }
     .tier3-row > .stat-card--quiet { flex: 1 1 0; min-width: 0; }
@@ -68,7 +82,15 @@
             $stateText = ['state-green' => 'Clear', 'state-amber' => 'Monitor', 'state-red' => 'Action needed'][$state];
             $t = $trends[$a['key']] ?? ['direction' => 'flat', 'percent' => 0];
         @endphp
-        <div class="stat-card {{ $state }}">
+        @php
+            $cardLink = ($a['key'] === 'unpaid_citations' && auth()->user()->isRole(\App\Enums\Role::SuperAdmin, \App\Enums\Role::Administrator, \App\Enums\Role::Cashier))
+                ? route('reports.overdue-citations')
+                : null;
+        @endphp
+        @if ($cardLink)
+            <a href="{{ $cardLink }}" class="text-decoration-none">
+        @endif
+        <div class="stat-card {{ $state }}{{ $cardLink ? ' h-100' : '' }}">
             <div class="stat-label">
                 <span class="state-dot" aria-hidden="true"></span>
                 <i class="bi {{ $a['icon'] }}"></i>
@@ -87,6 +109,9 @@
                 <span class="text-muted ms-1">vs last week</span>
             </div>
         </div>
+        @if ($cardLink)
+            </a>
+        @endif
     @endforeach
 </div>
 
@@ -195,45 +220,33 @@
     </div>
 </div>
 
-{{-- Trends --}}
-<div class="section-label">Trends</div>
-<div class="two-col animate-on-load">
-    {{-- Citations by Month --}}
-    <div class="panel">
-        <h3 class="h6 mb-3">Citations by Month</h3>
-        @if ($citationsByMonth->count() >= 2)
-            <div class="chart-box"><canvas id="citationsChart"></canvas></div>
-        @elseif ($citationsByMonth->count() === 1)
-            <div class="stat-with-caption">
-                <div class="big">{{ number_format($citationsByMonth->values()->first()) }}</div>
-                <div class="caption">{{ $citationsByMonth->keys()->first() }}</div>
-            </div>
-        @else
-            <div class="chart-empty">
-                <span class="icon"><i class="bi bi-bar-chart"></i></span>
-                <span class="msg">No citations recorded yet.</span>
-            </div>
-        @endif
+{{-- Unified Chart --}}
+<div class="section-label">Analytics</div>
+<div class="panel animate-on-load">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+        <h3 class="h6 mb-0">Tickets Overview</h3>
+        <div class="d-flex flex-wrap gap-2" role="group" aria-label="Date range">
+            @foreach (['day' => 'Day', 'week' => 'Week', 'month' => 'Month', 'year' => 'Year'] as $key => $label)
+                <a href="{{ route('dashboard', ['range' => $key]) }}"
+                   class="btn btn-sm {{ $range === $key ? 'btn-primary' : 'btn-outline-secondary' }}">{{ $label }}</a>
+            @endforeach
+        </div>
     </div>
-    {{-- Payments Trend --}}
-    @if (!auth()->user()->isRole(\App\Enums\Role::Enforcer))
-    <div class="panel">
-        <h3 class="h6 mb-3">Payments Trend</h3>
-        @if ($revenueByMonth->count() >= 2)
-            <div class="chart-box"><canvas id="revenueChart"></canvas></div>
-        @elseif ($revenueByMonth->count() === 1)
-            <div class="stat-with-caption">
-                <div class="big">₱{{ number_format($revenueByMonth->values()->first(), 2) }}</div>
-                <div class="caption">{{ $revenueByMonth->keys()->first() }}</div>
-            </div>
-        @else
-            <div class="chart-empty">
-                <span class="icon"><i class="bi bi-cash-stack"></i></span>
-                <span class="msg">No payments recorded yet.</span>
-            </div>
-        @endif
+
+    <div class="d-flex flex-wrap gap-2 mb-3" role="group" aria-label="Category filters">
+        <button type="button" class="chart-tag active" data-series="all">All</button>
+        <button type="button" class="chart-tag" data-series="tickets">Tickets</button>
+        <button type="button" class="chart-tag" data-series="payments">Payments</button>
+        <button type="button" class="chart-tag" data-series="appeals">Appeals</button>
     </div>
-    @endif
+
+    <div class="chart-box" style="height: 260px;"><canvas id="ticketsChart"></canvas></div>
+    <div class="text-muted small mt-2">
+        <span class="me-3"><span class="chart-dot" style="background:#176ff2;"></span>Tickets (citations issued)</span>
+        <span class="me-3"><span class="chart-dot" style="background:#10b981;"></span>Payments — Paid</span>
+        <span class="me-3"><span class="chart-dot" style="background:#f59e0b;"></span>Payments — Unpaid</span>
+        <span><span class="chart-dot" style="background:#8b5cf6;"></span>Appeals</span>
+    </div>
 </div>
 
 <div class="two-col animate-on-load">
@@ -260,22 +273,22 @@
             @endforeach
         @endif
     </div>
-    {{-- Appeals Trend --}}
     <div class="panel">
-        <h3 class="h6 mb-3">Appeals Trend</h3>
-        @if ($appealsByMonth->count() >= 2)
-            <div class="chart-box"><canvas id="appealsChart"></canvas></div>
-        @elseif ($appealsByMonth->count() === 1)
-            <div class="stat-with-caption">
-                <div class="big">{{ number_format($appealsByMonth->values()->first()) }}</div>
-                <div class="caption">{{ $appealsByMonth->keys()->first() }}</div>
+        <h3 class="h6 mb-3">Pending Work Queue</h3>
+        <div class="stat-with-caption">
+            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <span><i class="bi bi-chat-square-text me-2 text-warning"></i>Pending Appeals</span>
+                <strong>{{ number_format($pendingQueue['appeals']) }}</strong>
             </div>
-        @else
-            <div class="chart-empty">
-                <span class="icon"><i class="bi bi-chat-square-text"></i></span>
-                <span class="msg">No appeals filed yet.</span>
+            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <span><i class="bi bi-inbox me-2 text-info"></i>Pending Citizen Reports</span>
+                <strong>{{ number_format($pendingQueue['citizen_reports']) }}</strong>
             </div>
-        @endif
+            <div class="d-flex justify-content-between align-items-center py-2">
+                <span><i class="bi bi-person-plus me-2 text-primary"></i>Account Approvals</span>
+                <strong>{{ number_format($pendingQueue['account_approvals']) }}</strong>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -326,6 +339,9 @@
             @can('viewAny', App\Models\Appeal::class)
                 <a href="{{ route('appeals.index') }}" class="qa-btn gray"><i class="bi bi-chat-square-text"></i>Review Appeals</a>
             @endcan
+            @if (auth()->user()->isRole(\App\Enums\Role::SuperAdmin, \App\Enums\Role::Administrator, \App\Enums\Role::Cashier))
+                <a href="{{ route('reports.overdue-citations') }}" class="qa-btn red"><i class="bi bi-exclamation-octagon"></i>Overdue Citations</a>
+            @endif
         </div>
     </div>
     @if (!auth()->user()->isRole(\App\Enums\Role::Enforcer))
@@ -349,12 +365,7 @@
 @vite('resources/js/zone-picker.js')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const citationLabels = @json($citationsByMonth->keys()->values());
-    const citationData = @json($citationsByMonth->values());
-    const revenueLabels = @json($revenueByMonth->keys()->values());
-    const revenueData = @json($revenueByMonth->values());
-    const appealLabels = @json($appealsByMonth->keys()->values());
-    const appealData = @json($appealsByMonth->values());
+    const chartData = @json($chartData);
 
     // Robust Chart.js initialization with fallback
     function waitForChart(attempts = 0) {
@@ -381,59 +392,58 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const citationEl = document.getElementById('citationsChart');
-        if (citationEl) {
+        const ticketsEl = document.getElementById('ticketsChart');
+        if (ticketsEl) {
             try {
-                new Chart(citationEl, {
+                window.ticketsChart = new Chart(ticketsEl, {
                     type: 'bar',
                     data: {
-                        labels: citationLabels,
-                        datasets: [{ label: 'Citations', data: citationData, backgroundColor: '#2563eb', borderRadius: 4 }]
+                        labels: chartData.labels,
+                        datasets: [
+                            { label: 'Tickets (citations issued)', data: chartData.tickets, backgroundColor: '#176ff2', borderRadius: 4 },
+                            { label: 'Payments — Paid', data: chartData.payments_paid, backgroundColor: '#10b981', borderRadius: 4 },
+                            { label: 'Payments — Unpaid', data: chartData.payments_unpaid, backgroundColor: '#f59e0b', borderRadius: 4 },
+                            { label: 'Appeals', data: chartData.appeals, backgroundColor: '#8b5cf6', borderRadius: 4 },
+                        ]
                     },
                     options: {
                         responsive: true, maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                        scales: {
+                            x: { stacked: true, grid: { display: false } },
+                            y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1, precision: 0 } }
+                        }
                     }
                 });
-            } catch (e) { console.warn('Citation chart failed:', e); }
+
+                // Category tag chips toggle related datasets
+                const seriesMap = {
+                    tickets: [0],
+                    payments: [1, 2],
+                    appeals: [3],
+                };
+
+                document.querySelectorAll('.chart-tag').forEach(function (chip) {
+                    chip.addEventListener('click', function () {
+                        const series = chip.dataset.series;
+
+                        document.querySelectorAll('.chart-tag').forEach(function (c) {
+                            c.classList.remove('active');
+                        });
+                        chip.classList.add('active');
+
+                        window.ticketsChart.data.datasets.forEach(function (ds, idx) {
+                            const visible = series === 'all'
+                                || (seriesMap[series] ?? []).includes(idx);
+                            window.ticketsChart.setDatasetVisibility(idx, visible);
+                        });
+                        window.ticketsChart.update();
+                    });
+                });
+            } catch (e) { console.warn('Tickets chart failed:', e); }
         }
 
-        const revenueEl = document.getElementById('revenueChart');
-        if (revenueEl) {
-            try {
-                new Chart(revenueEl, {
-                    type: 'line',
-                    data: {
-                        labels: revenueLabels,
-                        datasets: [{ label: 'Payments (₱)', data: revenueData, borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)', fill: true, tension: 0.35 }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } } }
-                    }
-                });
-            } catch (e) { console.warn('Revenue chart failed:', e); }
-        }
-
-        const appealsEl = document.getElementById('appealsChart');
-        if (appealsEl) {
-            try {
-                new Chart(appealsEl, {
-                    type: 'line',
-                    data: {
-                        labels: appealLabels,
-                        datasets: [{ label: 'Appeals', data: appealData, borderColor: '#7c3aed', backgroundColor: 'rgba(124,58,237,0.08)', fill: true, tension: 0.35 }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-                    }
-                });
-            } catch (e) { console.warn('Appeals chart failed:', e); }
-        }
+        initCharts.done = true;
     }
 
     initCharts();

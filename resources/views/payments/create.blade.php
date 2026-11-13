@@ -124,10 +124,6 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Reference Number</label>
-                        <input type="text" name="reference_number" class="form-control" value="{{ old('reference_number') }}">
-                    </div>
                     <div class="col-12">
                         <label class="form-label">Notes</label>
                         <textarea name="notes" class="form-control" rows="2">{{ old('notes') }}</textarea>

@@ -166,6 +166,16 @@
     .pym-dash .pym-chip__x { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; color: inherit; }
     .pym-dash .pym-chip__x svg { width: 11px; height: 11px; stroke: currentColor; stroke-width: 2.2; }
 
+    /* KPI summary strip */
+    .pym-dash .pym-kpi-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+    .pym-dash .pym-kpi-card {
+        flex: 1; min-width: 180px; background: #fff; border: 1px solid var(--pym-line);
+        border-radius: 10px; padding: 12px 16px;
+    }
+    .pym-dash .pym-kpi-label { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--pym-muted); }
+    .pym-dash .pym-kpi-value { font-size: 1.35rem; font-weight: 800; color: var(--pym-ink); line-height: 1.25; }
+    .pym-dash .pym-kpi-sub { font-size: 0.7rem; color: var(--pym-muted); }
+
     /* Table */
     .pym-dash .pym-table-wrap { margin-top: 24px; overflow-x: auto; background: #fff; border: 1px solid var(--pym-line); border-radius: 12px; }
     .pym-dash .pym-table { width: 100%; border-collapse: collapse; min-width: 900px; table-layout: fixed; background: #fff; }
@@ -350,7 +360,7 @@
             <button type="submit" class="pym-search-submit" aria-label="Search payments">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
             </button>
-            <input type="search" name="search" id="pymSearchInput" placeholder="Citation # or plate..." value="{{ request('search') }}" autocomplete="off">
+            <input type="search" name="search" id="pymSearchInput" placeholder="Receipt #, citation #, or plate..." value="{{ request('search') }}" autocomplete="off">
         </label>
 
         @can('create', App\Models\Payment::class)
@@ -373,6 +383,27 @@
             @endforeach
         </div>
     @endif
+
+    {{-- Quick date presets --}}
+    <div class="pym-chips" style="margin-top: 10px;" aria-label="Quick date ranges">
+        <a href="{{ route('payments.index', array_filter(['date_from' => now()->toDateString(), 'date_to' => now()->toDateString(), 'category' => request('category')])) }}" class="pym-chip">Today</a>
+        <a href="{{ route('payments.index', array_filter(['date_from' => now()->subDays(6)->toDateString(), 'date_to' => now()->toDateString(), 'category' => request('category')])) }}" class="pym-chip">Last 7 Days</a>
+        <a href="{{ route('payments.index', array_filter(['date_from' => now()->startOfMonth()->toDateString(), 'date_to' => now()->toDateString(), 'category' => request('category')])) }}" class="pym-chip">This Month</a>
+    </div>
+
+    {{-- KPI summary strip --}}
+    <div class="pym-kpi-row">
+        <div class="pym-kpi-card">
+            <div class="pym-kpi-label">Collected (filtered)</div>
+            <div class="pym-kpi-value text-success">₱{{ number_format($kpis['collected_total'], 2) }}</div>
+            <div class="pym-kpi-sub">{{ number_format($kpis['collected_count']) }} payment{{ $kpis['collected_count'] === 1 ? '' : 's' }} · {{ $kpis['online_share'] }}% online</div>
+        </div>
+        <div class="pym-kpi-card">
+            <div class="pym-kpi-label">Awaiting Payment</div>
+            <div class="pym-kpi-value text-warning">{{ number_format($kpis['awaiting_count']) }}</div>
+            <div class="pym-kpi-sub">pending checkouts + outstanding tickets</div>
+        </div>
+    </div>
 
     <section class="pym-table-wrap" aria-label="Payments table">
         <table class="pym-table table-cards">

@@ -221,10 +221,6 @@ if (! \App\Enums\ImpoundingStatus::tryFrom($activeStatus)) {
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Reference Number</label>
-                                <input type="text" name="reference_number" class="form-control" placeholder="Optional">
-                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

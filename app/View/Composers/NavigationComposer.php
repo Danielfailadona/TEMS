@@ -70,7 +70,6 @@ class NavigationComposer
 
             if ($user->isRole(Role::SuperAdmin, Role::Administrator)) {
                 $monitoring[] = ['label' => 'Tracking', 'route' => 'tracking.index', 'icon' => 'broadcast'];
-                $monitoring[] = ['label' => 'Reports', 'route' => 'reports.index', 'icon' => 'graph-up'];
 
                 $administration[] = ['label' => 'Users', 'route' => 'users.index', 'icon' => 'person-gear'];
                 $administration[] = ['label' => 'Teams', 'route' => 'teams.index', 'icon' => 'people'];

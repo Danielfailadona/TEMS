@@ -193,14 +193,8 @@ Route::post('users/{user}/unsuspend', [UserController::class, 'toggleStatus'])->
     // Front Desk
     Route::get('front-desk', [FrontDeskController::class, 'index'])->name('frontdesk.index');
 
-    // Reports
-    Route::prefix('reports')->name('reports.')->group(function () {
-        Route::get('/', [ReportController::class, 'index'])->name('index');
-        Route::get('revenue', [ReportController::class, 'revenue'])->name('revenue');
-        Route::get('citations', [ReportController::class, 'citations'])->name('citations');
-        Route::get('overdue-citations', [ReportController::class, 'overdueCitations'])->name('overdue-citations');
-        Route::get('enforcer-performance', [ReportController::class, 'enforcerPerformance'])->name('enforcer-performance');
-    });
+    // Overdue Citations report (accessed from the Dashboard)
+    Route::get('reports/overdue-citations', [ReportController::class, 'overdueCitations'])->name('reports.overdue-citations');
 
     // Archives
     Route::get('archives', [ArchiveController::class, 'index'])->name('archives.index');

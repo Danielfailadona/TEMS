@@ -127,8 +127,22 @@ class PaymentController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
+        // KPI strip: collected vs awaiting within the current filters.
+        $collectedRows = $all->filter(fn ($row) => $row['kind'] === 'receipt' && $row['payment']->paid_at);
+        $collectedTotal = (float) $collectedRows->sum(fn ($row) => $row['payment']->amount);
+        $collectedCount = $collectedRows->count();
+        $onlineCount = $collectedRows->filter(fn ($row) => $row['payment']->isOnlinePayment())->count();
+        $awaitingCount = $all->count() - $collectedCount;
+        $kpis = [
+            'collected_total' => $collectedTotal,
+            'collected_count' => $collectedCount,
+            'awaiting_count' => $awaitingCount,
+            'online_share' => $collectedCount > 0 ? (int) round($onlineCount / $collectedCount * 100) : 0,
+        ];
+
         return view('payments.index', [
             'grid' => $grid,
+            'kpis' => $kpis,
         ]);
     }
 

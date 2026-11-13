@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="mb-4 d-flex justify-content-between align-items-center">
-    <a href="{{ auth()->user()->isCashier() ? route('dashboard') : route('reports.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+    <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
     <span class="text-muted small"><i class="bi bi-clock-history me-1"></i>Unpaid citations past their due date</span>
 </div>
 

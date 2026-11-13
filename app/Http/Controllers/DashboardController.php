@@ -18,6 +18,7 @@ use App\Models\ViolationType;
 use App\Models\Zone;
 use App\Models\User;
 use App\Services\UserKpiService;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -26,7 +27,7 @@ class DashboardController extends Controller
     {
     }
 
-public function index(): View
+public function index(Request $request): View
     {
         $user = auth()->user();
 
@@ -116,29 +117,67 @@ public function index(): View
             ),
         ];
 
-        // Analytics: Citations by Month
-        $citationsByMonth = Citation::query()
-            ->where('issued_at', '>=', now()->subMonths(6))
-            ->get()
-            ->groupBy(fn (Citation $c) => $c->issued_at->format('Y-m'))
-            ->map->count()
-            ->sortKeys();
+        // Analytics: unified categorized bar chart (Tickets / Payments / Appeals)
+        // with a selectable range: day | week | month | year.
+        $range = in_array($request->input('range'), ['day', 'week', 'month', 'year'], true)
+            ? $request->input('range')
+            : 'month';
 
-        // Analytics: Revenue by Month
-        $revenueByMonth = Payment::query()
-            ->where('paid_at', '>=', now()->subMonths(6))
-            ->get()
-            ->groupBy(fn (Payment $p) => $p->paid_at->format('Y-m'))
-            ->map(fn ($group) => $group->sum('amount'))
-            ->sortKeys();
+        $bucketSpec = match ($range) {
+            'day' => ['count' => 14, 'label' => 'M j', 'unit' => 'day'],
+            'week' => ['count' => 12, 'label' => 'M j', 'unit' => 'week'],
+            'year' => ['count' => 5, 'label' => 'Y', 'unit' => 'year'],
+            default => ['count' => 12, 'label' => 'M y', 'unit' => 'month'],
+        };
 
-        // Analytics: Appeals by Month
-        $appealsByMonth = Appeal::query()
-            ->where('submitted_at', '>=', now()->subMonths(6))
-            ->get()
-            ->groupBy(fn (Appeal $a) => $a->submitted_at->format('Y-m'))
-            ->map->count()
-            ->sortKeys();
+        $buckets = [];
+        $cursor = match ($bucketSpec['unit']) {
+            'day' => now()->startOfDay()->subDays($bucketSpec['count'] - 1),
+            'week' => now()->startOfWeek()->subWeeks($bucketSpec['count'] - 1),
+            'year' => now()->startOfYear()->subYears($bucketSpec['count'] - 1),
+            default => now()->startOfMonth()->subMonths($bucketSpec['count'] - 1),
+        };
+        for ($i = 0; $i < $bucketSpec['count']; $i++) {
+            $start = match ($bucketSpec['unit']) {
+                'day' => $cursor->copy()->addDays($i)->startOfDay(),
+                'week' => $cursor->copy()->addWeeks($i)->startOfWeek(),
+                'year' => $cursor->copy()->addYears($i)->startOfYear(),
+                default => $cursor->copy()->addMonths($i)->startOfMonth(),
+            };
+            $end = match ($bucketSpec['unit']) {
+                'day' => $start->copy()->endOfDay(),
+                'week' => $start->copy()->endOfWeek(),
+                'year' => $start->copy()->endOfYear(),
+                default => $start->copy()->endOfMonth(),
+            };
+            $buckets[] = [
+                'label' => $start->format($bucketSpec['label']),
+                'start' => $start,
+                'end' => $end,
+            ];
+        }
+
+        $chartData = [
+            'labels' => array_column($buckets, 'label'),
+            'tickets' => [],
+            'payments_paid' => [],
+            'payments_unpaid' => [],
+            'appeals' => [],
+        ];
+
+        foreach ($buckets as $bucket) {
+            $chartData['tickets'][] = Citation::whereBetween('issued_at', [$bucket['start'], $bucket['end']])->count();
+
+            $chartData['payments_paid'][] = Payment::whereNotNull('paid_at')
+                ->whereBetween('paid_at', [$bucket['start'], $bucket['end']])->count();
+
+            // Unpaid = citations issued in this bucket that are still outstanding.
+            $chartData['payments_unpaid'][] = Citation::whereBetween('issued_at', [$bucket['start'], $bucket['end']])
+                ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue, CitationStatus::Clamped, CitationStatus::Impounded])
+                ->count();
+
+            $chartData['appeals'][] = Appeal::whereBetween('submitted_at', [$bucket['start'], $bucket['end']])->count();
+        }
 
         // Analytics: Top Violation Types
         // All violation types are listed in a fixed (definition) order; rows keep their
@@ -221,9 +260,8 @@ public function index(): View
         return view('dashboard.index', compact(
             'stats',
             'trends',
-            'citationsByMonth',
-            'revenueByMonth',
-            'appealsByMonth',
+            'chartData',
+            'range',
             'topViolations',
             'recentActivity',
             'pendingQueue',
