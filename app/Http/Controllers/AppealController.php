@@ -36,16 +36,33 @@ class AppealController extends Controller
         return view('appeals.index', compact('appeals'));
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
         $this->authorize('create', Appeal::class);
 
-        $citations = Citation::with(['violationType'])
-            ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue])
-            ->latest('issued_at')
-            ->get();
+        // Selected citation survives validation errors via old('citation_id').
+        $citationId = $request->input('citation_id') ?? old('citation_id');
+        $citation = $citationId
+            ? Citation::with(['violationType', 'enforcer'])->find($citationId)
+            : null;
 
-        return view('appeals.create', compact('citations'));
+        // Citations eligible for appeal: still Issued/Overdue. Searchable so the
+        // list stays manageable at any volume.
+        $query = Citation::with(['violationType'])
+            ->whereIn('status', [CitationStatus::Issued, CitationStatus::Overdue]);
+
+        if ($request->filled('search')) {
+            $term = '%'.mb_strtolower(trim($request->search)).'%';
+            $query->where(function ($q) use ($term) {
+                $q->whereRaw('LOWER(citation_number) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(vehicle_plate) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(driver_name) LIKE ?', [$term]);
+            });
+        }
+
+        $citations = $query->orderByDesc('issued_at')->limit(50)->get();
+
+        return view('appeals.create', compact('citations', 'citation'));
     }
 
     public function store(StoreAppealRequest $request): RedirectResponse

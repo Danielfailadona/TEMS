@@ -75,4 +75,52 @@ class AppealsPageTest extends TestCase
         $response->assertSee($appeal->ticketNumber());
         $response->assertSee('Contested violation');
     }
+
+    public function test_appeals_create_search_and_review(): void
+    {
+        $admin = $this->superAdmin();
+        $violation = ViolationType::create([
+            'code' => 'TEST',
+            'name' => 'Test Violation',
+            'penalty_amount' => 500,
+            'is_active' => true,
+        ]);
+
+        $match = Citation::create([
+            'citation_number' => 'CIT-MATCH-0001',
+            'violation_type_id' => $violation->id,
+            'vehicle_plate' => 'MTCH-111',
+            'issued_by' => User::factory()->create(['role' => 'enforcer'])->id,
+            'penalty_amount' => 500,
+            'status' => CitationStatus::Issued,
+            'location' => 'Test Street',
+            'issued_at' => now(),
+            'due_date' => now()->addDays(7),
+        ]);
+
+        Citation::create([
+            'citation_number' => 'CIT-OTHER-0002',
+            'violation_type_id' => $violation->id,
+            'vehicle_plate' => 'OTH-222',
+            'issued_by' => User::factory()->create(['role' => 'enforcer'])->id,
+            'penalty_amount' => 500,
+            'status' => CitationStatus::Issued,
+            'location' => 'Test Street',
+            'issued_at' => now(),
+            'due_date' => now()->addDays(7),
+        ]);
+
+        // Search narrows the results table
+        $search = $this->actingAs($admin)->get('/appeals/create?search=MTCH-111');
+        $search->assertOk();
+        $search->assertSee('CIT-MATCH-0001');
+        $search->assertDontSee('CIT-OTHER-0002');
+
+        // Selecting a citation (server-side) renders the review panel + form
+        $review = $this->actingAs($admin)->get('/appeals/create?citation_id='.$match->id);
+        $review->assertOk();
+        $review->assertSee('Selected Citation — Review');
+        $review->assertSee('CIT-MATCH-0001');
+        $review->assertSee('Next Step — File the Appeal');
+    }
 }

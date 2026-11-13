@@ -1174,6 +1174,10 @@ body::before {
 .std-table tbody th {
     font-weight: 600;
 }
+.std-table tbody tr.row-selected {
+    background: #eef5ff;
+    box-shadow: inset 3px 0 0 #176ff2;
+}
 .std-table .std-empty {
     padding: 45px 20px;
     text-align: center;
