@@ -6,6 +6,7 @@ use App\Enums\AppealStatus;
 use App\Enums\CitationStatus;
 use App\Models\Appeal;
 use App\Models\Citation;
+use App\Models\Payment;
 use App\Models\User;
 use App\Models\ViolationType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -143,5 +144,57 @@ class AppealDiscountTest extends TestCase
         $response->assertOk();
         $response->assertSee('425.00');
         $response->assertDontSee('500.00');
+    }
+
+    public function test_approved_appeal_voids_stale_pending_checkout(): void
+    {
+        $reviewer = $this->superAdmin();
+        $submitter = User::factory()->create(['role' => 'vehicle_owner']);
+        $citation = $this->citation();
+        $appeal = $this->appeal($citation, $submitter->id);
+
+        // An abandoned online checkout for the pre-discount amount.
+        $stale = Payment::create([
+            'receipt_number' => 'RCPT-STALE-0001',
+            'citation_id' => $citation->id,
+            'cashier_id' => $reviewer->id,
+            'amount' => 500,
+            'payment_method' => 'other',
+            'online_payment_method' => 'gcash',
+            'paymongo_checkout_id' => 'cs_test_stale',
+            'paid_at' => null,
+        ]);
+
+        $this->actingAs($reviewer)
+            ->patch("/appeals/{$appeal->id}", ['status' => 'approved'])
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('payments', ['id' => $stale->id]);
+        $this->assertSame(425.0, (float) $citation->fresh()->penalty_amount);
+    }
+
+    public function test_appeal_show_labels_pending_checkout_without_receipt(): void
+    {
+        $reviewer = $this->superAdmin();
+        $submitter = User::factory()->create(['role' => 'vehicle_owner']);
+        $citation = $this->citation();
+        $appeal = $this->appeal($citation, $submitter->id);
+
+        Payment::create([
+            'receipt_number' => 'RCPT-PENDING-0001',
+            'citation_id' => $citation->id,
+            'cashier_id' => $reviewer->id,
+            'amount' => 500,
+            'payment_method' => 'other',
+            'online_payment_method' => 'gcash',
+            'paymongo_checkout_id' => 'cs_test_pending',
+            'paid_at' => null,
+        ]);
+
+        $response = $this->actingAs($reviewer)->get("/appeals/{$appeal->id}");
+
+        $response->assertOk();
+        $response->assertSee('Pending Online Payment');
+        $response->assertDontSee('Receipt #');
     }
 }

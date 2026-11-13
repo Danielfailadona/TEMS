@@ -127,7 +127,9 @@ class AppealController extends Controller
     {
         $this->authorize('update', $appeal);
 
-        DB::transaction(function () use ($request, $appeal) {
+        $voidedCheckout = false;
+
+        DB::transaction(function () use ($request, $appeal, &$voidedCheckout) {
             $wasApproved = $appeal->status === AppealStatus::Approved;
             $isNowApproved = $request->status === 'approved';
 
@@ -160,6 +162,13 @@ class AppealController extends Controller
                     $citation->update([
                         'penalty_amount' => $adjustedAmount,
                     ]);
+
+                    // Void any pending (unpaid) online checkout — the old PayMongo
+                    // session would still collect the pre-discount total, so a
+                    // fresh checkout must be started at the adjusted amount.
+                    if ($citation->payment()->whereNull('paid_at')->delete()) {
+                        $voidedCheckout = true;
+                    }
                 } elseif ($citation) {
                     $appeal->update([
                         'original_amount' => $appeal->original_amount ?? $citation->penalty_amount,
@@ -182,6 +191,10 @@ class AppealController extends Controller
                     $citation->update([
                         'penalty_amount' => $adjustedAmount,
                     ]);
+
+                    if ($citation->payment()->whereNull('paid_at')->delete()) {
+                        $voidedCheckout = true;
+                    }
                 }
             }
 
@@ -205,7 +218,12 @@ class AppealController extends Controller
             }
         });
 
-        return redirect()->route('appeals.show', $appeal)->with('success', 'Appeal updated successfully.');
+        $message = 'Appeal updated successfully.';
+        if ($voidedCheckout) {
+            $message .= ' The pending online checkout for the old amount was voided — a new checkout at the adjusted amount can be started from the ticket.';
+        }
+
+        return redirect()->route('appeals.show', $appeal)->with('success', $message);
     }
 
     public function destroy(Appeal $appeal): RedirectResponse

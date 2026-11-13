@@ -209,7 +209,7 @@
                         </div>
                     @endif
 
-                    @if ($citation->payment)
+                    @if ($citation->payment && $citation->payment->paid_at)
                         <hr>
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -217,8 +217,21 @@
                                 <strong>Receipt #{{ $citation->payment->receipt_number }}</strong>
                             </div>
                             <div class="text-end">
-                                <small class="text-muted d-block">{{ $citation->payment->paid_at ? 'Paid ' . $citation->payment->paid_at->format('M d, Y') : 'Pending' }}</small>
-                                <strong class="text-success">₱{{ number_format($citation->payment->amount ?? $citation->penalty_amount, 2) }}</strong>
+                                <small class="text-muted d-block">Paid {{ $citation->payment->paid_at->format('M d, Y') }}</small>
+                                <strong class="text-success">₱{{ number_format($citation->payment->amount, 2) }}</strong>
+                            </div>
+                        </div>
+                    @elseif ($citation->payment)
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-muted d-block">Payment</small>
+                                <strong class="text-warning">Pending Online Payment</strong>
+                                <small class="text-muted d-block">Not yet paid — online checkout in progress</small>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted d-block">Pending</small>
+                                <strong>₱{{ number_format($citation->payment->amount ?? $citation->penalty_amount, 2) }}</strong>
                             </div>
                         </div>
                     @endif
