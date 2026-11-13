@@ -242,53 +242,10 @@
 
     <div class="chart-box" style="height: 260px;"><canvas id="ticketsChart"></canvas></div>
     <div class="text-muted small mt-2">
-        <span class="me-3"><span class="chart-dot" style="background:#176ff2;"></span>Tickets (citations issued)</span>
+        <span class="me-3"><span class="chart-dot" style="background:#176ff2;"></span>Tickets (citations, reports, clamping, impounding)</span>
         <span class="me-3"><span class="chart-dot" style="background:#10b981;"></span>Payments — Paid</span>
         <span class="me-3"><span class="chart-dot" style="background:#f59e0b;"></span>Payments — Unpaid</span>
         <span><span class="chart-dot" style="background:#8b5cf6;"></span>Appeals</span>
-    </div>
-</div>
-
-<div class="two-col animate-on-load">
-    {{-- Top Violations --}}
-    <div class="panel">
-        <h3 class="h6 mb-3">Top Violation Types</h3>
-        @if ($topViolations->isEmpty())
-            <div class="chart-empty">
-                <span class="icon"><i class="bi bi-bar-chart"></i></span>
-                <span class="msg">No data for the last 3 months.</span>
-            </div>
-        @else
-            @php $maxCount = $topViolations->max('count'); @endphp
-            @foreach ($topViolations as $v)
-                <div class="violation-item">
-                    <span>{{ $v['name'] }}</span>
-                    <div class="d-flex align-items-center gap-2">
-                        <div style="width:80px;">
-                            <div class="violation-bar" style="width:{{ $maxCount > 0 ? ($v['count']/$maxCount)*100 : 0 }}%;"></div>
-                        </div>
-                        <span class="fw-semibold small">{{ $v['count'] }}</span>
-                    </div>
-                </div>
-            @endforeach
-        @endif
-    </div>
-    <div class="panel">
-        <h3 class="h6 mb-3">Pending Work Queue</h3>
-        <div class="stat-with-caption">
-            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                <span><i class="bi bi-chat-square-text me-2 text-warning"></i>Pending Appeals</span>
-                <strong>{{ number_format($pendingQueue['appeals']) }}</strong>
-            </div>
-            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                <span><i class="bi bi-inbox me-2 text-info"></i>Pending Citizen Reports</span>
-                <strong>{{ number_format($pendingQueue['citizen_reports']) }}</strong>
-            </div>
-            <div class="d-flex justify-content-between align-items-center py-2">
-                <span><i class="bi bi-person-plus me-2 text-primary"></i>Account Approvals</span>
-                <strong>{{ number_format($pendingQueue['account_approvals']) }}</strong>
-            </div>
-        </div>
     </div>
 </div>
 

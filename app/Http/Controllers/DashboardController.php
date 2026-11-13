@@ -166,7 +166,14 @@ public function index(Request $request): View
         ];
 
         foreach ($buckets as $bucket) {
-            $chartData['tickets'][] = Citation::whereBetween('issued_at', [$bucket['start'], $bucket['end']])->count();
+            // Tickets = every ticket type created in this bucket:
+            // citations, citizen reports, clamping records, impounding records.
+            $tickets = Citation::whereBetween('issued_at', [$bucket['start'], $bucket['end']])->count()
+                + CitizenReport::whereBetween('created_at', [$bucket['start'], $bucket['end']])->count()
+                + ClampingRecord::whereBetween('clamped_at', [$bucket['start'], $bucket['end']])->count()
+                + ImpoundingRecord::whereBetween('impounded_at', [$bucket['start'], $bucket['end']])->count();
+
+            $chartData['tickets'][] = $tickets;
 
             $chartData['payments_paid'][] = Payment::whereNotNull('paid_at')
                 ->whereBetween('paid_at', [$bucket['start'], $bucket['end']])->count();
@@ -178,15 +185,6 @@ public function index(Request $request): View
 
             $chartData['appeals'][] = Appeal::whereBetween('submitted_at', [$bucket['start'], $bucket['end']])->count();
         }
-
-        // Analytics: Top Violation Types
-        // All violation types are listed in a fixed (definition) order; rows keep their
-        // position regardless of count, and zero-count types still show an empty bar.
-        $topViolations = ViolationType::withCount(['citations' => fn ($q) => $q->where('issued_at', '>=', now()->subMonths(3))])
-            ->orderBy('id')
-            ->get()
-            ->map(fn ($v) => ['name' => $v->name, 'count' => (int) $v->citations_count])
-            ->values();
 
         // Recent activity
         $recentCitations = Citation::with(['violationType', 'enforcer'])
@@ -262,7 +260,6 @@ public function index(Request $request): View
             'trends',
             'chartData',
             'range',
-            'topViolations',
             'recentActivity',
             'pendingQueue',
             'zoneMapData',
