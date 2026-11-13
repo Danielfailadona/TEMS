@@ -149,6 +149,57 @@
     .tm-dash .tm-kpi-value.force-green { color: #10b981; }
     .tm-dash .tm-kpi-value.force-amber { color: #f59e0b; }
     .tm-dash .tm-kpi-value.force-red { color: #ef4444; }
+
+    /* Day selector buttons (segmented buttons for days of week) */
+    .tm-dash .day-select-group {
+        display: flex;
+        flex-wrap: wrap;
+        flex-direction: row;
+        gap: 0.375rem;
+        width: 100%;
+    }
+    .tm-dash .day-select-item { position: relative; flex: 0 0 auto; }
+    .tm-dash .day-select-check {
+        position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;
+    }
+    .tm-dash .day-select-label {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+        min-width: 64px;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: #6b7280;
+        background: #fff;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        user-select: none;
+        white-space: nowrap;
+    }
+    .tm-dash .day-select-label .bi-check {
+        font-size: 0.875rem;
+        line-height: 1;
+    }
+    .tm-dash .day-select-label:hover {
+        background: #f8fafc;
+        color: #374151;
+        border-color: #9ca3af;
+    }
+    .tm-dash .day-select-check:checked + .day-select-label {
+        background: #198754;
+        color: #fff;
+        border-color: #198754;
+    }
+    .tm-dash .day-select-check:checked + .day-select-label .bi-check {
+        display: inline-block;
+    }
+    .tm-dash .day-select-check:focus-visible + .day-select-label {
+        box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+        outline: none;
+    }
     @media (max-width: 600px) {
         .tm-dash .tm-toolbar { flex-wrap: wrap; gap: 10px; }
         .tm-dash .tm-filter-wrap { flex-basis: 115px; }
@@ -519,6 +570,38 @@
                                         <input type="time" name="shift_end" class="form-control" id="scheduleEnd{{ $enforcer->id }}" value="{{ old('shift_end_' . $enforcer->id, $todaysSchedule->end_time ?? '') }}">
                                     </div>
                                     <div class="mb-2">
+                                        <label class="form-label fw-semibold small">Days of Week</label>
+                                        <div class="day-select-group" id="dayGroup_{{ $enforcer->id }}">
+                                            @php
+                                                $dayNamesShort = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+                                                $schedule = $enforcer->enforcerSchedules->first();
+                                                $isActiveDays = $schedule?->is_active_days ?? [];
+                                            @endphp
+                                            @foreach ($dayNamesShort as $dayIdx => $dayShort)
+                                                @php $isActive = (bool) ($isActiveDays[$dayIdx] ?? false); @endphp
+                                                <div class="day-select-item">
+                                                    <input type="checkbox" class="day-select-check"
+                                                           id="daySelect_{{ $enforcer->id }}_{{ $dayIdx }}"
+                                                           {{ $isActive ? 'checked' : '' }}
+                                                           onchange="toggleDayPill({{ $dayIdx }}, {{ $enforcer->id }})">
+                                                    <label class="day-select-label" for="daySelect_{{ $enforcer->id }}_{{ $dayIdx }}">
+                                                        {{ $dayShort }}
+                                                        <i class="bi bi-check ms-1 d-none"></i>
+                                                    </label>
+                                                    <input type="hidden" class="day-input" name="days[]"
+                                                           value="{{ $dayIdx }}"
+                                                           id="dayInput_{{ $enforcer->id }}_{{ $dayIdx }}"
+                                                           {{ $isActive ? '' : 'disabled' }}>
+                                                    <input type="hidden" class="day-active-input" name="is_active_days[{{ $dayIdx }}]"
+                                                           value="1"
+                                                           id="dayActiveInput_{{ $enforcer->id }}_{{ $dayIdx }}"
+                                                           {{ $isActive ? '' : 'disabled' }}>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                        <small class="text-muted">Select the days this enforcer is on duty.</small>
+                                    </div>
+                                    <div class="mb-2">
                                         <label class="form-label fw-semibold small" for="availabilityOverride{{ $enforcer->id }}">Availability Override</label>
                                         <select name="availability_override" class="form-select" id="availabilityOverride{{ $enforcer->id }}">
                                             <option value="auto" {{ $overrideStatus === 'auto' ? 'selected' : '' }}>Auto</option>
@@ -592,6 +675,16 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(debounce);
         debounce = setTimeout(() => form.submit(), 300);
     });
+
+    window.toggleDayPill = function(dayIdx, enforcerId) {
+        const checkbox = document.getElementById('daySelect_' + enforcerId + '_' + dayIdx);
+        const dayInput = document.getElementById('dayInput_' + enforcerId + '_' + dayIdx);
+        const activeInput = document.getElementById('dayActiveInput_' + enforcerId + '_' + dayIdx);
+        if (!checkbox || !dayInput || !activeInput) return;
+
+        dayInput.disabled = !checkbox.checked;
+        activeInput.disabled = !checkbox.checked;
+    };
 });
 </script>
 @endpush
