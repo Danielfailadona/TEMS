@@ -243,7 +243,7 @@ class ImpoundingController extends Controller
 
         app(PaymentRecorder::class)->recordImpounding($impounding, [
                 'payment_method' => $validated['payment_method'],
-                'reference_number' => $validated['reference_number'],
+                'reference_number' => $validated['reference_number'] ?? null,
             ], auth()->id());
 
         return redirect()->route('impounding.show', $impounding)

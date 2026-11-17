@@ -57,7 +57,10 @@ class CitizenReportController extends Controller
             });
         }
 
-        $reports = $query->latest()->paginate(5)->withQueryString();
+        $reports = $query->orderByRaw("CASE WHEN status = '" . ReportStatus::Pending->value . "' THEN 0 ELSE 1 END")
+            ->latest('created_at')
+            ->paginate(5)
+            ->withQueryString();
 
         $statsQuery = CitizenReport::query();
         if ($isRestricted) {

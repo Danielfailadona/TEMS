@@ -85,7 +85,7 @@
     }
 
     .pym-dash .pym-pill-btn {
-        display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 14px;
+        display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 28px; padding: 0 14px;
         min-width: 100px;
         border: 1px solid var(--pym-line); border-radius: 15px; font-size: 12px; color: var(--pym-ink);
         text-decoration: none; background: #fff; cursor: pointer;

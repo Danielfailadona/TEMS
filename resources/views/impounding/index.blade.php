@@ -163,8 +163,8 @@ if (! \App\Enums\ImpoundingStatus::tryFrom($activeStatus)) {
                         <td data-label="Status"><span class="std-pill {{ $record->status->badgeClass() }}">{{ $record->status->label() }}</span></td>
                         <td>
                             <div class="imp-actions">
-                                <a href="{{ route('impounding.show', $record) }}" class="std-view-btn" title="View details" aria-label="View {{ $record->vehicle_plate }}">
-                                    <svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-5 9.5-5 9.5 5 9.5 5-3.5 5-9.5 5-9.5-5-9.5-5Z"/><circle cx="12" cy="12" r="2.3"/></svg>
+                                <a href="{{ route('impounding.show', $record) }}" class="btn btn-sm btn-outline-danger" title="View details" aria-label="View {{ $record->vehicle_plate }}">
+                                    <i class="bi bi-eye"></i>
                                 </a>
                                 @can('markPaid', $record)
                                     <button type="button" class="imp-payment-btn" data-bs-toggle="modal" data-bs-target="#payModal-{{ $record->id }}">Record Payment</button>
@@ -220,6 +220,10 @@ if (! \App\Enums\ImpoundingStatus::tryFrom($activeStatus)) {
                                         <option value="{{ $method->value }}">{{ $method->label() }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Reference Number</label>
+                                <input type="text" name="reference_number" class="form-control" placeholder="Optional receipt or reference number">
                             </div>
                         </div>
                         <div class="modal-footer">

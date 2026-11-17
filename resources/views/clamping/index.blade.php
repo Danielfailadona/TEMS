@@ -135,7 +135,7 @@
     .pym-dash .pym-actions { display: flex; gap: 6px; flex-wrap: wrap; }
     .pym-dash .pym-pill-btn {
         display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 14px;
-        min-width: 100px;
+        min-width: auto;
         border: 1px solid var(--pym-line); border-radius: 15px; font-size: 12px; color: var(--pym-ink);
         text-decoration: none; background: #fff; cursor: pointer;
     }
@@ -260,9 +260,9 @@
                         <td>
                             <div class="pym-actions">
                                 <a href="{{ route('clamping.show', $row) }}" class="pym-pill-btn" aria-label="View {{ $row->notice_number }}" title="View">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="16" height="16"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
-                                    View
+                                    <i class="bi bi-eye"></i>
                                 </a>
+                                <x-delete-button :record="$row" route-name="clamping.destroy" :label="$row->notice_number" class="btn btn-sm btn-outline-danger" />
                                 @can('markPaid', $row)
                                     <form method="POST" action="{{ route('clamping.mark-paid', $row) }}" class="d-inline" onsubmit="return confirm('Record payment for {{ addslashes($row->notice_number) }}?')">
                                         @csrf
@@ -289,7 +289,6 @@
                                         </button>
                                     </form>
                                 @endcan
-                                <x-delete-button :record="$row" route-name="clamping.destroy" :label="$row->notice_number" class="btn btn-sm btn-outline-danger" />
                             </div>
                         </td>
                     </tr>

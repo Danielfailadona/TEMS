@@ -41,7 +41,7 @@
                     <td data-label="Ticket #"><span class="std-pill tag-gray">{{ $appeal->ticketNumber() }}</span></td>
                     <td data-label="Citation">{{ $appeal->citation->citation_number ?? '—' }}</td>
                     <td data-label="Filed By">{{ $appeal->submitterDisplay() }}</td>
-                    <td data-label="Reason">{{ \Illuminate\Support\Str::limit($appeal->reason, 60) }}</td>
+                    <td data-label="Reason">{{ \Illuminate\Support\Str::limit($appeal->reason, 23) }}</td>
                     <td data-label="Status"><span class="std-pill {{ $appeal->status->badgeClass() }}">{{ $appeal->status->label() }}</span></td>
                     <td data-label="Submitted">{{ optional($appeal->submitted_at)->format('M d, Y') }}</td>
                     <td>
