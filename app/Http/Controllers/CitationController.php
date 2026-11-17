@@ -29,6 +29,11 @@ class CitationController extends Controller
 
         $query = Citation::with(['violationType', 'enforcer', 'impoundingRecord', 'evidence']);
 
+        $user = auth()->user();
+        if ($user->isRole(Role::Enforcer)) {
+            $query->where('issued_by', $user->id);
+        }
+
         $citations = $query
             ->when($request->search, function ($q, $search) {
                 $q->where(function ($inner) use ($search) {

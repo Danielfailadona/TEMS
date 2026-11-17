@@ -11,7 +11,16 @@
         @can('update', $payment)
             <a href="{{ route('payments.edit', $payment) }}" class="btn btn-outline-secondary">Edit</a>
         @endcan
-        <a href="{{ route('payments.print', $payment) }}" target="_blank" class="btn btn-outline-primary">Print Receipt</a>
+        @php
+            $paymentStatus = $payment->paid_at ? 'paid' : ($payment->paymongo_checkout_id ? 'pending' : 'unpaid');
+        @endphp
+        @if ($paymentStatus === 'paid')
+            <a href="{{ route('payments.print', $payment) }}" target="_blank" class="btn btn-outline-primary">Print Receipt</a>
+        @elseif ($paymentStatus === 'pending')
+            <a href="{{ route('payments.print', $payment) }}" target="_blank" class="btn btn-outline-primary">Print Payment Request</a>
+        @else
+            <a href="{{ route('payments.print', $payment) }}" target="_blank" class="btn btn-outline-primary">Print Invoice</a>
+        @endif
         <x-delete-button :record="$payment" route-name="payments.destroy" :label="$payment->receipt_number" class="btn btn-outline-danger">
             <i class="bi bi-trash me-1"></i>Delete
         </x-delete-button>
@@ -62,8 +71,9 @@
         @endif
         <div class="row mb-2"><div class="col-5 text-muted">Cashier</div><div class="col-7">{{ $payment->cashier->name ?? 'Online Payment' }}</div></div>
         <div class="row mb-2"><div class="col-5 text-muted">Date Paid</div><div class="col-7">{{ $payment->paid_at?->format('M d, Y h:i A') ?? 'Pending' }}</div></div>
-        <hr>
-        <p class="text-muted small mb-0 text-center">This receipt serves as proof of payment for the cited violation.</p>
+        @if ($payment->paid_at)
+            <p class="text-muted small mb-0 text-center">This receipt serves as proof of payment for the cited violation.</p>
+        @endif
     </div>
 </div>
 @endsection

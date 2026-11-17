@@ -28,6 +28,11 @@ class ClampingController extends Controller
 
         $query = ClampingRecord::with(['officer', 'citation']);
 
+        $user = auth()->user();
+        if ($user->isRole(Role::Enforcer)) {
+            $query->where('clamped_by', $user->id);
+        }
+
         if ($request->filled('search')) {
             $search = trim($request->search);
             $query->where(function ($q) use ($search) {

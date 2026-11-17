@@ -7,6 +7,7 @@ use App\Models\Team;
 use App\Models\Zone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ZoneController extends Controller
@@ -87,7 +88,7 @@ class ZoneController extends Controller
         $this->authorizeAdmin();
 
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', 'unique:zones,name'],
             'description' => ['nullable', 'string'],
             'address' => ['nullable', 'string', 'max:500'],
             'team_id' => ['nullable', 'exists:teams,id'],
@@ -117,7 +118,7 @@ class ZoneController extends Controller
         $this->authorizeAdmin();
 
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('zones', 'name')->ignore($zone->id)],
             'description' => ['nullable', 'string'],
             'address' => ['nullable', 'string', 'max:500'],
             'team_id' => ['nullable', 'exists:teams,id'],

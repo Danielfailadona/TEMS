@@ -28,6 +28,11 @@ class ImpoundingController extends Controller
 
         $query = ImpoundingRecord::with(['officer', 'citation.violationType', 'clampingRecord']);
 
+        $user = auth()->user();
+        if ($user->isRole(Role::Enforcer)) {
+            $query->where('impounded_by', $user->id);
+        }
+
         $status = ImpoundingStatus::tryFrom((string) $request->query('status'));
 
         if ($status !== null) {

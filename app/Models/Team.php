@@ -28,8 +28,8 @@ class Team extends Model
         return $this->belongsToMany(User::class)->withTimestamps();
     }
 
-    public function zones(): HasMany
+    public function zones(): BelongsToMany
     {
-        return $this->hasMany(Zone::class);
+        return $this->belongsToMany(Zone::class, 'team_zone')->withTimestamps();
     }
 }

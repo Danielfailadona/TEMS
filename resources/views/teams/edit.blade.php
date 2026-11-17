@@ -232,6 +232,7 @@
       <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check-lg me-1"></i>Update Team</button>
     </div>
   </div>
+</form>
 
 @if (auth()->user()?->isSuperAdmin())
 <!-- Delete Team Modal -->
@@ -259,7 +260,6 @@
 </div>
 @endif
 
-</form>
 @endsection
 
 @push('scripts')
